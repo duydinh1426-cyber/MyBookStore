@@ -516,7 +516,7 @@
                     if (res.ok) {
                         const data = await res.json();
 
-                        const token = data.data.token;
+                        const token = data.token;
                         sessionStorage.setItem("token", token);
 
                         // Decode token để lấy role

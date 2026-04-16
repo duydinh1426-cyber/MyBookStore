@@ -12,11 +12,9 @@ namespace WebAPI.Controllers
     {
         private readonly IAuthService _service;
 
-        public AuthController(IAuthService service)
-        {
-            _service = service;
-        }
+        public AuthController(IAuthService service) => _service = service;
 
+        #region Helper Methods
         private int GetAccountId()
         {
             var value = User.FindFirstValue("accountId");
@@ -25,44 +23,45 @@ namespace WebAPI.Controllers
 
         private int GetUserId()
         {
-            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? User.FindFirstValue("sub")
-                ?? "0");
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                        ?? User.FindFirstValue("sub");
+            return int.TryParse(value, out var userId) ? userId : 0;
         }
+        #endregion
 
         [HttpPost("register/send-otp")]
         public async Task<IActionResult> RegisterSendOtp(SendOtpDto dto)
         {
-            var result = await _service.RegisterSendOtp(dto);
-            return StatusCode(result.StatusCode, result);
+            await _service.RegisterSendOtpAsync(dto);
+            return Ok(new { message = "OTP đã được gửi đến email của bạn." });
         }
 
         [HttpPost("register/verify-otp")]
         public async Task<IActionResult> RegisterVerifyOtp(VerifyRegisterOtpDto dto)
         {
-            var result = await _service.RegisterVerifyOtp(dto);
-            return StatusCode(result.StatusCode, result);
+            await _service.RegisterVerifyOtpAsync(dto);
+            return Ok(new { message = "Đăng ký tài khoản thành công." });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var result = await _service.Login(dto);
-            return StatusCode(result.StatusCode, result);
+            var result = await _service.LoginAsync(dto);
+            return Ok(result);
         }
 
         [HttpPost("forgot-password/send-otp")]
         public async Task<IActionResult> ForgotSendOtp(SendOtpDto dto)
         {
-            var result = await _service.ForgotSendOtp(dto);
-            return StatusCode(result.StatusCode, result);
+            await _service.ForgotSendOtpAsync(dto);
+            return Ok(new { message = "OTP khôi phục mật khẩu đã được gửi." });
         }
 
         [HttpPost("forgot-password/verify-otp")]
         public async Task<IActionResult> ForgotVerifyOtp(VerifyForgotOtpDto dto)
         {
-            var result = await _service.ForgotVerifyOtp(dto);
-            return StatusCode(result.StatusCode, result);
+            await _service.ForgotVerifyOtpAsync(dto);
+            return Ok(new { message = "Đổi mật khẩu thành công." });
         }
 
         [HttpGet("me")]
@@ -70,8 +69,8 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetMe()
         {
             var accountId = GetAccountId();
-            var result = await _service.GetMe(accountId);
-            return StatusCode(result.StatusCode, result);
+            var result = await _service.GetMeAsync(accountId);
+            return Ok(result);
         }
 
         [HttpPut("me")]
@@ -80,9 +79,8 @@ namespace WebAPI.Controllers
         {
             var accountId = GetAccountId();
             var userId = GetUserId();
-
-            var result = await _service.UpdateMe(accountId, userId, dto);
-            return StatusCode(result.StatusCode, result);
+            var result = await _service.UpdateMeAsync(accountId, userId, dto);
+            return Ok(result);
         }
 
         [HttpPost("me/change-password/send-otp")]
@@ -90,8 +88,8 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> ChangeSendOtp(SendChangePasswordOtpDto dto)
         {
             var accountId = GetAccountId();
-            var result = await _service.ChangeSendOtp(accountId, dto);
-            return StatusCode(result.StatusCode, result);
+            await _service.ChangeSendOtpAsync(accountId, dto);
+            return Ok(new { message = "OTP xác nhận đổi mật khẩu đã được gửi." });
         }
 
         [HttpPut("me/change-password/verify-otp")]
@@ -99,8 +97,8 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> ChangeVerifyOtp(VerifyChangePasswordOtpDto dto)
         {
             var accountId = GetAccountId();
-            var result = await _service.ChangeVerifyOtp(accountId, dto);
-            return StatusCode(result.StatusCode, result);
+            await _service.ChangeVerifyOtpAsync(accountId, dto);
+            return Ok(new { message = "Mật khẩu đã được cập nhật thành công." });
         }
     }
 }
