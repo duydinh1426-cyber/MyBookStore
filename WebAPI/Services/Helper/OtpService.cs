@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using WebAPI.Enums;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Helper
 {
     public interface IOtpService
     {

@@ -2,7 +2,7 @@
 using MailKit.Net.Smtp;
 using WebAPI.Enums;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Helper
 {
     public interface IEmailService
     {

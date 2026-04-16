@@ -17,9 +17,6 @@ namespace WebAPI.Controllers
             _service = service;
         }
 
-        // =========================
-        // HELPER
-        // =========================
         private int GetUserId()
         {
             return int.Parse(
@@ -29,9 +26,6 @@ namespace WebAPI.Controllers
             );
         }
 
-        // =========================
-        // PUBLIC - GET REVIEWS BY BOOK
-        // =========================
         [HttpGet("book/{bookId:int}")]
         public async Task<IActionResult> GetByBook(
             int bookId,
@@ -43,9 +37,6 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
-        // =========================
-        // CUSTOMER - CHECK STATUS
-        // =========================
         [HttpGet("status/{bookId:int}")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetStatus(int bookId)
@@ -55,9 +46,6 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
-        // =========================
-        // CUSTOMER - CREATE REVIEW
-        // =========================
         [HttpPost]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Create([FromBody] CreateReviewDto dto)
@@ -65,13 +53,9 @@ namespace WebAPI.Controllers
             var userId = GetUserId();
             var result = await _service.Create(userId, dto);
 
-            // Có thể dùng Created nếu muốn chuẩn REST hơn
             return Ok(result);
         }
 
-        // =========================
-        // ADMIN - DELETE REVIEW
-        // =========================
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
@@ -80,9 +64,6 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
-        // =========================
-        // ADMIN - GET ALL
-        // =========================
         [HttpGet("admin/all")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminGetAll(

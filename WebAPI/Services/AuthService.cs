@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using WebAPI.DTOs;
 using WebAPI.Enums;
+using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Services
