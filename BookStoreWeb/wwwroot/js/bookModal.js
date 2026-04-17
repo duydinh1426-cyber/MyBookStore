@@ -341,7 +341,8 @@
 
         try {
             const res = await fetch(`${API}/reviews/book/${bookId}?${params}`);
-            const data = await res.json();
+            const result = await res.json();
+            const data = result.data;
             _rv.total = data.total ?? 0;
             _rv.totalPages = data.totalPages ?? 1;
 
@@ -352,7 +353,9 @@
                 try {
                     const sRes = await fetch(`${API}/reviews/status/${bookId}`,
                         { headers: authHeaders() });
-                    reviewStatus = await sRes.json();
+                    const result2 = await sRes.json();
+                    reviewStatus = result2.data;
+
                 } catch { }
             }
 
@@ -497,7 +500,8 @@
                 headers: authHeaders(),
                 body: JSON.stringify({ bookId, rating: _rv.pickedStar, comment })
             });
-            const data = await res.json();
+            const result = await res.json();
+            const data = result.data;
 
             if (!res.ok) {
                 const msg = data.message || data.Message || data.title

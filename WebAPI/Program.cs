@@ -78,31 +78,6 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        context.Response.ContentType = "application/json";
-
-        context.Response.StatusCode = ex switch
-        {
-            ArgumentException => 400,
-            UnauthorizedAccessException => 401,
-            KeyNotFoundException => 404,
-            _ => 500
-        };
-
-        await context.Response.WriteAsJsonAsync(new
-        {
-            message = ex.Message
-        });
-    }
-});
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

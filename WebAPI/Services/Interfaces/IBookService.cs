@@ -4,13 +4,13 @@ namespace WebAPI.Services.Interfaces
 {
     public interface IBookService
     {
-        Task<ApiResponse<BookPagedResultDto>> GetBooks(BookQueryDto query);
-        Task<ApiResponse<List<BookSummaryDto>>> GetTopNew(int count = 6);
-        Task<ApiResponse<List<BookSummaryDto>>> GetTopSelling(int count = 6);
-        Task<ApiResponse<List<BookSummaryDto>>> GetTopRated(int count = 6);
-        Task<ApiResponse<BookDetailDto>> GetById(int id);
-        Task<ApiResponse<object>> Create(BookUpsertDto dto);
-        Task<ApiResponse<object>> Update(int id, BookUpsertDto dto);
-        Task<ApiResponse<object>> Delete(int id);
+        Task<ApiResponse<BookPagedResultDto>> GetBooksAsync(BookQueryDto queryDto);
+        Task<ApiResponse<List<BookSummaryDto>>> GetTopNewAsync(int count);
+        Task<ApiResponse<List<BookSummaryDto>>> GetTopSellingAsync(int count);
+        Task<ApiResponse<List<BookSummaryDto>>> GetTopRatedAsync(int count);
+        Task<ApiResponse<BookDetailDto>> GetByIdAsync(int id);
+        Task<ApiResponse<object>> CreateAsync(BookUpsertDto dto);
+        Task<ApiResponse<object>> UpdateAsync(int id, BookUpsertDto dto);
+        Task<ApiResponse<object>> DeleteAsync(int id);
     }
 }

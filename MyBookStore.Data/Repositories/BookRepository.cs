@@ -11,15 +11,11 @@ namespace Data.Repositories
     {
         private readonly DBContext _db;
 
-        public BookRepository(DBContext db)
-        {
-            _db = db;
-        }
+        public BookRepository(DBContext db) => _db = db;
 
         public IQueryable<Book> GetQuery()
         {
             return _db.Books
-                .AsNoTracking()
                 .Include(b => b.Category)
                 .AsQueryable();
         }
@@ -30,38 +26,26 @@ namespace Data.Repositories
                 .Include(b => b.Category)
                 .FirstOrDefaultAsync(b => b.BookId == id);
         }
-        
-        public async Task AddAsync(Book book)
-        {
-            _db.Books.Add(book);
-            await _db.SaveChangesAsync();
-        }
 
-        public async Task UpdateAsync(Book book)
-        {
-            _db.Books.Update(book);
-            await _db.SaveChangesAsync();
-        }
+        public void Add(Book book) => _db.Books.Add(book);
 
-        public async Task DeleteAsync(Book book)
-        {
-            _db.Books.Remove(book);
-            await _db.SaveChangesAsync();
-        }
+        public void Update(Book book) => _db.Books.Update(book);
 
-        public async Task<bool> CategoryExists(int categoryId)
+        public void Delete(Book book) => _db.Books.Remove(book);
+
+        public async Task<bool> CategoryExistsAsync(int categoryId)
         {
             return await _db.Categories.AnyAsync(c => c.CategoryId == categoryId);
         }
 
-        public async Task<bool> HasOrderItems(int bookId)
+        public async Task<bool> HasOrderItemsAsync(int bookId)
         {
             return await _db.OrderItems.AnyAsync(oi => oi.BookId == bookId);
         }
 
-        public async Task SaveChangesAsync()
+        public async Task<bool> SaveChangesAsync()
         {
-            await _db.SaveChangesAsync();
+            return await _db.SaveChangesAsync() > 0;
         }
     }
 }

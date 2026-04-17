@@ -11,10 +11,7 @@ namespace WebAPI.Services
     {
         private readonly IBookRepository _repo;
 
-        public BookService(IBookRepository repo)
-        {
-            _repo = repo; 
-        }
+        public BookService(IBookRepository repo) => _repo = repo;
 
         private static BookSummaryDto MapToSummary(Book book)
         {
@@ -30,16 +27,16 @@ namespace WebAPI.Services
             );
         }
 
-        public async Task<ApiResponse<BookPagedResultDto>> GetBooks(BookQueryDto queryDto)
+        public async Task<ApiResponse<BookPagedResultDto>> GetBooksAsync(BookQueryDto queryDto)
         {
             var query = _repo.GetQuery().AsNoTracking();
 
-            // lọc
+            // Lọc theo từ khóa
             if (!string.IsNullOrWhiteSpace(queryDto.Keyword))
             {
-                var keyword = $"%{queryDto.Keyword.Trim()}%";
-                query = query.Where(b => EF.Functions.Like(b.Title, keyword) || 
-                                         EF.Functions.Like(b.Author, keyword));
+                var keyword = queryDto.Keyword.Trim().ToLower();
+                query = query.Where(b => b.Title.ToLower().Contains(keyword) ||
+                        (b.Author != null && b.Author.ToLower().Contains(keyword)));
             }
 
             if (queryDto.CategoryId.HasValue)
@@ -51,9 +48,9 @@ namespace WebAPI.Services
             if (queryDto.MaxPrice.HasValue)
                 query = query.Where(b => b.Price <= queryDto.MaxPrice);
 
-            // sorting
-            query = (queryDto.SortBy.ToLower(), queryDto.SortOrder.ToLower()) switch
-            { 
+            // Sắp xếp
+            query = (queryDto.SortBy?.ToLower(), queryDto.SortOrder?.ToLower()) switch
+            {
                 ("price", "asc") => query.OrderBy(b => b.Price),
                 ("price", _) => query.OrderByDescending(b => b.Price),
                 ("title", "asc") => query.OrderBy(b => b.Title),
@@ -75,13 +72,14 @@ namespace WebAPI.Services
                 .Select(b => MapToSummary(b))
                 .ToListAsync();
 
-            return ApiResponse<BookPagedResultDto>.Success(new BookPagedResultDto
-            (total, queryDto.Page, queryDto.PageSize, totalPages, data));
+            var result = new BookPagedResultDto(total, queryDto.Page, queryDto.PageSize, totalPages, data);
+            return ApiResponse<BookPagedResultDto>.Success(result);
         }
 
-        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopNew(int count = 6)
+        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopNewAsync(int count)
         {
             var data = await _repo.GetQuery()
+                .AsNoTracking()
                 .OrderByDescending(b => b.CreatedAt)
                 .Take(count)
                 .Select(b => MapToSummary(b))
@@ -90,19 +88,22 @@ namespace WebAPI.Services
             return ApiResponse<List<BookSummaryDto>>.Success(data);
         }
 
-        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopSelling(int count = 6)
+        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopSellingAsync(int count)
         {
             var data = await _repo.GetQuery()
+                .AsNoTracking()
                 .OrderByDescending(b => b.NumberSold)
                 .Take(count)
                 .Select(b => MapToSummary(b))
                 .ToListAsync();
+
             return ApiResponse<List<BookSummaryDto>>.Success(data);
         }
 
-        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopRated(int count = 6)
+        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopRatedAsync(int count)
         {
             var data = await _repo.GetQuery()
+                .AsNoTracking()
                 .OrderByDescending(b => b.AvgRating)
                 .ThenByDescending(b => b.ReviewCount)
                 .Take(count)
@@ -112,13 +113,13 @@ namespace WebAPI.Services
             return ApiResponse<List<BookSummaryDto>>.Success(data);
         }
 
-        public async Task<ApiResponse<BookDetailDto>> GetById(int id)
+        public async Task<ApiResponse<BookDetailDto>> GetByIdAsync(int id)
         {
             var book = await _repo.GetByIdAsync(id);
             if (book == null)
-                return ApiResponse<BookDetailDto>.Fail("Không tìm thấy sách", 404);
+                return ApiResponse<BookDetailDto>.Fail("Không tìm thấy sách.", 404);
 
-            return ApiResponse<BookDetailDto>.Success(new BookDetailDto(
+            var detail = new BookDetailDto(
                 book.BookId,
                 book.Title ?? "",
                 book.Author ?? "",
@@ -130,39 +131,29 @@ namespace WebAPI.Services
                 book.NumberStock,
                 book.NumberSold,
                 book.CategoryId,
-                book.Category != null ? book.Category.CategoryName : null,
+                book.Category?.CategoryName,
                 (double)book.AvgRating,
                 book.ReviewCount
-            ));
+            );
+
+            return ApiResponse<BookDetailDto>.Success(detail);
         }
 
-        public async Task<ApiResponse<object>> Create(BookUpsertDto dto)
+        public async Task<ApiResponse<object>> CreateAsync(BookUpsertDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title))
-                return ApiResponse<object>.Fail("Tên sách không được để trống.");
-
-            if (string.IsNullOrWhiteSpace(dto.Author))
-                return ApiResponse<object>.Fail("Tên tác giả không được để trống.");
-
-            if (dto.Price <= 0)
-                return ApiResponse<object>.Fail("Giá sách phải lớn hơn 0.");
-
-            if (dto.NumberStock < 0)
-                return ApiResponse<object>.Fail("Số lượng tồn kho không được âm.");
-
-            if (dto.CategoryId.HasValue && !await _repo.CategoryExists(dto.CategoryId.Value))
-                 return ApiResponse<object>.Fail("Thể loại không tồn tại.");
+            if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
+                return ApiResponse<object>.Fail("Thể loại không tồn tại.");
 
             var book = new Book
             {
                 CategoryId = dto.CategoryId,
-                Author = dto.Author?.Trim() ?? "",
+                Author = (dto.Author ?? "").Trim(),
                 Title = dto.Title.Trim(),
                 PublisherYear = dto.PublisherYear,
                 Description = dto.Description?.Trim(),
                 Image = dto.Image?.Trim(),
                 Price = dto.Price,
-                NumberPage = dto.NumberPage ?? 0,
+                NumberPage = dto.NumberPage,
                 NumberStock = dto.NumberStock,
                 NumberSold = 0,
                 AvgRating = 0,
@@ -170,62 +161,55 @@ namespace WebAPI.Services
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
-             
-            await _repo.AddAsync(book);
 
-            return ApiResponse<object>.Success(
-                new { bookId = book.BookId }, "Thêm sách thành công.");
+            _repo.Add(book);
+            if (await _repo.SaveChangesAsync())
+                return ApiResponse<object>.Success(new { bookId = book.BookId }, "Thêm sách thành công.");
+
+            return ApiResponse<object>.Fail("Lỗi hệ thống khi lưu sách.", 500);
         }
 
-        public async Task<ApiResponse<object>> Update(int id, BookUpsertDto dto)
+        public async Task<ApiResponse<object>> UpdateAsync(int id, BookUpsertDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Title))
-                return ApiResponse<object>.Fail("Tên sách không được để trống.");
-
-            if (string.IsNullOrWhiteSpace(dto.Author))
-                return ApiResponse<object>.Fail("Tên tác giả không được để trống.");
-
-            if (dto.Price <= 0)
-                return ApiResponse<object>.Fail("Giá sách phải lớn hơn 0.");
-
-            if (dto.NumberStock < 0)
-                return ApiResponse<object>.Fail("Số lượng tồn kho không được âm.");
-
-            if (dto.CategoryId.HasValue && !await _repo.CategoryExists(dto.CategoryId.Value))
-                return ApiResponse<object>.Fail("Thể loại không tồn tại.");
-
             var book = await _repo.GetByIdAsync(id);
             if (book == null)
-                return ApiResponse<object>.Fail("Không tìm thấy sách", 404);
+                return ApiResponse<object>.Fail("Không tìm thấy sách.", 404);
+
+            if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
+                return ApiResponse<object>.Fail("Thể loại không tồn tại.");
 
             book.CategoryId = dto.CategoryId;
-            book.Author = dto.Author?.Trim() ?? "";
+            book.Author = (dto.Author ?? "").Trim();
             book.Title = dto.Title.Trim();
             book.PublisherYear = dto.PublisherYear;
             book.Description = dto.Description?.Trim();
             book.Image = dto.Image?.Trim();
             book.Price = dto.Price;
-            book.NumberPage = dto.NumberPage ?? 0;
+            book.NumberPage = dto.NumberPage;
             book.NumberStock = dto.NumberStock;
             book.UpdatedAt = DateTime.UtcNow;
 
-            await _repo.UpdateAsync(book);
+            _repo.Update(book);
+            if (await _repo.SaveChangesAsync())
+                return ApiResponse<object>.Success(null, "Cập nhật sách thành công.");
 
-            return ApiResponse<object>.Success(null, "Cập nhật sách thành công.");
+            return ApiResponse<object>.Fail("Lỗi hệ thống khi cập nhật sách.", 500);
         }
 
-        public async Task<ApiResponse<object>> Delete(int id)
+        public async Task<ApiResponse<object>> DeleteAsync(int id)
         {
             var book = await _repo.GetByIdAsync(id);
             if (book == null)
-                return ApiResponse<object>.Fail("Không tìm thấy sách", 404);
+                return ApiResponse<object>.Fail("Không tìm thấy sách.", 404);
 
-            if (await _repo.HasOrderItems(id))
-                return ApiResponse<object>.Fail("Không thể xóa sách đang có trong đơn hàng.");
+            if (await _repo.HasOrderItemsAsync(id))
+                return ApiResponse<object>.Fail("Không thể xóa sách đã có trong đơn hàng.");
 
-            await _repo.DeleteAsync(book);
+            _repo.Delete(book);
+            if (await _repo.SaveChangesAsync())
+                return ApiResponse<object>.Success(null, "Xóa sách thành công.");
 
-            return ApiResponse<object>.Success(null, "Xóa sách thành công.");
-        }   
+            return ApiResponse<object>.Fail("Lỗi hệ thống khi xóa sách.", 500);
+        }
     }
 }

@@ -9,11 +9,11 @@ namespace Data.Repositories.Interfaces
     {
         IQueryable<Book> GetQuery();
         Task<Book?> GetByIdAsync(int id);
-        Task AddAsync(Book book);
-        Task UpdateAsync(Book book);
-        Task DeleteAsync(Book book);
-        Task<bool> CategoryExists(int categoryId);
-        Task<bool> HasOrderItems(int bookId);
-        Task SaveChangesAsync();
+        void Add(Book book);
+        void Update(Book book);
+        void Delete(Book book);
+        Task<bool> CategoryExistsAsync(int categoryId);
+        Task<bool> HasOrderItemsAsync(int bookId);
+        Task<bool> SaveChangesAsync();
     }
 }
