@@ -1,8 +1,11 @@
-﻿namespace WebAPI.Services.Interfaces
+﻿using Microsoft.AspNetCore.Http;
+using WebAPI.DTOs;
+
+namespace WebAPI.Services.Interfaces
 {
     public interface IFileService
     {
-        Task<string> SaveImageAsync(IFormFile file);
-        void DeleteImage(string fileName);
+        Task<ApiResponse<string>> SaveImageAsync(IFormFile file);
+        ApiResponse<object> DeleteImage(string fileName);
     }
 }

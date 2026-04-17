@@ -617,7 +617,8 @@
                 try {
                     const res = await fetch(`${API}/orders/admin/stats`, { headers: authHeaders() });
                     if (!res.ok) return;
-                    const d = await res.json();
+                    const result = await res.json();
+                    const d = result.data;
                     document.getElementById("stTotal").textContent = d.totalOrders ?? 0;
                     document.getElementById("stRevenue").textContent = fmt(d.totalRevenue ?? 0);
                     const byS = d.byStatus ?? [];
@@ -646,7 +647,8 @@
                 try {
                     const res = await fetch(`${API}/orders/admin/all?${p}`, { headers: authHeaders() });
                     if (!res.ok) throw new Error();
-                    const data = await res.json();
+                    const result = await res.json();
+                    const data = result.data;
                     const orders = data.data || [];
                     const totalPages = data.totalPages ?? 1;
 
@@ -702,7 +704,8 @@
                         method: "PUT", headers: authHeaders(),
                         body: JSON.stringify({ status: newStatus })
                     });
-                    const data = await res.json();
+                    const result = await res.json();
+                    const data = result.data;
 
                     if (!res.ok) {
                         alert(data.message || "Cập nhật thất bại.");
@@ -744,7 +747,8 @@
                 try {
                     const res = await fetch(`${API}/orders/${id}`, { headers: authHeaders() });
                     if (!res.ok) throw new Error();
-                    const o = await res.json();
+                    const result = await res.json();
+                    const o = result.data;
                     const items = o.items ?? [];
 
                     const itemsHtml = items.map(it => {
@@ -844,7 +848,8 @@
                         method: "PUT", headers: authHeaders(),
                         body: JSON.stringify({ status: newStatus })
                     });
-                    const data = await res.json();
+                    const result = await res.json();
+                    const data = result.data;
 
                     if (!res.ok) {
                         alert(data.message || "Cập nhật thất bại.");

@@ -4,158 +4,134 @@ using MyBookStore.Data.Models;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
-public class ReviewService : IReviewService
+namespace WebAPI.Services
 {
-    private readonly IReviewRepository _repo;
-
-    public ReviewService(IReviewRepository repo)
+    public class ReviewService : IReviewService
     {
-        _repo = repo;
-    }
+        private readonly IReviewRepository _repo;
+        public ReviewService(IReviewRepository repo) => _repo = repo;
 
-    public async Task<object> GetByBook(int bookId, int page, int pageSize, int? rating)
-    {
-        if (!await _repo.BookExists(bookId))
-            throw new Exception("Không tìm thấy sách");
-
-        var query = _repo.GetReviewsByBook(bookId);
-
-        if (rating.HasValue)
-            query = query.Where(r => r.Rating == rating.Value);
-
-        var total = await _repo.CountReviews(query);
-        var avg = await _repo.GetAverageRating(query);
-        var stats = await _repo.GetRatingStats(bookId);
-        var reviews = await _repo.GetPagedReviews(query, page, pageSize);
-
-        var data = reviews.Select(r => new ReviewResponseDto(
-            r.ReviewId,
-            r.User.Name ?? "",
-            r.Rating,
-            r.Comment,
-            r.CreatedAt
-        ));
-
-        return new
+        public async Task<ApiResponse<object>> GetByBookAsync(int bookId, int page, int pageSize, int? rating)
         {
-            total,
-            page,
-            pageSize,
-            totalPages = (int)Math.Ceiling(total / (double)pageSize),
-            avgRating = Math.Round(avg, 1),
-            ratingStats = stats,
-            data
-        };
-    }
+            if (!await _repo.BookExistsAsync(bookId))
+                return ApiResponse<object>.Fail("Không tìm thấy sách.", 404);
 
-    public async Task<object> GetReviewStatus(int userId, int bookId)
-    {
-        if (!await _repo.HasPurchased(userId, bookId))
-            return new { canReview = false, reason = "not_purchased" };
+            var query = _repo.GetQuery().Where(r => r.BookId == bookId);
+            if (rating.HasValue) query = query.Where(r => r.Rating == rating.Value);
 
-        var review = await _repo.GetUserReview(userId, bookId);
+            var total = await query.CountAsync();
+            var avg = total > 0 ? await query.AverageAsync(r => r.Rating) : 0;
+            var stats = await _repo.GetRatingStatsAsync(bookId);
 
-        if (review != null)
-        {
-            return new
+            var items = await query
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new {
+                    r.ReviewId,
+                    CustomerName = r.User.Name,
+                    r.Rating,
+                    r.Comment,
+                    r.CreatedAt
+                }).ToListAsync();
+
+            return ApiResponse<object>.Success(new
             {
-                canReview = false,
-                reason = "already_reviewed",
-                review.Rating,
-                review.Comment
-            };
+                Total = total,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                AvgRating = Math.Round(avg, 1),
+                RatingStats = stats,
+                Data = items
+            });
         }
 
-        return new { canReview = true };
-    }
-
-    public async Task<object> Create(int userId, CreateReviewDto dto)
-    {
-        if (dto.rating < 1 || dto.rating > 5)
-            throw new Exception("Rating phải từ 1-5");
-
-        if (!await _repo.BookExists(dto.bookId))
-            throw new Exception("Không tìm thấy sách");
-
-        if (!await _repo.HasPurchased(userId, dto.bookId))
-            throw new Exception("Bạn cần mua sách trước");
-
-        if (await _repo.AlreadyReviewed(userId, dto.bookId))
-            throw new Exception("Bạn đã đánh giá rồi");
-
-        var review = new Review
+        public async Task<ApiResponse<object>> GetReviewStatusAsync(int userId, int bookId)
         {
-            BookId = dto.bookId,
-            UserId = userId,
-            Rating = dto.rating,
-            Comment = dto.comment?.Trim(),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+            if (!await _repo.HasPurchasedAsync(userId, bookId))
+                return ApiResponse<object>.Success(new { CanReview = false, Reason = "not_purchased" });
 
-        await _repo.AddReview(review);
-        await _repo.SaveAsync();
+            var review = await _repo.GetUserReviewAsync(userId, bookId);
+            if (review != null)
+                return ApiResponse<object>.Success(new
+                {
+                    CanReview = false,
+                    Reason = "already_reviewed",
+                    Rating = review.Rating,
+                    Comment = review.Comment
+                });
 
-        await _repo.UpdateBookRating(dto.bookId);
-        await _repo.SaveAsync();
+            return ApiResponse<object>.Success(new { CanReview = true });
+        }
 
-        return new
+        public async Task<ApiResponse<object>> CreateAsync(int userId, CreateReviewDto dto)
         {
-            message = "Đã tạo review",
-            reviewId = review.ReviewId
-        };
-    }
+            if (dto.rating < 1 || dto.rating > 5) return ApiResponse<object>.Fail("Đánh giá phải từ 1 đến 5 sao.");
+            if (!await _repo.BookExistsAsync(dto.bookId)) return ApiResponse<object>.Fail("Sách không tồn tại.", 404);
+            if (!await _repo.HasPurchasedAsync(userId, dto.bookId)) return ApiResponse<object>.Fail("Bạn cần mua sản phẩm này trước khi đánh giá.");
+            if (await _repo.GetUserReviewAsync(userId, dto.bookId) != null) return ApiResponse<object>.Fail("Bạn đã đánh giá sản phẩm này rồi.");
 
-    public async Task<object> Delete(int id)
-    {
-        var review = await _repo.GetById(id);
-        if (review == null)
-            throw new Exception("Không tìm thấy");
-
-        var bookId = review.BookId;
-
-        await _repo.DeleteReview(review);
-
-        await _repo.UpdateBookRating(bookId);
-        await _repo.SaveAsync();
-
-        return new { message = "Đã xóa" };
-    }
-
-    public async Task<object> AdminGetAll(int page, int pageSize, int? rating, int? bookId)
-    {
-        var query = _repo.GetAll();
-
-        if (rating.HasValue)
-            query = query.Where(r => r.Rating == rating.Value);
-
-        if (bookId.HasValue)
-            query = query.Where(r => r.BookId == bookId.Value);
-
-        var total = await query.CountAsync();
-
-        var data = await query
-            .OrderByDescending(r => r.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(r => new
+            var review = new Review
             {
-                r.ReviewId,
-                r.Rating,
-                r.Comment,
-                r.CreatedAt,
-                customer = r.User.Name,
-                book = new { r.Book.BookId, r.Book.Title }
-            })
-            .ToListAsync();
+                BookId = dto.bookId,
+                UserId = userId,
+                Rating = dto.rating,
+                Comment = dto.comment?.Trim(),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
-        return new
+            _repo.Add(review);
+            await _repo.UpdateBookRatingAsync(dto.bookId);
+
+            return await _repo.SaveChangesAsync()
+                ? ApiResponse<object>.Success(new { reviewId = review.ReviewId }, "Gửi đánh giá thành công.")
+                : ApiResponse<object>.Fail("Lỗi khi lưu đánh giá.", 500);
+        }
+
+        public async Task<ApiResponse<object>> DeleteAsync(int id)
         {
-            total,
-            page,
-            pageSize,
-            totalPages = (int)Math.Ceiling(total / (double)pageSize),
-            data
-        };
+            var review = await _repo.GetByIdAsync(id);
+            if (review == null) return ApiResponse<object>.Fail("Không tìm thấy đánh giá.", 404);
+
+            var bookId = review.BookId;
+            _repo.Delete(review);
+            await _repo.UpdateBookRatingAsync(bookId);
+
+            return await _repo.SaveChangesAsync()
+                ? ApiResponse<object>.Success(null, "Đã xóa đánh giá.")
+                : ApiResponse<object>.Fail("Lỗi khi xóa đánh giá.", 500);
+        }
+
+        public async Task<ApiResponse<object>> AdminGetAllAsync(int page, int pageSize, int? rating, int? bookId)
+        {
+            var query = _repo.GetQuery();
+            if (rating.HasValue) query = query.Where(r => r.Rating == rating.Value);
+            if (bookId.HasValue) query = query.Where(r => r.BookId == bookId.Value);
+
+            var total = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new {
+                    r.ReviewId,
+                    r.Rating,
+                    r.Comment,
+                    r.CreatedAt,
+                    CustomerName = r.User.Name,
+                    Book = new { r.Book.BookId, r.Book.Title }
+                }).ToListAsync();
+
+            return ApiResponse<object>.Success(new
+            {
+                Total = total,
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                Data = items
+            });
+        }
     }
 }

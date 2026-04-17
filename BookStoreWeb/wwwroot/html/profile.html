@@ -25,11 +25,7 @@
         }
 
         .pf-title {
-<<<<<<< Updated upstream
             font-family: 'Playfair Display',serif;
-=======
-            font-family: 'DM Sans',sans-serif;
->>>>>>> Stashed changes
             font-size: 1.75rem;
             font-weight: 700;
             color: #1a1a1a;
@@ -606,7 +602,8 @@
                 try {
                     const res = await fetch(`${API}/auth/me`, { headers: authHeaders() });
                     if (!res.ok) throw new Error();
-                    const d = await res.json();
+                    const result = await res.json();
+                    const d = result.data;
                     _original = { name: d.name || "", email: d.email || "", address: d.address || "" };
 
                     const initials = (d.name || "?").split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
@@ -657,7 +654,8 @@
 
                 try {
                     const res = await fetch(`${API}/auth/me`, { method: "PUT", headers: authHeaders(), body: JSON.stringify(payload) });
-                    const data = await res.json();
+                    const result = await res.json();
+                    const d = result.data;
                     if (!res.ok) {
                         showAlert("pfInfoAlert", "pfInfoAlertMsg", data.message || "Cập nhật thất bại.", "error");
                     } else {
@@ -692,7 +690,8 @@
                         method: "POST", headers: authHeaders(),
                         body: JSON.stringify({ currentPassword: document.getElementById("pfCurPw").value })
                     });
-                    const data = await res.json().catch(() => ({}));
+                    const result = await res.json();
+                    const d = result.data.catch(() => ({}));
                     if (res.ok) {
                         // Chuyển sang bước 2
                         document.getElementById("pwStep1").style.display = "none";
@@ -721,7 +720,8 @@
                         method: "POST", headers: authHeaders(),
                         body: JSON.stringify({ currentPassword: document.getElementById("pfCurPw").value })
                     });
-                    const data = await res.json().catch(() => ({}));
+                    const result = await res.json();
+                    const d = result.data.catch(() => ({}));
                     if (res.ok) {
                         showAlert("pfPwAlert", "pfPwAlertMsg", "Đã gửi lại OTP về email.", "success");
                         startCountdown();
@@ -755,7 +755,8 @@
                     const res = await fetch(`${API}/auth/me/change-password/verify-otp`, {
                         method: "PUT", headers: authHeaders(), body: JSON.stringify(payload)
                     });
-                    const data = await res.json().catch(() => ({}));
+                    const result = await res.json();
+                    const d = result.data.catch(() => ({}));
                     if (!res.ok) {
                         showAlert("pfPwAlert", "pfPwAlertMsg", data.message || "Đổi mật khẩu thất bại.", "error");
                     } else {

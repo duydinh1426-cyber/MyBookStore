@@ -727,7 +727,8 @@
                         method: "POST", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ email: document.getElementById("rgEmail").value.trim() })
                     });
-                    const data = await res.json().catch(() => ({}));
+                    const result = await res.json();
+                    const d = result.data.catch(() => ({}));
                     if (res.ok) {
                         // Chuyển sang bước 2
                         document.getElementById("stepInfo").style.display = "none";
@@ -754,7 +755,8 @@
                         method: "POST", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ email: document.getElementById("rgEmail").value.trim() })
                     });
-                    const data = await res.json().catch(() => ({}));
+                    const result = await res.json();
+                    const d = result.data.catch(() => ({}));
                     if (res.ok) {
                         showAlert("Đã gửi lại OTP về email.", "success");
                         startCountdown();
@@ -790,7 +792,8 @@
                         method: "POST", headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(payload)
                     });
-                    const data = await res.json().catch(() => ({}));
+                    const result = await res.json();
+                    const d = result.data.catch(() => ({}));
                     if (res.ok) {
                         showAlert("Đăng ký thành công! Đang chuyển đến trang đăng nhập...", "success");
                         clearInterval(_countdown);

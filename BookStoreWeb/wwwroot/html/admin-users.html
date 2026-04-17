@@ -614,7 +614,8 @@
                 try {
                     const res = await fetch(`${API}/users/admin/all?${p}`, { headers: authHeaders() });
                     if (!res.ok) throw new Error();
-                    const data = await res.json();
+                    const result = await res.json();
+                    const data = result.data;
                     const users = data.data || [];
                     const totalPages = data.totalPages ?? 1;
 
@@ -695,7 +696,8 @@
                 try {
                     const res = await fetch(`${API}/users/admin/${id}`, { headers: authHeaders() });
                     if (!res.ok) throw new Error();
-                    const u = await res.json();
+                    const result = await res.json();
+                    const u = result.data;
 
                     document.getElementById("userModalBody").innerHTML = `
                 <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem">
@@ -748,7 +750,8 @@
                                 method: "POST",
                                 headers: authHeaders()
                             });
-                            const data = await res.json();
+                            const result = await res.json();
+                            const data = result.data;
                             if (!res.ok) throw new Error(data.message || "Có lỗi xảy ra.");
                             showToast(data.message || "Đã reset mật khẩu thành công.", "success");
                         } catch (e) {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
 namespace BookStoreAPI.Controllers
@@ -16,29 +17,23 @@ namespace BookStoreAPI.Controllers
         }
 
         [HttpPost("image")]
-        [Authorize(Roles = "Admin")] // Chỉ Admin mới được upload
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
-            try
-            {
-                var fileName = await _fileService.SaveImageAsync(file);
-                var fileUrl = $"{Request.Scheme}://{Request.Host}/images/{fileName}";
+            var result = await _fileService.SaveImageAsync(file);
 
-                return Ok(new
-                {
-                    message = "Upload thành công",
-                    url = fileUrl,
-                    fileName = fileName
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, "Lỗi server khi upload ảnh.");
-            }
+            if (result.StatusCode != 200)
+                return StatusCode(result.StatusCode, result);
+
+            var fileName = result.Data;
+            var fileUrl = $"{Request.Scheme}://{Request.Host}/images/{fileName}";
+
+            var response = ApiResponse<object>.Success(
+                new { fileName, url = fileUrl },
+                "Upload thành công"
+            );
+
+            return StatusCode(response.StatusCode, response);
         }
     }
 }

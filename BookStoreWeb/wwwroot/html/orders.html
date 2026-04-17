@@ -553,7 +553,8 @@
             async function fetchDetail(id) {
                 try {
                     const res = await fetch(`${API}/orders/${id}`, { headers: authHeaders() });
-                    return res.ok ? await res.json() : null;
+                    const result = await res.json();
+                    return res.ok ? result.data : null;
                 } catch { return null; }
             }
 
@@ -722,7 +723,7 @@
                 try {
                     const res = await fetch(`${API}/orders/${_cancelId}/cancel`, { method: "PUT", headers: authHeaders() });
                     const result = await res.json();
-                    const data = result.data; const data = await res.json();
+                    const data = result.data;
                     bootstrap.Modal.getInstance(document.getElementById("cancelModal"))?.hide();
                     setTimeout(() => {
                         if (res.ok) { showToast(data.message || "Đã hủy đơn hàng thành công.", "success"); load(curPage, curStatus); }

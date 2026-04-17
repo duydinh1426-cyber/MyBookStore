@@ -396,7 +396,8 @@
 
                 try {
                     const res = await fetch(`${API}/orders/admin/stats?${p}`, { headers: authHeaders() });
-                    const data = await res.json();
+                    const result = await res.json();
+                    const data = result.data;
 
                     const rev = data.totalRevenue ?? 0;
                     const tot = data.totalOrders ?? 0;

@@ -62,30 +62,30 @@ namespace WebAPI.Services
         }
         #endregion
 
-        public async Task<ApiResponse<string>> RegisterSendOtpAsync(SendOtpDto dto)
+        public async Task<ApiResponse<object>> RegisterSendOtpAsync(SendOtpDto dto)
         {
             if (string.IsNullOrEmpty(dto.Email) || !dto.Email.Contains('@'))
-                return ApiResponse<string>.Fail("Email không hợp lệ.");
+                return ApiResponse<object>.Fail("Email không hợp lệ.");
 
             if (await _repo.IsEmailExistsAsync(dto.Email))
-                return ApiResponse<string>.Fail("Email đã tồn tại trên hệ thống.");
+                return ApiResponse<object>.Fail("Email đã tồn tại trên hệ thống.");
 
             var otp = _otp.GenerateOtp(dto.Email, OtpPurpose.REGISTER);
             await _email.SendOtpAsync(dto.Email, otp, OtpPurpose.REGISTER);
 
-            return ApiResponse<string>.Success(null, "Mã OTP đã được gửi đến email.");
+            return ApiResponse<object>.Success(null, "Mã OTP đã được gửi đến email.");
         }
 
-        public async Task<ApiResponse<string>> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto)
+        public async Task<ApiResponse<object>> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto)
         {
             if (!_otp.VerifyOtp(dto.Email, dto.Otp, OtpPurpose.REGISTER))
-                return ApiResponse<string>.Fail("Mã OTP không chính xác hoặc đã hết hạn.");
+                return ApiResponse<object>.Fail("Mã OTP không chính xác hoặc đã hết hạn.");
 
             if (await _repo.IsUsernameExistsAsync(dto.Username))
-                return ApiResponse<string>.Fail("Tên đăng nhập đã tồn tại.");
+                return ApiResponse<object>.Fail("Tên đăng nhập đã tồn tại.");
 
             if (dto.Password.Length < 6)
-                return ApiResponse<string>.Fail("Mật khẩu phải có ít nhất 6 ký tự.");
+                return ApiResponse<object>.Fail("Mật khẩu phải có ít nhất 6 ký tự.");
 
             var account = new Account
             {
@@ -99,9 +99,9 @@ namespace WebAPI.Services
             _repo.AddCustomer(new Customer { Account = account, Name = dto.Name, Address = dto.Address });
 
             if (!await _repo.SaveChangesAsync())
-                return ApiResponse<string>.Fail("Lỗi hệ thống khi tạo tài khoản.", 500);
+                return ApiResponse<object>.Fail("Lỗi hệ thống khi tạo tài khoản.", 500);
 
-            return ApiResponse<string>.Success(null, "Đăng ký tài khoản thành công.");
+            return ApiResponse<object>.Success(null, "Đăng ký tài khoản thành công.");
         }
 
         public async Task<ApiResponse<AuthResponseDto>> LoginAsync(LoginDto dto)
@@ -125,30 +125,30 @@ namespace WebAPI.Services
             return ApiResponse<AuthResponseDto>.Success(data, "Đăng nhập thành công.");
         }
 
-        public async Task<ApiResponse<string>> ForgotSendOtpAsync(SendOtpDto dto)
+        public async Task<ApiResponse<object>> ForgotSendOtpAsync(SendOtpDto dto)
         {
             var account = await _repo.GetByEmailAsync(dto.Email);
-            if (account == null) return ApiResponse<string>.Fail("Email không tồn tại trên hệ thống.");
+            if (account == null) return ApiResponse<object>.Fail("Email không tồn tại trên hệ thống.");
 
             var otp = _otp.GenerateOtp(dto.Email, OtpPurpose.FORGOT_PASSWORD);
             await _email.SendOtpAsync(dto.Email, otp, OtpPurpose.FORGOT_PASSWORD);
 
-            return ApiResponse<string>.Success(null, "Mã khôi phục đã được gửi.");
+            return ApiResponse<object>.Success(null, "Mã khôi phục đã được gửi.");
         }
 
-        public async Task<ApiResponse<string>> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto)
+        public async Task<ApiResponse<object>> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto)
         {
             if (!_otp.VerifyOtp(dto.Email, dto.Otp, OtpPurpose.FORGOT_PASSWORD))
-                return ApiResponse<string>.Fail("Mã OTP không hợp lệ.");
+                return ApiResponse<object>.Fail("Mã OTP không hợp lệ.");
 
             var account = await _repo.GetByEmailAsync(dto.Email);
-            if (account == null) return ApiResponse<string>.Fail("Tài khoản không tồn tại.");
+            if (account == null) return ApiResponse<object>.Fail("Tài khoản không tồn tại.");
 
             account.Password = HashPassword(dto.NewPassword);
             _repo.UpdateAccount(account);
             await _repo.SaveChangesAsync();
 
-            return ApiResponse<string>.Success(null, "Đổi mật khẩu thành công.");
+            return ApiResponse<object>.Success(null, "Đổi mật khẩu thành công.");
         }
 
         public async Task<ApiResponse<UserProfileDto>> GetMeAsync(int accountId)
@@ -205,42 +205,42 @@ namespace WebAPI.Services
             return ApiResponse<object>.Success(result, "Cập nhật thông tin thành công.");
         }
 
-        public async Task<ApiResponse<string>> ChangeSendOtpAsync(int accountId, SendChangePasswordOtpDto dto)
+        public async Task<ApiResponse<object>> ChangeSendOtpAsync(int accountId, SendChangePasswordOtpDto dto)
         {
             var account = await _repo.GetByIdAsync(accountId);
-            if (account == null) return ApiResponse<string>.Fail("Tài khoản không tồn tại.", 404);
+            if (account == null) return ApiResponse<object>.Fail("Tài khoản không tồn tại.", 404);
 
             if (account.Password != HashPassword(dto.CurrentPassword))
-                return ApiResponse<string>.Fail("Mật khẩu hiện tại không đúng.");
+                return ApiResponse<object>.Fail("Mật khẩu hiện tại không đúng.");
 
             var otp = _otp.GenerateOtp(account.Email!, OtpPurpose.CHANGE_PASSWORD);
             await _email.SendOtpAsync(account.Email!, otp, OtpPurpose.CHANGE_PASSWORD);
 
-            return ApiResponse<string>.Success(null, "Mã xác nhận đã được gửi.");
+            return ApiResponse<object>.Success(null, "Mã xác nhận đã được gửi.");
         }
 
-        public async Task<ApiResponse<string>> ChangeVerifyOtpAsync(int accountId, VerifyChangePasswordOtpDto dto)
+        public async Task<ApiResponse<object>> ChangeVerifyOtpAsync(int accountId, VerifyChangePasswordOtpDto dto)
         {
             var account = await _repo.GetByIdAsync(accountId);
-            if (account == null) return ApiResponse<string>.Fail("Tài khoản không tồn tại.", 404);
+            if (account == null) return ApiResponse<object>.Fail("Tài khoản không tồn tại.", 404);
 
             if (!_otp.VerifyOtp(account.Email!, dto.Otp, OtpPurpose.CHANGE_PASSWORD))
-                return ApiResponse<string>.Fail("Mã OTP không hợp lệ.");
+                return ApiResponse<object>.Fail("Mã OTP không hợp lệ.");
 
             if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
-                return ApiResponse<string>.Fail("Mật khẩu mới phải có ít nhất 6 ký tự.");
+                return ApiResponse<object>.Fail("Mật khẩu mới phải có ít nhất 6 ký tự.");
 
             if (dto.NewPassword != dto.ConfirmPassword)
-                return ApiResponse<string>.Fail("Xác nhận mật khẩu không khớp.");
+                return ApiResponse<object>.Fail("Xác nhận mật khẩu không khớp.");
 
             if (account.Password == HashPassword(dto.NewPassword))
-                return ApiResponse<string>.Fail("Mật khẩu mới phải khác mật khẩu hiện tại.");
+                return ApiResponse<object>.Fail("Mật khẩu mới phải khác mật khẩu hiện tại.");
 
             account.Password = HashPassword(dto.NewPassword);
             _repo.UpdateAccount(account);
             await _repo.SaveChangesAsync();
 
-            return ApiResponse<string>.Success(null, "Mật khẩu đã được cập nhật.");
+            return ApiResponse<object>.Success(null, "Mật khẩu đã được cập nhật.");
         }
     }
 }

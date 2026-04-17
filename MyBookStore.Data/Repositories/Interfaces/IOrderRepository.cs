@@ -1,16 +1,16 @@
 ﻿using MyBookStore.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Data.Repositories.Interfaces
 {
     public interface IOrderRepository
     {
-        Task<List<CartItem>> GetCartItems(int userId);
-        Task<Order?> GetOrderById(int id);  
-        Task AddOrder(Order item);
-        void RemoveCartItems(List<CartItem> items);
-        Task SaveChangesAsync();
+        Task<Order?> GetOrderByIdAsync(int id);
+        Task<List<Order>> GetUserOrdersAsync(int userId);
+        Task<List<Order>> GetAllOrdersAdminAsync(string? status, string? keyword);
+        Task<object> GetAdminStatsAsync();
+        Task<List<CartItem>> GetCartItemsAsync(int userId);
+        void AddOrder(Order order);
+        void RemoveCartItems(IEnumerable<CartItem> items);
+        Task<bool> SaveChangesAsync();
     }
 }

@@ -498,7 +498,8 @@
         try{
             // Lấy tất cả reviews để tính thống kê
             const res  = await fetch(`${API}/reviews/admin/all?pageSize=1`, {headers:authHeaders()});
-            const data = await res.json();
+            const result = await res.json();
+            const data = result.data;
             const total = data.total ?? 0;
             document.getElementById("stTotal").textContent = total;
 
@@ -506,8 +507,9 @@
             const starCounts = {};
             let totalSum = 0;
             await Promise.all([1,2,3,4,5].map(async s => {
-                const r = await fetch(`${API}/reviews/admin/all?pageSize=1&rating=${s}`, {headers:authHeaders()});
-                const d = await r.json();
+                const r = await fetch(`${API}/reviews/admin/all?pageSize=1&rating=${s}`, { headers: authHeaders() });
+                const result = await r.json();
+                const d = result.data;
                 starCounts[s] = d.total ?? 0;
                 totalSum += (d.total??0) * s;
             }));
@@ -552,7 +554,8 @@
         try{
             const res  = await fetch(`${API}/reviews/admin/all?${p}`, {headers:authHeaders()});
             if(!res.ok) throw new Error();
-            const data = await res.json();
+            const result = await res.json();
+            const data = result.data;
             let reviews = data.data || [];
 
             // Filter theo tên sách nếu có keyword
@@ -685,7 +688,8 @@
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xoá...';
         try{
             const res  = await fetch(`${API}/reviews/${_deleteId}`, {method:"DELETE",headers:authHeaders()});
-            const data = await res.json();
+            const result = await res.json();
+            const data = result.data;
             bootstrap.Modal.getInstance(document.getElementById("deleteModal"))?.hide();
             if(res.ok){
                 // Flash row rồi reload

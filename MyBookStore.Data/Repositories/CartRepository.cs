@@ -1,9 +1,6 @@
 ﻿using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MyBookStore.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Data.Repositories
 {
@@ -11,12 +8,9 @@ namespace Data.Repositories
     {
         private readonly DBContext _db;
 
-        public CartRepository(DBContext db)
-        {
-            _db = db;
-        }
+        public CartRepository(DBContext db) => _db = db;
 
-        public async Task<List<CartItem>> GetCart(int userId)
+        public async Task<List<CartItem>> GetCartByUserIdAsync(int userId)
         {
             return await _db.CartItems
                 .Include(c => c.Book)
@@ -24,42 +18,31 @@ namespace Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<CartItem?> GetCartItem(int userId, int bookId)
+        public async Task<CartItem?> GetCartItemAsync(int userId, int bookId)
         {
             return await _db.CartItems
                 .Include(c => c.Book)
                 .FirstOrDefaultAsync(c => c.UserId == userId && c.BookId == bookId);
         }
 
-        public async Task AddAsync(CartItem item)
-        {
-            _db.CartItems.Add(item);
-            await _db.SaveChangesAsync();
-        }
+        public void Add(CartItem item) => _db.CartItems.Add(item);
 
-        public async Task ClearCartAsync(int userId)
+        public void Update(CartItem item) => _db.CartItems.Update(item);
+
+        public void Delete(CartItem item) => _db.CartItems.Remove(item);
+
+        public async Task<bool> ClearCartByUserIdAsync(int userId)
         {
-            await _db.CartItems
+            // Sử dụng ExecuteDeleteAsync để tối ưu hiệu năng khi xóa hàng loạt
+            var rows = await _db.CartItems
                 .Where(c => c.UserId == userId)
                 .ExecuteDeleteAsync();
+            return rows >= 0;
         }
 
-        public async Task DeleteAsync(CartItem item)
+        public async Task<bool> SaveChangesAsync()
         {
-            _db.CartItems.Remove(item);
-            await _db.SaveChangesAsync();
+            return await _db.SaveChangesAsync() > 0;
         }
-
-        public async Task SaveChangesAsync()
-        {
-            await _db.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(CartItem item)
-        {
-            _db.CartItems.Update(item);
-            await _db.SaveChangesAsync();
-        }
-        
     }
 }

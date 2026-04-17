@@ -530,23 +530,27 @@
                 fetch(`${API}/orders/admin/stats`, {headers:authHeaders()}),
                 fetch(`${API}/book?pageSize=1`)
             ]);
-            const stats = await statsRes.json();
-            const books = await booksRes.json();
+            const res1 = await statsRes.json();
+            const res2 = await booksRes.json();
+
+            const res1 = await statsRes.json();
+            const res2 = await booksRes.json();
 
             document.getElementById("stOrders").textContent  = stats.totalOrders ?? 0;
             document.getElementById("stRevenue").textContent = fmt(stats.totalRevenue ?? 0);
-            document.getElementById("stBooks").textContent   = books.total ?? 0;
+            document.getElementById("stBooks").textContent = books.total ?? 0;
 
-            const pending = (stats.byStatus||[]).find(x=>x.status==="pending")?.count ?? 0;
-            document.getElementById("stPending").textContent = pending;
+            const statusList = stats.statusDistribution || [];
+            const pendingObj = statusList.find(x => x.status.toLowerCase() === "pending");
+            document.getElementById("stPending").textContent = pendingObj ? pendingObj.count : 0;
 
             // Status breakdown
             const total = stats.totalOrders || 1;
             const colors = {pending:"#f39c12",confirmed:"#3498db",shipping:"#1a6fb0",completed:"#27ae60",cancelled:"#e74c3c"};
-            const html = (stats.byStatus||[]).map(s=>{
-                const pct = Math.round((s.count/total)*100);
-                const col = colors[s.status] || "#8a9bb0";
-                const m   = STATUS_MAP[s.status] || {label:s.status};
+            const html = statusList.map(s => {
+                const pct = Math.round((s.count / total) * 100);
+                const col = colors[s.status.toLowerCase()] || "#8a9bb0";
+                const m = STATUS_MAP[s.status.toLowerCase()] || { label: s.status };
                 return `
                 <div style="margin-bottom:.75rem">
                     <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
@@ -566,34 +570,40 @@
 
     async function loadRecentOrders(){
         try{
-            const res  = await fetch(`${API}/orders/admin/all?pageSize=7`, {headers:authHeaders()});
-            const data = await res.json();
-            const orders = data.data || [];
-            if(!orders.length){
-                document.getElementById("recentOrders").innerHTML =
-                    `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#8a9bb0">Chưa có đơn hàng.</td></tr>`;
+            const res = await fetch(`${API}/orders/admin/all?pageSize=7`, { headers: authHeaders() });
+            const result = await res.json();
+
+            const orders = result.data?.data || [];
+
+            const tbody = document.getElementById("recentOrders");
+            if (!orders.length) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#8a9bb0">Chưa có đơn hàng.</td></tr>`;
                 return;
             }
-            document.getElementById("recentOrders").innerHTML = orders.map(o=>`
+
+            tbody.innerHTML = orders.map(o => `
             <tr>
                 <td><span style="font-weight:700">#${o.orderID}</span></td>
                 <td>
-                    <div style="font-weight:600;font-size:.84rem">${o.customerName??""}</div>
-                    <div style="font-size:.74rem;color:#8a9bb0">${o.phone??""}</div>
+                    <div style="font-weight:600;font-size:.84rem">${o.customerName ?? "Khách lẻ"}</div>
+                    <div style="font-size:.74rem;color:#8a9bb0">${o.phone ?? ""}</div>
                 </td>
-                <td style="font-weight:700;color:#6ab04c">${fmt(o.totalCost??0)}</td>
+                <td style="font-weight:700;color:#6ab04c">${fmt(o.totalCost ?? 0)}</td>
                 <td>${badge(o.status)}</td>
                 <td style="font-size:.76rem;color:#8a9bb0">
-                    ${o.createdAt?new Date(o.createdAt).toLocaleDateString("vi-VN"):""}
+                    ${o.createdAt ? new Date(o.createdAt).toLocaleDateString("vi-VN") : ""}
                 </td>
             </tr>`).join("");
-        }catch(e){ console.error(e); }
+        } catch (e) { console.error("Lỗi Orders:", e); }
     }
 
     async function loadTopBooks(){
         try{
-            const res  = await fetch(`${API}/books/top-selling?count=6`);
-            const data = await res.json();
+            const res = await fetch(`${API}/book/top-selling?count=6`);
+            const result = await res.json();
+
+            const data = result.data || [];
+
             if(!data.length){
                 document.getElementById("topBooks").innerHTML =
                     `<p style="text-align:center;padding:1.5rem;color:#8a9bb0;font-size:.85rem">Chưa có dữ liệu.</p>`;

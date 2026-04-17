@@ -412,7 +412,8 @@
     async function checkReviewStatus(){
         try{
             const res  = await fetch(`${API}/reviews/status/${bookId}`, {headers:authHeaders()});
-            const data = await res.json();
+            const result = await res.json();
+            const d = result.data;
 
             if(!data.canReview){
                 if(data.reason === "already_reviewed"){
@@ -429,8 +430,9 @@
     // Load book info
     async function loadBook(){
         try{
-            const res  = await fetch(`${API}/books/${bookId}`);
-            const b    = await res.json();
+            const res = await fetch(`${API}/book/${bookId}`);
+            const result = await res.json();
+            const b = result.data;
             const src  = imgSrc(b.image || b.Image || "");
             document.getElementById("bookCard").innerHTML = `
                 ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
@@ -476,7 +478,8 @@
                 method:"POST", headers:authHeaders(),
                 body:JSON.stringify({ bookId, rating:pickedStar, comment })
             });
-            const data = await res.json();
+            const result = await res.json();
+            const d = result.data;
 
             if(!res.ok){
                 const msg = data.message || data.Message
