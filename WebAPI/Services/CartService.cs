@@ -16,7 +16,7 @@ namespace WebAPI.Services
             _bookRepo = bookRepo;
         }
 
-        public async Task<ApiResponse<CartResponseDto>> GetCartAsync(int userId)
+        public async Task<CartResponseDto> GetCartAsync(int userId)
         {
             var items = await _repo.GetCartByUserIdAsync(userId);
 
@@ -31,32 +31,38 @@ namespace WebAPI.Services
                 i.Book.Price * i.Quantity
             )).ToList();
 
-            var response = new CartResponseDto(
+            return new CartResponseDto(
                 itemDtos,
                 itemDtos.Sum(i => i.SubTotal),
                 itemDtos.Sum(i => i.Quantity)
             );
-
-            return ApiResponse<CartResponseDto>.Success(response);
         }
 
-        public async Task<ApiResponse<object>> AddToCartAsync(int userId, AddCartDto dto)
+        public async Task<string?> AddToCartAsync(int userId, AddCartDto dto)
         {
             if (dto.Quantity <= 0)
-                return ApiResponse<object>.Fail("Số lượng thêm vào phải lớn hơn 0.");
+            {
+                return "Số lượng phải lớn hơn 0.";
+            }
 
             var book = await _bookRepo.GetByIdAsync(dto.BookId);
             if (book == null)
-                return ApiResponse<object>.Fail("Sách không tồn tại.", 404);
+            {
+                return "Sách không tồn tại.";
+            }
 
             if (book.NumberStock <= 0)
-                return ApiResponse<object>.Fail("Sách hiện đã hết hàng.");
+            {
+                return "Sách hiện đã hết hàng.";
+            }
 
             var cartItem = await _repo.GetCartItemAsync(userId, dto.BookId);
             var targetQty = (cartItem?.Quantity ?? 0) + dto.Quantity;
 
             if (targetQty > book.NumberStock)
-                return ApiResponse<object>.Fail($"Sách trong kho không đủ (Hiện có: {book.NumberStock}).");
+            {
+                return $"Chỉ còn {book.NumberStock} cuốn trong kho.";
+            }
 
             if (cartItem == null)
             {
@@ -76,16 +82,17 @@ namespace WebAPI.Services
                 _repo.Update(cartItem);
             }
 
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(null, "Đã thêm vào giỏ hàng.")
-                : ApiResponse<object>.Fail("Lỗi hệ thống khi lưu giỏ hàng.", 500);
+            var success = await _repo.SaveChangesAsync();
+            return success ? null : "Lỗi hệ thống khi cập nhật giỏ hàng.";
         }
 
-        public async Task<ApiResponse<object>> UpdateCartAsync(int userId, int bookId, UpdateCartDto dto)
+        public async Task<string?> UpdateCartAsync(int userId, int bookId, UpdateCartDto dto)
         {
             var cartItem = await _repo.GetCartItemAsync(userId, bookId);
             if (cartItem == null)
-                return ApiResponse<object>.Fail("Không tìm thấy sản phẩm trong giỏ hàng.", 404);
+            {
+                return "Sách không có trong giỏ hàng.";
+            }
 
             if (dto.Quantity <= 0)
             {
@@ -94,36 +101,36 @@ namespace WebAPI.Services
             else
             {
                 if (dto.Quantity > cartItem.Book.NumberStock)
-                    return ApiResponse<object>.Fail($"Chỉ còn {cartItem.Book.NumberStock} sản phẩm trong kho.");
+                {
+                    return $"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.";
+                }
 
                 cartItem.Quantity = dto.Quantity;
                 cartItem.UpdatedAt = DateTime.UtcNow;
                 _repo.Update(cartItem);
             }
 
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(null, "Cập nhật giỏ hàng thành công.")
-                : ApiResponse<object>.Fail("Lỗi khi cập nhật giỏ hàng.", 500);
+            var success = await _repo.SaveChangesAsync();
+            return success ? null : "Lỗi khi cập nhật giỏ hàng.";
         }
 
-        public async Task<ApiResponse<object>> RemoveFromCartAsync(int userId, int bookId)
+        public async Task<string?> RemoveFromCartAsync(int userId, int bookId)
         {
             var cartItem = await _repo.GetCartItemAsync(userId, bookId);
             if (cartItem == null)
-                return ApiResponse<object>.Fail("Sản phẩm không tồn tại trong giỏ hàng.", 404);
+            {
+                return "Sách không tồn tại trong giỏ hàng.";
+            }
 
             _repo.Delete(cartItem);
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(null, "Đã xóa sản phẩm khỏi giỏ hàng.")
-                : ApiResponse<object>.Fail("Lỗi khi xóa sản phẩm.", 500);
+            var success = await _repo.SaveChangesAsync();
+            return success ? null : "Lỗi khi xóa sản phẩm.";
         }
 
-        public async Task<ApiResponse<object>> ClearCartAsync(int userId)
+        public async Task<string?> ClearCartAsync(int userId)
         {
             var result = await _repo.ClearCartByUserIdAsync(userId);
-            return result
-                ? ApiResponse<object>.Success(null, "Giỏ hàng đã được làm trống.")
-                : ApiResponse<object>.Fail("Lỗi khi xóa giỏ hàng.", 500);
+            return result ? null : "Lỗi khi làm trống giỏ hàng.";
         }
     }
 }

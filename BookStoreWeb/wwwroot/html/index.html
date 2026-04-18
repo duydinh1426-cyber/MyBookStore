@@ -399,10 +399,9 @@
             const wrap = document.getElementById(containerId);
             wrap.innerHTML = skelCards(6);
             try {
-                const res = await fetch(API + "/book/" + endpoint + "?count=6");
+                const res = await fetch(API + "/books/" + endpoint + "?count=6");
                 if (!res.ok) throw new Error();
-                const result = await res.json();
-                const books = result.data;
+                const books = await res.json();
                 if (!books || !books.length) { wrap.innerHTML = ""; return; }
                 wrap.innerHTML = books
                     .map(function (b) {

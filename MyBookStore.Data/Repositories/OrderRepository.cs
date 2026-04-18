@@ -19,12 +19,46 @@ namespace Data.Repositories
                 .FirstOrDefaultAsync(o => o.OrderId == id);
         }
 
-        public async Task<List<Order>> GetUserOrdersAsync(int userId)
+        public async Task<object> GetUserOrdersAsync(int userId, int page, int pageSize, string? status)
         {
-            return await _db.Orders
+            var query = _db.Orders
                 .Where(o => o.UserId == userId)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(o => o.Status == status);
+
+            var total = await query.CountAsync();
+
+            var items = await query
                 .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(o => new {
+                    orderId = o.OrderId,
+                    totalCost = o.TotalCost,
+                    status = o.Status,
+                    statusLabel = o.Status == "pending" ? "Chờ xác nhận" :
+                                  o.Status == "confirmed" ? "Đã xác nhận" :
+                                  o.Status == "shipping" ? "Đang giao" :
+                                  o.Status == "completed" ? "Hoàn thành" :
+                                  o.Status == "cancelled" ? "Đã hủy" : "Không xác định",
+                    phone = o.Phone,
+                    address = o.Address,
+                    note = o.Note,
+                    createdAt = o.CreatedAt,
+                    itemCount = o.OrderItems != null ? o.OrderItems.Count : 0
+                })
                 .ToListAsync();
+
+            return new
+            {
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling(total / (double)pageSize),
+                data = items
+            };
         }
 
         public async Task<List<Order>> GetAllOrdersAdminAsync(string? status, string? keyword)
@@ -52,37 +86,44 @@ namespace Data.Repositories
                 .ToListAsync();
         }
 
-        public async Task<object> GetAdminStatsAsync()
+        public async Task<object> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null)
         {
             var now = DateTime.UtcNow;
             var startOfMonth = new DateTime(now.Year, now.Month, 1);
 
-            // Tổng doanh thu (chỉ tính các đơn không bị hủy)
-            var totalRevenue = await _db.Orders
-                .Where(o => o.Status != "CANCELLED")
+            // Base query với filter ngày
+            var baseQuery = _db.Orders.AsQueryable();
+            if (from.HasValue) baseQuery = baseQuery.Where(o => o.CreatedAt >= from.Value);
+            if (to.HasValue) baseQuery = baseQuery.Where(o => o.CreatedAt <= to.Value);
+
+            // Tổng doanh thu - chỉ tính đơn HOÀN THÀNH trong khoảng ngày được chọn
+            var totalRevenue = await baseQuery
+                .Where(o => o.Status == "completed")
                 .SumAsync(o => o.TotalCost);
 
-            // Doanh thu tháng này
+            // Doanh thu tháng này - luôn tính theo tháng hiện tại, không bị ảnh hưởng filter
             var monthlyRevenue = await _db.Orders
-                .Where(o => o.Status != "CANCELLED" && o.CreatedAt >= startOfMonth)
+                .Where(o => o.Status == "completed" && o.CreatedAt >= startOfMonth)
                 .SumAsync(o => o.TotalCost);
 
-            // Thống kê theo trạng thái
-            var statusCounts = await _db.Orders
+            // Thống kê theo trạng thái - dùng baseQuery để filter ngày
+            var statusCounts = await baseQuery
                 .GroupBy(o => o.Status)
-                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .Select(g => new { Status = g.Key, Count = g.Count(), Revenue = g.Sum(o => o.TotalCost) })
                 .ToListAsync();
 
-            // Tổng số sách đã bán
+            // Tổng số sách đã bán - dùng baseQuery để filter ngày
             var totalBooksSold = await _db.OrderItems
-                .Where(oi => oi.Order.Status != "CANCELLED")
+                .Where(oi => oi.Order.Status == "completed" &&
+                             (!from.HasValue || oi.Order.CreatedAt >= from.Value) &&
+                             (!to.HasValue || oi.Order.CreatedAt <= to.Value))
                 .SumAsync(oi => oi.Quantity);
 
             return new
             {
                 TotalRevenue = totalRevenue,
                 MonthlyRevenue = monthlyRevenue,
-                TotalOrders = await _db.Orders.CountAsync(),
+                TotalOrders = await baseQuery.CountAsync(),
                 TotalBooksSold = totalBooksSold,
                 StatusDistribution = statusCounts
             };

@@ -20,61 +20,88 @@ namespace WebAPI.Controllers
             return int.TryParse(claim, out var id) ? id : 0;
         }
 
-        // --- DÀNH CHO CUSTOMER ---
-
         [HttpPost("checkout")]
-        public async Task<IActionResult> Checkout([FromBody] CheckoutDto dto)
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> Checkout(CheckoutDto dto)
         {
-            var res = await _service.CheckoutAsync(GetUserId(), dto);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.CheckoutAsync(GetUserId(), dto);
+            dynamic res = result;
+
+            if (res.message == "Giỏ hàng của bạn đang trống." ||
+                res.message == "Lỗi hệ thống khi xử lý đơn hàng.")
+                return BadRequest(result);
+
+            string msg = res.message;
+            if (msg != null && msg.Contains("chỉ còn"))
+                return BadRequest(result);
+
+            return StatusCode(201, result);
         }
 
-        [HttpGet("my-orders")]
-        public async Task<IActionResult> GetMyOrders()
+        [HttpGet("my")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetMyOrders(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? status = null)
         {
-            var res = await _service.GetUserOrdersAsync(GetUserId());
-            return StatusCode(res.StatusCode, res);
+            return Ok(await _service.GetUserOrdersAsync(GetUserId(), page, pageSize, status));
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var res = await _service.GetByIdAsync(GetUserId(), User.IsInRole("Admin"), id);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.GetByIdAsync(GetUserId(), User.IsInRole("Admin"), id);
+            if (result == null) return NotFound(new { message = "Không tìm thấy đơn hàng." });
+
+            dynamic res = result;
+            if (res.message == "Forbidden") return Forbid();
+
+            return Ok(result);
         }
 
         [HttpPut("{id:int}/cancel")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Cancel(int id)
         {
-            var res = await _service.CancelAsync(GetUserId(), id);
-            return StatusCode(res.StatusCode, res);
-        }
+            var result = await _service.CancelAsync(GetUserId(), id);
+            dynamic res = result;
 
-        // --- DÀNH CHO ADMIN ---
+            if (res.message == "NotFound") return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            if (res.message == "Forbidden") return Forbid();
+
+            string msg = res.message;
+            if (msg != null && (msg.StartsWith("Không thể") || msg.StartsWith("Lỗi hệ thống")))
+                return BadRequest(result);
+
+            return Ok(result);
+        }
 
         [HttpGet("admin/all")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AdminGetAll([FromQuery] string? status, [FromQuery] string? q)
+        public async Task<IActionResult> AdminGetAll([FromQuery] string? status, [FromQuery] string? keyword)
         {
-            var res = await _service.AdminGetAllOrdersAsync(status, q);
-            return StatusCode(res.StatusCode, res);
+            return Ok(await _service.AdminGetAllOrdersAsync(status, keyword));
         }
 
-        [HttpPut("{id:int}/status")]
+        [HttpPut("admin/{id:int}/status")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateOrderStatusDto dto)
+        public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
         {
-            var res = await _service.UpdateStatusAsync(id, dto);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.UpdateStatusAsync(id, dto);
+            dynamic res = result;
+
+            if (res.message == "NotFound") return NotFound(new { message = "Không tìm thấy đơn hàng." });
+            if (res.success == false) return BadRequest(result);
+
+            return Ok(result);
         }
 
         [HttpGet("admin/stats")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetAdminStats()
+        public async Task<IActionResult> GetAdminStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            var res = await _service.GetAdminStatsAsync();
-            return StatusCode(res.StatusCode, res);
+            return Ok(await _service.GetAdminStatsAsync(from, to));
         }
     }
 }

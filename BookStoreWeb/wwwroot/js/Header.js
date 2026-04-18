@@ -342,8 +342,7 @@
         try {
             const res = await fetch(`${API}/cart`, { headers: authHeaders() });
             if (!res.ok) return;
-            const result = await res.json();
-            const d = result.data;
+            const d = await res.json();
             _cartUpdateBadge(d.totalItems || 0);
         } catch { }
     }
@@ -353,8 +352,7 @@
         try {
             const res = await fetch(`${API}/cart`, { headers: authHeaders() });
             if (!res.ok) throw new Error();
-            const result = await res.json();
-            const d = result.data;
+            const d = await res.json();
             _cartRender(d);
             _cartUpdateBadge(d.totalItems || 0);
         } catch {
@@ -417,8 +415,7 @@
             if (!isLoggedIn()) { showToast("Vui lòng đăng nhập để thêm vào giỏ hàng", "error"); return; }
             try {
                 const res = await fetch(`${API}/cart`, { method: "POST", headers: authHeaders(), body: JSON.stringify({ bookId, quantity: 1 }) });
-                const result = await res.json();
-                const d = result.data;
+                const d = await res.json();
                 if (!res.ok) { showToast(d.message || "Lỗi thêm vào giỏ", "error"); return; }
                 showToast(`Đã thêm "${bookTitle}" vào giỏ hàng!`);
                 _cartLoadCount();
@@ -427,8 +424,7 @@
         async updateQty(bookId, newQty) {
             try {
                 const res = await fetch(`${API}/cart/${bookId}`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ quantity: newQty }) });
-                const result = await res.json();
-                const d = result.data;
+                const d = await res.json();
                 if (!res.ok) { showToast(d.message || "Lỗi cập nhật", "error"); return; }
                 _cartFetch();
             } catch { showToast("Lỗi kết nối", "error"); }

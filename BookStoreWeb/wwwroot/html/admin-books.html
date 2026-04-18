@@ -953,8 +953,7 @@
             async function loadCats() {
                 try {
                     const res = await fetch(`${API}/categories`);
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     const cats = data.data || data || [];
                     const opts = cats.map(c => {
                         const id = c.categoryId || c.id;
@@ -982,9 +981,8 @@
                 if (cat) p.append("categoryId", cat);
 
                 try {
-                    const res = await fetch(`${API}/book?${p}`);
-                    const result = await res.json();
-                    const data = result.data;
+                    const res = await fetch(`${API}/books?${p}`);
+                    const data = await res.json();
                     const books = data.data || [];
                     const totalPages = data.totalPages ?? 1;
 
@@ -996,28 +994,28 @@
                     tbody.innerHTML = books.map(b => {
                         const src = imgSrc(b.image);
                         return `
-                    <tr>
-                        <td>
-                            ${src ? `<img class="td-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
-                            <div class="td-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                        </td>
-                        <td><div style="font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${b.title}">${b.title}</div></td>
-                        <td style="color:#4a5568">${b.author}</td>
-                        <td style="font-size:.8rem;color:var(--muted)">${b.categoryName ?? ""}</td>
-                        <td style="font-weight:700;color:var(--green);white-space:nowrap">${fmt(b.price)}</td>
-                        <td class="${(b.numberStock ?? 0) < 10 ? "stock-low" : "stock-ok"}">${b.numberStock ?? 0}</td>
-                        <td style="color:#4a5568">${b.numberSold ?? 0}</td>
-                        <td>
-                            <div style="display:flex;gap:5px">
-                                <button class="adm-btn adm-btn-edit" onclick="openForm(${b.bookId ?? b.bookID})">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                <button class="adm-btn adm-btn-del" onclick="confirmDeleteBook(${b.bookId ?? b.bookID},'${(b.title || "").replace(/'/g, "\\'")}')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>`;
+                        <tr>
+                            <td>
+                                ${src ? `<img class="td-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                                <div class="td-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                            </td>
+                            <td><div style="font-weight:600;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${b.title}">${b.title}</div></td>
+                            <td style="color:#4a5568">${b.author}</td>
+                            <td style="font-size:.8rem;color:var(--muted)">${b.categoryName ?? ""}</td>
+                            <td style="font-weight:700;color:var(--green);white-space:nowrap">${fmt(b.price)}</td>
+                            <td class="${(b.numberStock ?? 0) < 10 ? "stock-low" : "stock-ok"}">${b.numberStock ?? 0}</td>
+                            <td style="color:#4a5568">${b.numberSold ?? 0}</td>
+                            <td>
+                                <div style="display:flex;gap:5px">
+                                    <button class="adm-btn adm-btn-edit" onclick="openForm(${b.bookId ?? b.bookID})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="adm-btn adm-btn-del" onclick="confirmDeleteBook(${b.bookId ?? b.bookID},'${(b.title || "").replace(/'/g, "\\'")}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>`;
                     }).join("");
 
                     if (totalPages > 1) {
@@ -1050,8 +1048,7 @@
                     const fd = new FormData();
                     fd.append("file", file);
                     const res = await fetch(`${API}/upload/image`, { method: "POST", headers: { "Authorization": `Bearer ${getToken()}` }, body: fd });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     if (!res.ok) { showToast(data.message || "Upload ảnh thất bại.", "error"); resetImagePreview(); return; }
                     document.getElementById("fmImageName").value = data.fileName;
                     document.getElementById("imgUploadTitle").textContent = "✓ " + file.name;
@@ -1086,9 +1083,8 @@
 
                 if (id) {
                     try {
-                        const res = await fetch(`${API}/book/${id}`);
-                        const result = await res.json();
-                        const b = result.data;
+                        const res = await fetch(`${API}/books/${id}`);
+                        const b = await res.json();
                         document.getElementById("fmTitle").value = b.title || "";
                         document.getElementById("fmAuthor").value = b.author || "";
                         document.getElementById("fmPrice").value = b.price || "";
@@ -1145,11 +1141,10 @@
                     numberPage: parseInt(document.getElementById("fmPages").value) || null,
                 };
                 try {
-                    const url = editId ? `${API}/book/${editId}` : `${API}/book`;
+                    const url = editId ? `${API}/books/${editId}` : `${API}/books`;
                     const method = editId ? "PUT" : "POST";
                     const res = await fetch(url, { method, headers: authHeaders(), body: JSON.stringify(payload) });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     if (!res.ok) {
                         document.getElementById("fmAlertMsg").textContent = data.message || "Lưu thất bại.";
                         document.getElementById("fmAlert").style.display = "flex";
@@ -1180,9 +1175,8 @@
                 const btn = this; btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xoá...';
                 try {
-                    const res = await fetch(`${API}/book/${_deleteId}`, { method: "DELETE", headers: authHeaders() });
-                    const result = await res.json();
-                    const data = result.data;
+                    const res = await fetch(`${API}/books/${_deleteId}`, { method: "DELETE", headers: authHeaders() });
+                    const data = await res.json();
                     bootstrap.Modal.getInstance(document.getElementById("deleteModal"))?.hide();
                     if (!res.ok) { setTimeout(() => showToast(data.message || "Xoá thất bại.", "error"), 300); return; }
                     setTimeout(() => showToast("Đã xoá sách thành công.", "success"), 300);
@@ -1210,8 +1204,7 @@
                 box.innerHTML = `<div style="text-align:center;padding:1rem;color:var(--muted)"><div class="spinner-border spinner-border-sm text-success"></div></div>`;
                 try {
                     const res = await fetch(`${API}/categories`);
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     const cats = data.data || data || [];
                     if (!cats.length) {
                         box.innerHTML = `<p style="text-align:center;color:var(--muted);font-size:.85rem;padding:1rem">Chưa có thể loại nào.</p>`;
@@ -1221,16 +1214,16 @@
                         const id = c.categoryId || c.id;
                         const name = c.categoryName || c.name;
                         return `
-                    <div class="cat-row" id="catrow_${id}">
-                        <input id="catinput_${id}" class="cat-input" type="text" value="${name}"
-                               onkeydown="if(event.key==='Enter')saveCat(${id})">
-                        <button class="cat-btn cat-btn-save" onclick="saveCat(${id})" title="Lưu">
-                            <i class="bi bi-check-lg"></i>
-                        </button>
-                        <button class="cat-btn cat-btn-del" onclick="deleteCat(${id},'${name.replace(/'/g, "\\'")}')">
-                            <i class="bi bi-trash3"></i>
-                        </button>
-                    </div>`;
+                        <div class="cat-row" id="catrow_${id}">
+                            <input id="catinput_${id}" class="cat-input" type="text" value="${name}"
+                                   onkeydown="if(event.key==='Enter')saveCat(${id})">
+                            <button class="cat-btn cat-btn-save" onclick="saveCat(${id})" title="Lưu">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button class="cat-btn cat-btn-del" onclick="deleteCat(${id},'${name.replace(/'/g, "\\'")}')">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>`;
                     }).join("");
                 } catch {
                     box.innerHTML = `<p style="color:var(--red);font-size:.83rem;padding:.5rem">Lỗi tải thể loại.</p>`;
@@ -1248,8 +1241,7 @@
                 if (!name) return;
                 try {
                     const res = await fetch(`${API}/categories`, { method: "POST", headers: authHeaders(), body: JSON.stringify({ categoryName: name }) });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     if (!res.ok) { showToast(data.message || "Thêm thể loại thất bại.", "error"); return; }
                     document.getElementById("catNewName").value = "";
                     showToast(`Đã thêm thể loại "${name}".`, "success");
@@ -1264,8 +1256,7 @@
                 if (!name) return;
                 try {
                     const res = await fetch(`${API}/categories/${id}`, { method: "PUT", headers: authHeaders(), body: JSON.stringify({ categoryName: name }) });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     if (!res.ok) { showToast(data.message || "Cập nhật thất bại.", "error"); return; }
                     input.style.borderColor = "var(--green)";
                     setTimeout(() => input.style.borderColor = "", 1500);
@@ -1288,8 +1279,7 @@
             async function _doDeleteCat(id, name) {
                 try {
                     const res = await fetch(`${API}/categories/${id}`, { method: "DELETE", headers: authHeaders() });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
 
                     if (!res.ok) {
                         // Còn sách → hỏi force delete
@@ -1317,8 +1307,7 @@
             async function _forceDeleteCat(id, name) {
                 try {
                     const res = await fetch(`${API}/categories/${id}?force=true`, { method: "DELETE", headers: authHeaders() });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     if (!res.ok) { showToast(data.message || "Xoá thất bại.", "error"); return; }
                     showToast(`Đã xoá thể loại "${name}".`, "success");
                     await refreshCats();
@@ -1329,8 +1318,7 @@
             async function refreshCats() {
                 try {
                     const res = await fetch(`${API}/categories`);
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     const cats = data.data || data || [];
                     _catMap = {};
                     const opts = cats.map(c => {

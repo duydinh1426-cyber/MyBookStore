@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
-namespace BookStoreAPI.Controllers
+namespace WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/upload")]
     [ApiController]
     public class UploadController : ControllerBase
     {
@@ -21,19 +20,34 @@ namespace BookStoreAPI.Controllers
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             var result = await _fileService.SaveImageAsync(file);
+            dynamic res = result;
 
-            if (result.StatusCode != 200)
-                return StatusCode(result.StatusCode, result);
+            if (res.error != null && res.error == true)
+            {
+                return BadRequest(new { message = res.message });
+            }
 
-            var fileName = result.Data;
-            var fileUrl = $"{Request.Scheme}://{Request.Host}/images/{fileName}";
 
-            var response = ApiResponse<object>.Success(
-                new { fileName, url = fileUrl },
-                "Upload thành công"
-            );
+            return Ok(new
+            {
+                message = "Upload thành công.",
+                fileName = res.fileName,
+                url = $"/images/{res.fileName}"
+            });
+        }
 
-            return StatusCode(response.StatusCode, response);
+        // Endpoint xóa ảnh (nếu cần dùng cho Admin)
+        [HttpDelete("image/{fileName}")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult DeleteImage(string fileName)
+        {
+            var result = _fileService.DeleteImage(fileName);
+            dynamic res = result;
+
+            if (res.message == "NotFound")
+                return NotFound(new { message = "Tập tin không tồn tại trên hệ thống." });
+
+            return Ok(new { message = "Đã xóa ảnh thành công." });
         }
     }
 }

@@ -396,12 +396,11 @@
 
                 try {
                     const res = await fetch(`${API}/orders/admin/stats?${p}`, { headers: authHeaders() });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
 
                     const rev = data.totalRevenue ?? 0;
                     const tot = data.totalOrders ?? 0;
-                    const byS = data.byStatus || [];
+                    const byS = data.statusDistribution || [];
                     const get = s => (byS.find(x => x.status === s)?.count ?? 0);
                     const getR = s => (byS.find(x => x.status === s)?.revenue ?? 0);
 
@@ -428,10 +427,10 @@
                             options: { responsive: true, maintainAspectRatio: false, cutout: "65%", plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.label}: ${c.raw} đơn` } } } }
                         });
                         document.getElementById("donutLegend").innerHTML = byS.map(s => `
-                        <div style="display:flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600">
-                            <span style="width:10px;height:10px;border-radius:50%;background:${STATUS_COLORS[s.status] || "#8a9bb0"};flex-shrink:0"></span>
-                            ${STATUS_LABELS[s.status] || s.status}: ${s.count}
-                        </div>`).join("");
+                            <div style="display:flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600">
+                                <span style="width:10px;height:10px;border-radius:50%;background:${STATUS_COLORS[s.status] || "#8a9bb0"};flex-shrink:0"></span>
+                                ${STATUS_LABELS[s.status] || s.status}: ${s.count}
+                            </div>`).join("");
                     }
 
                     // Bar chart - revenue
@@ -463,9 +462,8 @@
             /* ── Top books ── */
             async function loadTopBooks() {
                 try {
-                    const res = await fetch(`${API}/book/top-selling?count=10`);
-                    const result = await res.json();
-                    const data = result.data;
+                    const res = await fetch(`${API}/books/top-selling?count=10`);
+                    const data = await res.json();
                     if (!data.length) {
                         document.getElementById("topBooks").innerHTML = `<p style="text-align:center;color:#8a9bb0;font-size:.85rem;padding:1rem">Chưa có dữ liệu.</p>`;
                         return;
@@ -474,18 +472,18 @@
                         const src = imgSrc(b.image);
                         const rc = i === 0 ? "r1" : i === 1 ? "r2" : i === 2 ? "r3" : "rn";
                         return `
-                    <div class="book-row">
-                        <div class="rank ${rc}">${i + 1}</div>
-                        ${src ? `<img class="b-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
-                        <div class="b-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                        <div style="flex:1;min-width:0">
-                            <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
-                            <div style="font-size:.75rem;color:#8a9bb0">${b.author}</div>
-                        </div>
-                        <div style="font-weight:700;color:#6ab04c;font-size:.84rem;white-space:nowrap">
-                            <i class="bi bi-bag-check me-1" style="font-size:.75rem"></i>${b.numberSold ?? 0} cuốn
-                        </div>
-                    </div>`;
+                        <div class="book-row">
+                            <div class="rank ${rc}">${i + 1}</div>
+                            ${src ? `<img class="b-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                            <div class="b-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                            <div style="flex:1;min-width:0">
+                                <div style="font-weight:600;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
+                                <div style="font-size:.75rem;color:#8a9bb0">${b.author}</div>
+                            </div>
+                            <div style="font-weight:700;color:#6ab04c;font-size:.84rem;white-space:nowrap">
+                                <i class="bi bi-bag-check me-1" style="font-size:.75rem"></i>${b.numberSold ?? 0} cuốn
+                            </div>
+                        </div>`;
                     }).join("");
                 } catch (e) { console.error(e); }
             }
@@ -493,32 +491,31 @@
             /* ── Low stock ── */
             async function loadLowStock() {
                 try {
-                    const res = await fetch(`${API}/book?pageSize=50&sortBy=numberstock&sortOrder=asc`);
-                    const result = await res.json();
-                    const data = result.data;
+                    const res = await fetch(`${API}/books?pageSize=50&sortBy=numberstock&sortOrder=asc`);
+                    const data = await res.json();
                     const low = (data.data || []).filter(b => (b.numberStock ?? 0) < 10);
                     if (!low.length) {
                         document.getElementById("lowStock").innerHTML = `
-                    <div style="text-align:center;padding:1rem;color:#27ae60;font-size:.85rem">
-                        <i class="bi bi-check-circle-fill me-1"></i>Tất cả sách đều đủ hàng!
-                    </div>`;
+                        <div style="text-align:center;padding:1rem;color:#27ae60;font-size:.85rem">
+                            <i class="bi bi-check-circle-fill me-1"></i>Tất cả sách đều đủ hàng!
+                        </div>`;
                         return;
                     }
                     document.getElementById("lowStock").innerHTML = low.slice(0, 8).map(b => `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f5f5f5">
-                    <div style="min-width:0;flex:1">
-                        <div style="font-weight:600;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
-                        <div style="font-size:.74rem;color:#8a9bb0">${b.author}</div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:12px">
-                        <span style="font-weight:700;color:${(b.numberStock ?? 0) === 0 ? "#e74c3c" : "#f39c12"};font-size:.85rem">
-                            ${b.numberStock ?? 0} còn
-                        </span>
-                        ${(b.numberStock ?? 0) === 0
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #f5f5f5">
+                        <div style="min-width:0;flex:1">
+                            <div style="font-weight:600;font-size:.83rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
+                            <div style="font-size:.74rem;color:#8a9bb0">${b.author}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:12px">
+                            <span style="font-weight:700;color:${(b.numberStock ?? 0) === 0 ? "#e74c3c" : "#f39c12"};font-size:.85rem">
+                                ${b.numberStock ?? 0} còn
+                            </span>
+                            ${(b.numberStock ?? 0) === 0
                             ? `<span style="font-size:.7rem;background:#fff0f0;color:#e74c3c;border:1px solid #f5c6c6;border-radius:4px;padding:0 5px;font-weight:700">HẾT</span>`
                             : `<span style="font-size:.7rem;background:#fff8ec;color:#d68910;border:1px solid #ffe0a0;border-radius:4px;padding:0 5px;font-weight:700">ÍT</span>`}
-                    </div>
-                </div>`).join("");
+                        </div>
+                    </div>`).join("");
                 } catch (e) { console.error(e); }
             }
 

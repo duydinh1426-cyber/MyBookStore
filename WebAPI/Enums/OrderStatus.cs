@@ -2,63 +2,59 @@
 {
     public enum OrderStatus
     {
-        PENDING = 1,
-        CONFIRMED = 2,
-        SHIPPING = 3,
-        COMPLETED = 4,
-        CANCELLED = 5,
+        pending = 1,
+        confirmed = 2,
+        shipping = 3,
+        completed = 4,
+        cancelled = 5,
     }
 
     public static class OrderStatusExtensions
     {
-        // label tiếng việt 
+        // Nhãn tiếng Việt - giữ nguyên vì đây là hiển thị người dùng
         public static string ToLabel(this OrderStatus status)
         {
-            switch (status)
+            return status switch
             {
-                case OrderStatus.PENDING: return "Chờ xác nhận";
-                case OrderStatus.CONFIRMED: return "Đã xác nhận";
-                case OrderStatus.SHIPPING: return "Đang giao";
-                case OrderStatus.COMPLETED: return "Hoàn thành";
-                case OrderStatus.CANCELLED: return "Đã hủy";
-                default: return "Không xác định";
-            }
+                OrderStatus.pending => "Chờ xác nhận",
+                OrderStatus.confirmed => "Đã xác nhận",
+                OrderStatus.shipping => "Đang giao",
+                OrderStatus.completed => "Hoàn thành",
+                OrderStatus.cancelled => "Đã hủy",
+                _ => "Không xác định"
+            };
         }
 
-        // value string gửi frontend
+        // Giá trị string gửi frontend (giờ đã mặc định là chữ thường)
         public static string ToValue(this OrderStatus status)
         {
-            return status.ToString().ToLower();
+            return status.ToString();
         }
 
-        // parse string -> enum
+        // Parse string -> enum (không cần ToLower nữa vì enum đã là chữ thường)
         public static OrderStatus ToEnum(this string value)
         {
             if (string.IsNullOrWhiteSpace(value))
-                return OrderStatus.PENDING;
+                return OrderStatus.pending;
 
             if (Enum.TryParse<OrderStatus>(value.Trim(), true, out var result))
                 return result;
 
-            return OrderStatus.PENDING;
+            return OrderStatus.pending;
         }
 
-        // kiểm tra trạng thái
+        // Kiểm tra logic chuyển đổi trạng thái
         public static bool CanTransitionTo(this OrderStatus current, OrderStatus next)
         {
-            if (current == OrderStatus.PENDING)
-                return next == OrderStatus.CONFIRMED || next == OrderStatus.CANCELLED;
-
-            if (current == OrderStatus.CONFIRMED)
-                return next == OrderStatus.SHIPPING || next == OrderStatus.CANCELLED;
-
-            if (current == OrderStatus.SHIPPING)
-                return next == OrderStatus.COMPLETED || next == OrderStatus.CANCELLED;
-
-            return false;
+            return current switch
+            {
+                OrderStatus.pending => next == OrderStatus.confirmed || next == OrderStatus.cancelled,
+                OrderStatus.confirmed => next == OrderStatus.shipping || next == OrderStatus.cancelled,
+                OrderStatus.shipping => next == OrderStatus.completed || next == OrderStatus.cancelled,
+                _ => false
+            };
         }
 
-        // danh sách trạng thái tiếp theo
         public static List<OrderStatus> GetNextStatuses(this OrderStatus current)
         {
             return Enum.GetValues<OrderStatus>()
@@ -66,34 +62,27 @@
                 .ToList();
         }
 
-        public static bool isFinal(this OrderStatus status)
+        public static bool IsFinal(this OrderStatus status)
         {
-            return status == OrderStatus.COMPLETED || status == OrderStatus.CANCELLED;
+            return status == OrderStatus.completed || status == OrderStatus.cancelled;
         }
 
-        // trả về danh sách cho dropdown
         public static List<StatusOption> GetStatusList()
         {
-            var list = new List<StatusOption>();
-
-            foreach (OrderStatus s in Enum.GetValues(typeof(OrderStatus)))
-            {
-                list.Add(new StatusOption
+            return Enum.GetValues<OrderStatus>()
+                .Select(s => new StatusOption
                 {
-                    Id = (int)s,
-                    Name = s.ToLabel(),
-                    Code = s.ToValue()
-                });
-            }
-
-            return list;
+                    id = (int)s,
+                    name = s.ToLabel(),
+                    code = s.ToValue()
+                }).ToList();
         }
     }
 
     public class StatusOption
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Code { get; set; } = string.Empty;
+        public int id { get; set; }
+        public string name { get; set; } = string.Empty;
+        public string code { get; set; } = string.Empty;
     }
 }

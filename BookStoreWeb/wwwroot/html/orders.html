@@ -447,14 +447,14 @@
                 const c = colors[type] || colors.success;
                 const t = document.createElement("div");
                 t.style.cssText = `background:${c.bg};border:1.5px solid ${c.border};border-radius:10px;
-                padding:.65rem 1rem;font-size:.84rem;font-family:'DM Sans',sans-serif;
-                box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:flex-start;
-                gap:8px;min-width:260px;max-width:340px;pointer-events:all;animation:_ohSlide .2s ease`;
+                    padding:.65rem 1rem;font-size:.84rem;font-family:'DM Sans',sans-serif;
+                    box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:flex-start;
+                    gap:8px;min-width:260px;max-width:340px;pointer-events:all;animation:_ohSlide .2s ease`;
                 t.innerHTML = `
-                <i class="bi ${c.icon}" style="color:${c.iconColor};font-size:1rem;flex-shrink:0;margin-top:1px"></i>
-                <span style="flex:1;line-height:1.4">${msg}</span>
-                <i class="bi bi-x" style="cursor:pointer;color:#aaa;font-size:1rem;flex-shrink:0"
-                   onclick="this.closest('div').remove()"></i>`;
+                    <i class="bi ${c.icon}" style="color:${c.iconColor};font-size:1rem;flex-shrink:0;margin-top:1px"></i>
+                    <span style="flex:1;line-height:1.4">${msg}</span>
+                    <i class="bi bi-x" style="cursor:pointer;color:#aaa;font-size:1rem;flex-shrink:0"
+                       onclick="this.closest('div').remove()"></i>`;
                 wrap.appendChild(t);
                 setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, 4000);
             }
@@ -504,23 +504,22 @@
                 try {
                     const res = await fetch(`${API}/orders/my?${p}`, { headers: authHeaders() });
                     if (!res.ok) throw new Error();
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     const orders = data.data || [];
                     const totalPages = data.totalPages ?? 1;
 
                     if (!orders.length) {
                         list.innerHTML = `
-                    <div class="oh-empty">
-                        <i class="bi bi-bag-x"></i>
-                        <p>Chưa có đơn hàng nào</p>
-                        <small>Hãy mua sắm và quay lại đây nhé!</small>
-                    </div>`;
+                        <div class="oh-empty">
+                            <i class="bi bi-bag-x"></i>
+                            <p>Chưa có đơn hàng nào</p>
+                            <small>Hãy mua sắm và quay lại đây nhé!</small>
+                        </div>`;
                         return;
                     }
 
                     // Load chi tiết từng đơn song song
-                    const details = await Promise.all(orders.map(o => fetchDetail(o.orderID)));
+                    const details = await Promise.all(orders.map(o => fetchDetail(o.orderId)));
 
                     // Với đơn completed: load review status cho từng sách
                     // reviewMaps[i] = { bookId: canReview(bool) }
@@ -543,18 +542,17 @@
                     }
                 } catch {
                     list.innerHTML = `
-                <div class="oh-empty">
-                    <i class="bi bi-wifi-off"></i>
-                    <p>Không tải được đơn hàng</p><small>Vui lòng thử lại sau.</small>
-                </div>`;
+                    <div class="oh-empty">
+                        <i class="bi bi-wifi-off"></i>
+                        <p>Không tải được đơn hàng</p><small>Vui lòng thử lại sau.</small>
+                    </div>`;
                 }
             }
 
             async function fetchDetail(id) {
                 try {
                     const res = await fetch(`${API}/orders/${id}`, { headers: authHeaders() });
-                    const result = await res.json();
-                    return res.ok ? result.data : null;
+                    return res.ok ? await res.json() : null;
                 } catch { return null; }
             }
 
@@ -562,13 +560,12 @@
             // Trả về map: { bookId: true (chưa đánh giá) | false (đã đánh giá) }
             async function fetchReviewMap(detail) {
                 if (!detail?.items?.length) return {};
-                const bookIds = [...new Set(detail.items.map(it => it.book?.bookID ?? it.book?.bookId ?? 0).filter(Boolean))];
+                const bookIds = [...new Set(detail.items.map(it => it.book?.bookId ?? it.book?.bookId ?? 0).filter(Boolean))];
                 const results = await Promise.all(
                     bookIds.map(async bid => {
                         try {
                             const res = await fetch(`${API}/reviews/status/${bid}`, { headers: authHeaders() });
-                            const result = await res.json();
-                            const data = result.data;
+                            const data = await res.json();
                             // canReview=true → chưa đánh giá → hiện nút
                             // canReview=false, reason=already_reviewed → đã đánh giá → ẩn nút
                             return { bid, canReview: data.canReview === true };
@@ -582,7 +579,7 @@
 
             /* ── render 1 card ── */
             function renderCard(o, detail, reviewMap = {}) {
-                const id = o.orderID;
+                const id = o.orderId;
                 const status = o.status ?? "";
                 const total = o.totalCost ?? 0;
                 const phone = o.phone ?? "";
@@ -595,7 +592,7 @@
                 const itemHtml = (list) => list.map(it => {
                     const src = imgSrc(it.book?.image ?? "");
                     const name = it.book?.title ?? "Sách";
-                    const bookId = it.book?.bookID ?? it.book?.bookId ?? 0;
+                    const bookId = it.book?.bookId ?? it.book?.bookId ?? 0;
                     const qty = it.quantity ?? 1;
                     const sub = it.subTotal ?? (it.unitPrice * qty);
                     const canReview = reviewMap[bookId]; // true=chưa đánh giá, false=đã đánh giá, undefined=không áp dụng
@@ -606,40 +603,40 @@
                         if (canReview === false) {
                             // Đã đánh giá → hiện badge xanh
                             reviewBtn = `
-                        <span style="display:inline-flex;align-items:center;gap:4px;
-                                     background:#f0fff4;color:#27ae60;border:1.5px solid #b7e4c7;
-                                     border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
-                                     font-weight:700;white-space:nowrap;flex-shrink:0">
-                            <i class="bi bi-check-circle-fill"></i> Đã đánh giá
-                        </span>`;
+                            <span style="display:inline-flex;align-items:center;gap:4px;
+                                         background:#f0fff4;color:#27ae60;border:1.5px solid #b7e4c7;
+                                         border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
+                                         font-weight:700;white-space:nowrap;flex-shrink:0">
+                                <i class="bi bi-check-circle-fill"></i> Đã đánh giá
+                            </span>`;
                         } else {
                             // Chưa đánh giá (canReview=true hoặc undefined) → hiện nút vàng
                             reviewBtn = `
-                        <a href="review.html?bookId=${bookId}&orderId=${id}"
-                           style="display:inline-flex;align-items:center;gap:4px;
-                                  background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;
-                                  border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
-                                  font-weight:700;text-decoration:none;white-space:nowrap;
-                                  flex-shrink:0;transition:all .15s"
-                           onmouseover="this.style.background='#f39c12';this.style.color='#fff';this.style.borderColor='#f39c12'"
-                           onmouseout="this.style.background='#fff8ec';this.style.color='#d68910';this.style.borderColor='#ffe0a0'">
-                            <i class="bi bi-star-fill"></i> Đánh giá
-                        </a>`;
+                            <a href="review.html?bookId=${bookId}&orderId=${id}"
+                               style="display:inline-flex;align-items:center;gap:4px;
+                                      background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;
+                                      border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
+                                      font-weight:700;text-decoration:none;white-space:nowrap;
+                                      flex-shrink:0;transition:all .15s"
+                               onmouseover="this.style.background='#f39c12';this.style.color='#fff';this.style.borderColor='#f39c12'"
+                               onmouseout="this.style.background='#fff8ec';this.style.color='#d68910';this.style.borderColor='#ffe0a0'">
+                                <i class="bi bi-star-fill"></i> Đánh giá
+                            </a>`;
                         }
                     }
 
                     return `
-                <div class="oh-item">
-                    ${src ? `<img class="oh-item-img" src="${src}" alt="${name}"
-                                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`: ``}
-                    <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                    <div style="flex:1;min-width:0">
-                        <div class="oh-item-name">${name}</div>
-                        <div class="oh-item-meta">SL: ${qty}</div>
-                        <div class="oh-item-price">${fmt(sub)}</div>
-                    </div>
-                    ${reviewBtn}
-                </div>`;
+                    <div class="oh-item">
+                        ${src ? `<img class="oh-item-img" src="${src}" alt="${name}"
+                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`: ``}
+                        <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                        <div style="flex:1;min-width:0">
+                            <div class="oh-item-name">${name}</div>
+                            <div class="oh-item-meta">SL: ${qty}</div>
+                            <div class="oh-item-price">${fmt(sub)}</div>
+                        </div>
+                        ${reviewBtn}
+                    </div>`;
                 }).join("");
 
                 const visibleItems = items.slice(0, SHOW);
@@ -647,42 +644,42 @@
                 const hasMore = hiddenItems.length > 0;
 
                 return `
-            <div class="oh-card" id="card_${id}">
-                <div class="oh-head">
-                    <div>
-                        <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
-                        ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
+                <div class="oh-card" id="card_${id}">
+                    <div class="oh-head">
+                        <div>
+                            <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
+                            ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
+                        </div>
+                        ${badge(status)}
                     </div>
-                    ${badge(status)}
-                </div>
-                <div class="oh-body">
-                    ${itemHtml(visibleItems)}
-                    ${hasMore ? `
-                    <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
-                    <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
-                        <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
-                    </button>`: ""}
-                    ${(phone || address) ? `
-                    <div class="oh-ship" id="ship_${id}">
-                        ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
-                        ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
-                        ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
-                    </div>`: ""}
-                </div>
-                <div class="oh-foot">
-                    <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <div class="oh-body">
+                        ${itemHtml(visibleItems)}
+                        ${hasMore ? `
+                        <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
+                        <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
+                            <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
+                        </button>`: ""}
                         ${(phone || address) ? `
-                        <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
-                            <i class="bi bi-geo-alt me-1"></i>Địa chỉ
-                        </button>`: ""}
-                        ${status === "pending" ? `
-                        <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id})">
-                            <i class="bi bi-x-circle me-1"></i>Hủy đơn
-                        </button>`: ""}
+                        <div class="oh-ship" id="ship_${id}">
+                            ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
+                            ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
+                            ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
+                        </div>`: ""}
                     </div>
-                </div>
-            </div>`;
+                    <div class="oh-foot">
+                        <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
+                        <div style="display:flex;gap:6px;flex-wrap:wrap">
+                            ${(phone || address) ? `
+                            <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
+                                <i class="bi bi-geo-alt me-1"></i>Địa chỉ
+                            </button>`: ""}
+                            ${status === "pending" ? `
+                            <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id})">
+                                <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                            </button>`: ""}
+                        </div>
+                    </div>
+                </div>`;
             }
 
             window.toggleExtra = function (id) {
@@ -722,8 +719,7 @@
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang hủy...';
                 try {
                     const res = await fetch(`${API}/orders/${_cancelId}/cancel`, { method: "PUT", headers: authHeaders() });
-                    const result = await res.json();
-                    const data = result.data;
+                    const data = await res.json();
                     bootstrap.Modal.getInstance(document.getElementById("cancelModal"))?.hide();
                     setTimeout(() => {
                         if (res.ok) { showToast(data.message || "Đã hủy đơn hàng thành công.", "success"); load(curPage, curStatus); }
