@@ -28,35 +28,55 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetCart()
         {
             var result = await _service.GetCartAsync(GetUserId());
-            return StatusCode(result.StatusCode, result);
+            return Ok(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddToCart(AddCartDto dto)
         {
-            var result = await _service.AddToCartAsync(GetUserId(), dto);
-            return StatusCode(result.StatusCode, result);
+            var message = await _service.AddToCartAsync(GetUserId(), dto);
+            if (message != null)
+            {
+                return BadRequest(new { message = message });
+            }
+            return Ok(new { message = "Đã thêm vào giỏ hàng." });
         }
 
         [HttpPut("{bookId:int}")]
         public async Task<IActionResult> UpdateCart(int bookId, UpdateCartDto dto)
         {
-            var result = await _service.UpdateCartAsync(GetUserId(), bookId, dto);
-            return StatusCode(result.StatusCode, result);
+            var message = await _service.UpdateCartAsync(GetUserId(), bookId, dto);
+            if (message != null)
+            {
+                return BadRequest(new { message = message });
+            }
+
+            if (dto.Quantity <= 0)
+                return Ok(new { message = "Đã xóa sách khỏi giỏ hàng." });
+
+            return Ok(new { message = "Cập nhật giỏ hàng thành công." });
         }
 
         [HttpDelete("{bookId:int}")]
         public async Task<IActionResult> RemoveFromCart(int bookId)
         {
-            var result = await _service.RemoveFromCartAsync(GetUserId(), bookId);
-            return StatusCode(result.StatusCode, result);
+            var message = await _service.RemoveFromCartAsync(GetUserId(), bookId);
+            if (message != null)
+            {
+                return NotFound(new { message = message });
+            }
+            return Ok(new { message = "Đã xóa sách khỏi giỏ hàng." });
         }
 
         [HttpDelete]
         public async Task<IActionResult> ClearCart()
         {
-            var result = await _service.ClearCartAsync(GetUserId());
-            return StatusCode(result.StatusCode, result);
+            var message = await _service.ClearCartAsync(GetUserId());
+            if (message != null)
+            {
+                return BadRequest(new { message = message });
+            }
+            return Ok(new { message = "Đã xóa toàn bộ giỏ hàng." });
         }
     }
 }

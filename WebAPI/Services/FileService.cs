@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Services
@@ -8,33 +7,32 @@ namespace WebAPI.Services
     public class FileService : IFileService
     {
         private readonly IWebHostEnvironment _env;
-        private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+        private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
         private const string ImageFolder = "images";
 
-        public FileService(IWebHostEnvironment env)
-        {
-            _env = env;
-        }
+        public FileService(IWebHostEnvironment env) => _env = env;
 
-        public async Task<ApiResponse<string>> SaveImageAsync(IFormFile file)
+        public async Task<object> SaveImageAsync(IFormFile file)
         {
             try
             {
                 if (file == null || file.Length == 0)
-                    return ApiResponse<string>.Fail("File không hợp lệ hoặc trống.");
+                    return new { error = true, message = "Vui lòng chọn file ảnh." };
 
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
                 if (!_allowedExtensions.Contains(ext))
-                    return ApiResponse<string>.Fail("Định dạng file không hỗ trợ (Chỉ nhận .jpg, .jpeg, .png, .webp).");
+                    return new { error = true, message = "Chỉ chấp nhận JPG, PNG, WEBP, GIF." };
 
-                // Tạo đường dẫn thư mục images trong wwwroot
+                // Giới hạn 5MB
+                if (file.Length > 5 * 1024 * 1024)
+                    return new { error = true, message = "Ảnh không được vượt quá 5MB." };
+
                 var contentPath = _env.WebRootPath;
                 var path = Path.Combine(contentPath, ImageFolder);
 
                 if (!Directory.Exists(path))
                     Directory.CreateDirectory(path);
 
-                // Tạo tên file duy nhất để tránh trùng lặp
                 var fileName = $"{Guid.NewGuid()}{ext}";
                 var fileNameWithPath = Path.Combine(path, fileName);
 
@@ -43,34 +41,34 @@ namespace WebAPI.Services
                     await file.CopyToAsync(stream);
                 }
 
-                return ApiResponse<string>.Success(fileName, "Lưu ảnh thành công.");
+                return new { error = false, fileName };
             }
             catch (Exception)
             {
-                return ApiResponse<string>.Fail("Lỗi hệ thống khi lưu tập tin.", 500);
+                return new { error = true, message = "Lỗi hệ thống khi lưu tập tin." };
             }
         }
 
-        public ApiResponse<object> DeleteImage(string fileName)
+        public object DeleteImage(string fileName)
         {
             try
             {
                 if (string.IsNullOrEmpty(fileName))
-                    return ApiResponse<object>.Fail("Tên file không hợp lệ.");
+                    return new { message = "Tên file không hợp lệ." };
 
                 var path = Path.Combine(_env.WebRootPath, ImageFolder, fileName);
 
                 if (File.Exists(path))
                 {
                     File.Delete(path);
-                    return ApiResponse<object>.Success(null, "Đã xóa ảnh thành công.");
+                    return new { message = "Đã xóa ảnh thành công." };
                 }
 
-                return ApiResponse<object>.Fail("Tập tin không tồn tại trên hệ thống.", 404);
+                return new { message = "NotFound" };
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return ApiResponse<object>.Fail("Lỗi khi xóa tập tin.", 500);
+                return new { message = "Lỗi khi xóa tập tin.", detail = ex.Message };
             }
         }
     }

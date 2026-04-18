@@ -696,8 +696,7 @@
             try {
                 const res = await fetch(`${API}/categories`);
                 if (!res.ok) return;
-                const result = await res.json();
-                const cats = result.data
+                const cats = await res.json();
                 const wrap = document.getElementById("catList");
                 cats.forEach(c => {
                     const id = c.categoryId ?? c.categoryID;
@@ -760,10 +759,9 @@
             if (S.maxPrice) p.append("maxPrice", S.maxPrice);
 
             try {
-                const res = await fetch(`${API}/book?${p}`);
+                const res = await fetch(`${API}/books?${p}`);
                 if (!res.ok) throw new Error("API " + res.status);
-                const result = await res.json();
-                const data = result.data;
+                const data = await res.json();
 
                 S.totalPages = data.totalPages;
                 window._books = data.data;
@@ -776,7 +774,7 @@
             } catch (err) {
                 console.error(err);
                 el.innerHTML = `<div class="text-center text-muted py-5" style="grid-column:1/-1">
-                    <i class="bi bi-wifi-off fs-2 d-block mb-2"></i>Không tải được sách</div>`;
+                        <i class="bi bi-wifi-off fs-2 d-block mb-2"></i>Không tải được sách</div>`;
             }
         }
 
@@ -786,17 +784,17 @@
 
             if (!books.length) {
                 el.innerHTML = `<div class="text-center text-muted py-5">
-                    <i class="bi bi-search fs-2 d-block mb-2"></i>Không tìm thấy sách phù hợp</div>`;
+                        <i class="bi bi-search fs-2 d-block mb-2"></i>Không tìm thấy sách phù hợp</div>`;
                 return;
             }
 
             if (S.view === "grid") {
                 el.innerHTML = `
-                    <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
-                        ${books.map(b =>
+                        <div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
+                            ${books.map(b =>
                     `<div class="col">${window._bookCard.render(b, { showRating: true })}</div>`
                 ).join("")}
-                    </div>`;
+                        </div>`;
             } else {
                 el.innerHTML = books.map(b => window._bookCard.renderList(b)).join("");
             }
@@ -808,7 +806,7 @@
             if (total <= 1) { wrap.innerHTML = ""; return; }
 
             let html = `<button class="pg-btn" ${S.page === 1 ? "disabled" : ""} onclick="goPage(${S.page - 1})">
-                            <i class="bi bi-chevron-left"></i></button>`;
+                                <i class="bi bi-chevron-left"></i></button>`;
             const range = [];
             for (let i = 1; i <= total; i++)
                 if (i === 1 || i === total || (i >= S.page - 2 && i <= S.page + 2)) range.push(i);
@@ -819,7 +817,7 @@
                 prev = p;
             });
             html += `<button class="pg-btn" ${S.page === total ? "disabled" : ""} onclick="goPage(${S.page + 1})">
-                         <i class="bi bi-chevron-right"></i></button>`;
+                             <i class="bi bi-chevron-right"></i></button>`;
             wrap.innerHTML = html;
         }
 
@@ -831,33 +829,33 @@
         /* ── Skeletons ── */
         function skelGrid() {
             return `<div class="row row-cols-2 row-cols-md-3 row-cols-xl-4 g-3">
-                ${Array(8).fill(0).map(() => `
-                <div class="col"><div class="book-card">
-                    <div style="height:220px" class="skel"></div>
-                    <div class="book-info">
-                        <div class="skel mb-1" style="height:9px;width:40%"></div>
-                        <div class="skel mb-1" style="height:13px"></div>
-                        <div class="skel mb-1" style="height:11px;width:65%"></div>
-                        <div class="skel mb-1" style="height:10px;width:50%"></div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
-                            <div class="skel" style="height:14px;width:55px"></div>
-                            <div class="skel" style="height:26px;width:58px;border-radius:6px"></div>
+                    ${Array(8).fill(0).map(() => `
+                    <div class="col"><div class="book-card">
+                        <div style="height:220px" class="skel"></div>
+                        <div class="book-info">
+                            <div class="skel mb-1" style="height:9px;width:40%"></div>
+                            <div class="skel mb-1" style="height:13px"></div>
+                            <div class="skel mb-1" style="height:11px;width:65%"></div>
+                            <div class="skel mb-1" style="height:10px;width:50%"></div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto">
+                                <div class="skel" style="height:14px;width:55px"></div>
+                                <div class="skel" style="height:26px;width:58px;border-radius:6px"></div>
+                            </div>
                         </div>
-                    </div>
-                </div></div>`).join("")}
-            </div>`;
+                    </div></div>`).join("")}
+                </div>`;
         }
 
         function skelList() {
             return Array(6).fill(0).map(() => `
-                <div class="list-item">
-                    <div class="list-img-wrap skel"></div>
-                    <div class="list-info">
-                        <div class="skel mb-1" style="height:9px;width:35%"></div>
-                        <div class="skel mb-1" style="height:13px;width:100%"></div>
-                        <div class="skel"      style="height:10px;width:60%"></div>
-                    </div>
-                </div>`).join("");
+                    <div class="list-item">
+                        <div class="list-img-wrap skel"></div>
+                        <div class="list-info">
+                            <div class="skel mb-1" style="height:9px;width:35%"></div>
+                            <div class="skel mb-1" style="height:13px;width:100%"></div>
+                            <div class="skel"      style="height:10px;width:60%"></div>
+                        </div>
+                    </div>`).join("");
         }
 
         /* ── Init ── */

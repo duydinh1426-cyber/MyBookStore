@@ -488,149 +488,139 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/header.js"></script>
     <script>
-(function(){
-    const API     = "https://localhost:7204/api";
-    const IMG_URL = "https://localhost:7204";
+        (function () {
+            const API = "https://localhost:7204/api";
+            const IMG_URL = "https://localhost:7204";
 
-    const getToken = () => sessionStorage.getItem("token");
-    const isLoggedIn  = () => !!getToken();
-    const authHeaders = () => ({
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${getToken()}`
-    });
-    const fmt = n => new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND"}).format(n);
-    const imgSrc = raw => {
-        if(!raw) return "";
-        if(/^https?:\/\//i.test(raw)) return raw;
-        return IMG_URL+"/images/"+raw.replace(/^\/?(images\/)?/,"");
-    };
+            const getToken = () => sessionStorage.getItem("token");
+            const isLoggedIn = () => !!getToken();
+            const authHeaders = () => ({
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            });
+            const fmt = n => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+            const imgSrc = raw => {
+                if (!raw) return "";
+                if (/^https?:\/\//i.test(raw)) return raw;
+                return IMG_URL + "/images/" + raw.replace(/^\/?(images\/)?/, "");
+            };
 
-    if(!isLoggedIn()){ window.location.href="../html/login.html"; return; }
+            if (!isLoggedIn()) { window.location.href = "../html/login.html"; return; }
 
-    const STATUS_MAP = {
-        pending:  {label:"Chờ xác nhận", cls:"s-pending",   icon:"bi-hourglass-split"},
-        confirmed:{label:"Đã xác nhận",  cls:"s-confirmed", icon:"bi-check2"},
-        shipping: {label:"Đang giao",    cls:"s-shipping",  icon:"bi-truck"},
-        completed:{label:"Hoàn thành",   cls:"s-completed", icon:"bi-check-circle"},
-        cancelled:{label:"Đã huỷ",       cls:"s-cancelled", icon:"bi-x-circle"},
-    };
+            const STATUS_MAP = {
+                pending: { label: "Chờ xác nhận", cls: "s-pending", icon: "bi-hourglass-split" },
+                confirmed: { label: "Đã xác nhận", cls: "s-confirmed", icon: "bi-check2" },
+                shipping: { label: "Đang giao", cls: "s-shipping", icon: "bi-truck" },
+                completed: { label: "Hoàn thành", cls: "s-completed", icon: "bi-check-circle" },
+                cancelled: { label: "Đã huỷ", cls: "s-cancelled", icon: "bi-x-circle" },
+            };
 
-    function badge(s){
-        const m = STATUS_MAP[(s??"").toLowerCase()] || {label:s,cls:"s-pending",icon:"bi-question-circle"};
-        return `<span class="badge-status ${m.cls}"><i class="bi ${m.icon}"></i>${m.label}</span>`;
-    }
-
-    async function init(){
-        await Promise.all([loadStats(), loadRecentOrders(), loadTopBooks()]);
-    }
-
-    async function loadStats(){
-        try{
-            const [statsRes, booksRes] = await Promise.all([
-                fetch(`${API}/orders/admin/stats`, {headers:authHeaders()}),
-                fetch(`${API}/book?pageSize=1`)
-            ]);
-            const res1 = await statsRes.json();
-            const res2 = await booksRes.json();
-
-            const res1 = await statsRes.json();
-            const res2 = await booksRes.json();
-
-            document.getElementById("stOrders").textContent  = stats.totalOrders ?? 0;
-            document.getElementById("stRevenue").textContent = fmt(stats.totalRevenue ?? 0);
-            document.getElementById("stBooks").textContent = books.total ?? 0;
-
-            const statusList = stats.statusDistribution || [];
-            const pendingObj = statusList.find(x => x.status.toLowerCase() === "pending");
-            document.getElementById("stPending").textContent = pendingObj ? pendingObj.count : 0;
-
-            // Status breakdown
-            const total = stats.totalOrders || 1;
-            const colors = {pending:"#f39c12",confirmed:"#3498db",shipping:"#1a6fb0",completed:"#27ae60",cancelled:"#e74c3c"};
-            const html = statusList.map(s => {
-                const pct = Math.round((s.count / total) * 100);
-                const col = colors[s.status.toLowerCase()] || "#8a9bb0";
-                const m = STATUS_MAP[s.status.toLowerCase()] || { label: s.status };
-                return `
-                <div style="margin-bottom:.75rem">
-                    <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
-                        <span style="font-weight:600;color:#4a5568">${m.label}</span>
-                        <span style="font-weight:700;color:${col}">${s.count} (${pct}%)</span>
-                    </div>
-                    <div style="height:7px;border-radius:4px;background:#f0f0f0;overflow:hidden">
-                        <div style="height:100%;border-radius:4px;background:${col};width:${pct}%;transition:width .6s"></div>
-                    </div>
-                </div>`;
-            }).join("");
-            document.getElementById("statusBreakdown").innerHTML = html || `<p style="color:#8a9bb0;font-size:.85rem">Chưa có dữ liệu.</p>`;
-        }catch(e){
-            console.error(e);
-        }
-    }
-
-    async function loadRecentOrders(){
-        try{
-            const res = await fetch(`${API}/orders/admin/all?pageSize=7`, { headers: authHeaders() });
-            const result = await res.json();
-
-            const orders = result.data?.data || [];
-
-            const tbody = document.getElementById("recentOrders");
-            if (!orders.length) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#8a9bb0">Chưa có đơn hàng.</td></tr>`;
-                return;
+            function badge(s) {
+                const m = STATUS_MAP[(s ?? "").toLowerCase()] || { label: s, cls: "s-pending", icon: "bi-question-circle" };
+                return `<span class="badge-status ${m.cls}"><i class="bi ${m.icon}"></i>${m.label}</span>`;
             }
 
-            tbody.innerHTML = orders.map(o => `
-            <tr>
-                <td><span style="font-weight:700">#${o.orderID}</span></td>
-                <td>
-                    <div style="font-weight:600;font-size:.84rem">${o.customerName ?? "Khách lẻ"}</div>
-                    <div style="font-size:.74rem;color:#8a9bb0">${o.phone ?? ""}</div>
-                </td>
-                <td style="font-weight:700;color:#6ab04c">${fmt(o.totalCost ?? 0)}</td>
-                <td>${badge(o.status)}</td>
-                <td style="font-size:.76rem;color:#8a9bb0">
-                    ${o.createdAt ? new Date(o.createdAt).toLocaleDateString("vi-VN") : ""}
-                </td>
-            </tr>`).join("");
-        } catch (e) { console.error("Lỗi Orders:", e); }
-    }
-
-    async function loadTopBooks(){
-        try{
-            const res = await fetch(`${API}/book/top-selling?count=6`);
-            const result = await res.json();
-
-            const data = result.data || [];
-
-            if(!data.length){
-                document.getElementById("topBooks").innerHTML =
-                    `<p style="text-align:center;padding:1.5rem;color:#8a9bb0;font-size:.85rem">Chưa có dữ liệu.</p>`;
-                return;
+            async function init() {
+                await Promise.all([loadStats(), loadRecentOrders(), loadTopBooks()]);
             }
-            document.getElementById("topBooks").innerHTML = data.map((b,i)=>{
-                const src  = imgSrc(b.image);
-                const rank = i===0?"top1":i===1?"top2":i===2?"top3":"";
-                return `
-                <div class="book-row">
-                    <div class="book-rank ${rank}">${i+1}</div>
-                    ${src
-                        ? `<img class="book-img" src="${src}" alt="${b.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-                        : ""}
-                    <div class="book-img-ph" ${src?'style="display:none"':""}><i class="bi bi-book"></i></div>
-                    <div style="flex:1;min-width:0">
-                        <div class="book-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
-                        <div class="book-meta">${b.author}</div>
-                    </div>
-                    <div class="book-sold"><i class="bi bi-bag-check me-1"></i>${b.numberSold??0}</div>
-                </div>`;
-            }).join("");
-        }catch(e){ console.error(e); }
-    }
 
-    init();
-})();
+            async function loadStats() {
+                try {
+                    const [statsRes, booksRes] = await Promise.all([
+                        fetch(`${API}/orders/admin/stats`, { headers: authHeaders() }),
+                        fetch(`${API}/books?pageSize=1`)
+                    ]);
+                    const stats = await statsRes.json();
+                    const books = await booksRes.json();
+
+                    document.getElementById("stOrders").textContent = stats.totalOrders ?? 0;
+                    document.getElementById("stRevenue").textContent = fmt(stats.totalRevenue ?? 0);
+                    document.getElementById("stBooks").textContent = books.total ?? 0;
+
+                    const pending = (stats.statusDistribution || []).find(x => x.status === "pending")?.count ?? 0;
+                    document.getElementById("stPending").textContent = pending;
+
+                    // Status breakdown
+                    const total = stats.totalOrders || 1;
+                    const colors = { pending: "#f39c12", confirmed: "#3498db", shipping: "#1a6fb0", completed: "#27ae60", cancelled: "#e74c3c" };
+                    const html = (stats.statusDistribution || []).map(s => {
+                        const pct = Math.round((s.count / total) * 100);
+                        const col = colors[s.status] || "#8a9bb0";
+                        const m = STATUS_MAP[s.status] || { label: s.status };
+                        return `
+                    <div style="margin-bottom:.75rem">
+                        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:4px">
+                            <span style="font-weight:600;color:#4a5568">${m.label}</span>
+                            <span style="font-weight:700;color:${col}">${s.count} (${pct}%)</span>
+                        </div>
+                        <div style="height:7px;border-radius:4px;background:#f0f0f0;overflow:hidden">
+                            <div style="height:100%;border-radius:4px;background:${col};width:${pct}%;transition:width .6s"></div>
+                        </div>
+                    </div>`;
+                    }).join("");
+                    document.getElementById("statusBreakdown").innerHTML = html || `<p style="color:#8a9bb0;font-size:.85rem">Chưa có dữ liệu.</p>`;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            async function loadRecentOrders() {
+                try {
+                    const res = await fetch(`${API}/orders/admin/all?pageSize=7`, { headers: authHeaders() });
+                    const data = await res.json();
+                    const orders = Array.isArray(data) ? data : (data.data || []);;
+                    if (!orders.length) {
+                        document.getElementById("recentOrders").innerHTML =
+                            `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#8a9bb0">Chưa có đơn hàng.</td></tr>`;
+                        return;
+                    }
+                    document.getElementById("recentOrders").innerHTML = orders.map(o => `
+                <tr>
+                    <td><span style="font-weight:700">#${o.orderId}</span></td>
+                    <td>
+                        <div style="font-weight:600;font-size:.84rem">${o.customerName ?? ""}</div>
+                        <div style="font-size:.74rem;color:#8a9bb0">${o.phone ?? ""}</div>
+                    </td>
+                    <td style="font-weight:700;color:#6ab04c">${fmt(o.totalCost ?? 0)}</td>
+                    <td>${badge(o.status)}</td>
+                    <td style="font-size:.76rem;color:#8a9bb0">
+                        ${o.createdAt ? new Date(o.createdAt).toLocaleDateString("vi-VN") : ""}
+                    </td>
+                </tr>`).join("");
+                } catch (e) { console.error(e); }
+            }
+
+            async function loadTopBooks() {
+                try {
+                    const res = await fetch(`${API}/books/top-selling?count=6`);
+                    const data = await res.json();
+                    if (!data.length) {
+                        document.getElementById("topBooks").innerHTML =
+                            `<p style="text-align:center;padding:1.5rem;color:#8a9bb0;font-size:.85rem">Chưa có dữ liệu.</p>`;
+                        return;
+                    }
+                    document.getElementById("topBooks").innerHTML = data.map((b, i) => {
+                        const src = imgSrc(b.image);
+                        const rank = i === 0 ? "top1" : i === 1 ? "top2" : i === 2 ? "top3" : "";
+                        return `
+                    <div class="book-row">
+                        <div class="book-rank ${rank}">${i + 1}</div>
+                        ${src
+                                ? `<img class="book-img" src="${src}" alt="${b.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+                                : ""}
+                        <div class="book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                        <div style="flex:1;min-width:0">
+                            <div class="book-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div>
+                            <div class="book-meta">${b.author}</div>
+                        </div>
+                        <div class="book-sold"><i class="bi bi-bag-check me-1"></i>${b.numberSold ?? 0}</div>
+                    </div>`;
+                    }).join("");
+                } catch (e) { console.error(e); }
+            }
+
+            init();
+        })();
     </script>
 </body>
 </html>

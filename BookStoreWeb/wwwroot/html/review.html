@@ -351,162 +351,159 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/header.js"></script>
     <script>
-(function(){
-    const API     = "https://localhost:7204/api";
-    const IMG_URL = "https://localhost:7204";
+        (function () {
+            const API = "https://localhost:7204/api";
+            const IMG_URL = "https://localhost:7204";
 
-    const getToken    = () => sessionStorage.getItem("token");
-    const isLoggedIn  = () => !!getToken();
-    const authHeaders = () => ({
-        "Content-Type":"application/json",
-        "Authorization":`Bearer ${getToken()}`
-    });
-    const imgSrc = raw => {
-        if(!raw) return "";
-        if(/^https?:\/\//i.test(raw)) return raw;
-        return IMG_URL + "/images/" + raw.replace(/^\/?(images\/)?/,"");
-    };
+            const getToken = () => sessionStorage.getItem("token");
+            const isLoggedIn = () => !!getToken();
+            const authHeaders = () => ({
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            });
+            const imgSrc = raw => {
+                if (!raw) return "";
+                if (/^https?:\/\//i.test(raw)) return raw;
+                return IMG_URL + "/images/" + raw.replace(/^\/?(images\/)?/, "");
+            };
 
-    if(!isLoggedIn()){ window.location.replace("login.html"); return; }
+            if (!isLoggedIn()) { window.location.replace("login.html"); return; }
 
-    // Đọc ?bookId= từ URL
-    const params = new URLSearchParams(window.location.search);
-    const bookId = parseInt(params.get("bookId"));
-    const orderId = params.get("orderId");
+            // Đọc ?bookId= từ URL
+            const params = new URLSearchParams(window.location.search);
+            const bookId = parseInt(params.get("bookId"));
+            const orderId = params.get("orderId");
 
-    if(!bookId){ window.location.replace("orders.html"); return; }
+            if (!bookId) { window.location.replace("orders.html"); return; }
 
-    if(orderId){
-        document.getElementById("backLink").href = `orders.html`;
-    }
+            if (orderId) {
+                document.getElementById("backLink").href = `orders.html`;
+            }
 
-    // Star names
-    const STAR_NAMES = ["","Rất tệ","Không tốt","Bình thường","Khá tốt","Tuyệt vời!"];
-    let pickedStar = 0;
+            // Star names
+            const STAR_NAMES = ["", "Rất tệ", "Không tốt", "Bình thường", "Khá tốt", "Tuyệt vời!"];
+            let pickedStar = 0;
 
-    // Star picker
-    const stars = document.querySelectorAll("#starPicker i");
-    stars.forEach(el => {
-        el.addEventListener("mouseenter", () => highlightStars(parseInt(el.dataset.v)));
-        el.addEventListener("mouseleave", () => highlightStars(pickedStar));
-        el.addEventListener("click", () => {
-            pickedStar = parseInt(el.dataset.v);
-            highlightStars(pickedStar);
-            document.getElementById("starName").textContent = STAR_NAMES[pickedStar];
-            document.getElementById("rvAlert").classList.remove("show");
-        });
-    });
+            // Star picker
+            const stars = document.querySelectorAll("#starPicker i");
+            stars.forEach(el => {
+                el.addEventListener("mouseenter", () => highlightStars(parseInt(el.dataset.v)));
+                el.addEventListener("mouseleave", () => highlightStars(pickedStar));
+                el.addEventListener("click", () => {
+                    pickedStar = parseInt(el.dataset.v);
+                    highlightStars(pickedStar);
+                    document.getElementById("starName").textContent = STAR_NAMES[pickedStar];
+                    document.getElementById("rvAlert").classList.remove("show");
+                });
+            });
 
-    function highlightStars(n){
-        stars.forEach((el,i) => el.classList.toggle("on", i < n));
-    }
+            function highlightStars(n) {
+                stars.forEach((el, i) => el.classList.toggle("on", i < n));
+            }
 
-    window.updateCharCount = function(){
-        const v = document.getElementById("rvComment").value;
-        document.getElementById("charCount").textContent = `${v.length} / 500`;
-        if(v.length > 500)
-            document.getElementById("rvComment").value = v.slice(0,500);
-    };
+            window.updateCharCount = function () {
+                const v = document.getElementById("rvComment").value;
+                document.getElementById("charCount").textContent = `${v.length} / 500`;
+                if (v.length > 500)
+                    document.getElementById("rvComment").value = v.slice(0, 500);
+            };
 
-    // Kiểm tra trạng thái review (đã đánh giá chưa, có quyền chưa)
-    async function checkReviewStatus(){
-        try{
-            const res  = await fetch(`${API}/reviews/status/${bookId}`, {headers:authHeaders()});
-            const result = await res.json();
-            const d = result.data;
+            // Kiểm tra trạng thái review (đã đánh giá chưa, có quyền chưa)
+            async function checkReviewStatus() {
+                try {
+                    const res = await fetch(`${API}/reviews/status/${bookId}`, { headers: authHeaders() });
+                    const data = await res.json();
 
-            if(!data.canReview){
-                if(data.reason === "already_reviewed"){
-                    showAlert("Bạn đã đánh giá cuốn sách này rồi.", "error");
-                    document.getElementById("rvSubmit").disabled = true;
-                } else if(data.reason === "not_purchased"){
-                    showAlert("Bạn chưa mua cuốn sách này hoặc đơn hàng chưa hoàn thành.", "error");
-                    document.getElementById("rvSubmit").disabled = true;
+                    if (!data.canReview) {
+                        if (data.reason === "already_reviewed") {
+                            showAlert("Bạn đã đánh giá cuốn sách này rồi.", "error");
+                            document.getElementById("rvSubmit").disabled = true;
+                        } else if (data.reason === "not_purchased") {
+                            showAlert("Bạn chưa mua cuốn sách này hoặc đơn hàng chưa hoàn thành.", "error");
+                            document.getElementById("rvSubmit").disabled = true;
+                        }
+                    }
+                } catch { }
+            }
+
+            // Load book info
+            async function loadBook() {
+                try {
+                    const res = await fetch(`${API}/books/${bookId}`);
+                    const b = await res.json();
+                    const src = imgSrc(b.image || b.Image || "");
+                    document.getElementById("bookCard").innerHTML = `
+                    ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
+                    <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                    <div>
+                        <div class="rv-book-title">${b.title || b.Title || ""}</div>
+                        <div class="rv-book-author">${b.author || b.Author || ""}</div>
+                        <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
+                            ${(b.categoryName || b.CategoryName || "")}
+                        </div>
+                    </div>`;
+                } catch {
+                    document.getElementById("bookCard").innerHTML =
+                        `<div style="color:#aaa;font-size:.85rem">Không tải được thông tin sách.</div>`;
                 }
             }
-        }catch{}
-    }
 
-    // Load book info
-    async function loadBook(){
-        try{
-            const res = await fetch(`${API}/book/${bookId}`);
-            const result = await res.json();
-            const b = result.data;
-            const src  = imgSrc(b.image || b.Image || "");
-            document.getElementById("bookCard").innerHTML = `
-                ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
-                <div class="rv-book-img-ph" ${src?'style="display:none"':""}><i class="bi bi-book"></i></div>
-                <div>
-                    <div class="rv-book-title">${b.title||b.Title||""}</div>
-                    <div class="rv-book-author">${b.author||b.Author||""}</div>
-                    <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
-                        ${(b.categoryName||b.CategoryName||"")}
-                    </div>
-                </div>`;
-        }catch{
-            document.getElementById("bookCard").innerHTML =
-                `<div style="color:#aaa;font-size:.85rem">Không tải được thông tin sách.</div>`;
-        }
-    }
-
-    function showAlert(msg, type){
-        const el  = document.getElementById("rvAlert");
-        const txt = document.getElementById("rvAlertMsg");
-        txt.textContent = msg;
-        el.className = `rv-alert ${type} show`;
-        el.querySelector("i").className = type === "success"
-            ? "bi bi-check-circle-fill"
-            : "bi bi-exclamation-circle-fill";
-    }
-
-    window.submitReview = async function(){
-        document.getElementById("rvAlert").classList.remove("show");
-
-        if(!pickedStar){
-            showAlert("Vui lòng chọn số sao trước khi gửi.", "error");
-            return;
-        }
-
-        const comment = document.getElementById("rvComment").value.trim();
-        const btn     = document.getElementById("rvSubmit");
-        btn.disabled  = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
-
-        try{
-            const res  = await fetch(`${API}/reviews`, {
-                method:"POST", headers:authHeaders(),
-                body:JSON.stringify({ bookId, rating:pickedStar, comment })
-            });
-            const result = await res.json();
-            const d = result.data;
-
-            if(!res.ok){
-                const msg = data.message || data.Message
-                    || Object.values(data.errors||{})[0]?.[0]
-                    || "Gửi đánh giá thất bại.";
-                showAlert(msg, "error");
-                btn.disabled  = false;
-                btn.innerHTML = '<i class="bi bi-send"></i> Gửi đánh giá';
-                return;
+            function showAlert(msg, type) {
+                const el = document.getElementById("rvAlert");
+                const txt = document.getElementById("rvAlertMsg");
+                txt.textContent = msg;
+                el.className = `rv-alert ${type} show`;
+                el.querySelector("i").className = type === "success"
+                    ? "bi bi-check-circle-fill"
+                    : "bi bi-exclamation-circle-fill";
             }
 
-            // Ẩn form, hiện success
-            document.getElementById("formCard").style.display  = "none";
-            document.getElementById("bookCard").style.display  = "none";
-            document.querySelector(".rv-back").style.display   = "none";
-            document.getElementById("successCard").classList.add("show");
+            window.submitReview = async function () {
+                document.getElementById("rvAlert").classList.remove("show");
 
-        }catch{
-            showAlert("Không kết nối được máy chủ.", "error");
-            btn.disabled  = false;
-            btn.innerHTML = '<i class="bi bi-send"></i> Gửi đánh giá';
-        }
-    };
+                if (!pickedStar) {
+                    showAlert("Vui lòng chọn số sao trước khi gửi.", "error");
+                    return;
+                }
 
-    loadBook();
-    checkReviewStatus();
-})();
+                const comment = document.getElementById("rvComment").value.trim();
+                const btn = document.getElementById("rvSubmit");
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+
+                try {
+                    const res = await fetch(`${API}/reviews`, {
+                        method: "POST", headers: authHeaders(),
+                        body: JSON.stringify({ bookId, rating: pickedStar, comment })
+                    });
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        const msg = data.message || data.Message
+                            || Object.values(data.errors || {})[0]?.[0]
+                            || "Gửi đánh giá thất bại.";
+                        showAlert(msg, "error");
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-send"></i> Gửi đánh giá';
+                        return;
+                    }
+
+                    // Ẩn form, hiện success
+                    document.getElementById("formCard").style.display = "none";
+                    document.getElementById("bookCard").style.display = "none";
+                    document.querySelector(".rv-back").style.display = "none";
+                    document.getElementById("successCard").classList.add("show");
+
+                } catch {
+                    showAlert("Không kết nối được máy chủ.", "error");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send"></i> Gửi đánh giá';
+                }
+            };
+
+            loadBook();
+            checkReviewStatus();
+        })();
     </script>
 </body>
 </html>

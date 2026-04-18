@@ -4,12 +4,12 @@ namespace WebAPI.Services.Interfaces
 {
     public interface ICategoryService
     {
-        Task<ApiResponse<object>> GetAllAsync(bool includeBookCount);
-        Task<ApiResponse<CategoryDto>> GetByIdAsync(int id);
-        Task<ApiResponse<object>> GetBooksAsync(int id, int page, int pageSize);
-        Task<ApiResponse<CategoryDto>> CreateAsync(CategoryUpsertDto dto);
-        Task<ApiResponse<CategoryDto>> UpdateAsync(int id, CategoryUpsertDto dto);
-        Task<ApiResponse<object>> DeleteAsync(int id, bool force);
-        Task<ApiResponse<List<CategoryDto>>> SearchAsync(string keyword);
+        Task<object> GetAllAsync(bool includeBookCount);
+        Task<CategoryDto?> GetByIdAsync(int id);
+        Task<object?> GetBooksAsync(int id, int page, int pageSize);
+        Task<object> CreateAsync(CategoryUpsertDto dto);
+        Task<object> UpdateAsync(int id, CategoryUpsertDto dto);
+        Task<object> DeleteAsync(int id, bool force);
+        Task<List<CategoryDto>> SearchAsync(string keyword);
     }
 }

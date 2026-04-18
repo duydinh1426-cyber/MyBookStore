@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Services
@@ -12,7 +11,7 @@ namespace WebAPI.Services
         private readonly IUserRepository _repo;
         public UserService(IUserRepository repo) => _repo = repo;
 
-        public async Task<ApiResponse<object>> GetAllUsersAsync(string? keyword, int page, int pageSize)
+        public async Task<object> GetAllUsersAsync(string? keyword, int page, int pageSize)
         {
             var query = _repo.GetQuery();
 
@@ -33,64 +32,63 @@ namespace WebAPI.Services
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(a => new {
-                    AccountId = a.AccountId,
-                    UserId = a.Customers.Select(c => c.UserId).FirstOrDefault(),
-                    Username = a.Username,
-                    Email = a.Email,
-                    Name = a.Customers.Select(c => c.Name).FirstOrDefault(),
-                    Address = a.Customers.Select(c => c.Address).FirstOrDefault() ?? "",
-                    a.CreatedAt
+                    userId = a.Customers.Select(c => c.UserId).FirstOrDefault(),
+                    accountId = a.AccountId,
+                    name = a.Customers.Select(c => c.Name).FirstOrDefault() ?? "",
+                    username = a.Username,
+                    email = a.Email,
+                    address = a.Customers.Select(c => c.Address).FirstOrDefault() ?? "",
+                    isAdmin = false,
+                    createdAt = a.CreatedAt
                 })
                 .ToListAsync();
 
-            var result = new
+            return new
             {
-                Total = total,
-                Page = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)total / pageSize),
-                Data = items
+                data = items, 
+                total = total,
+                totalPages = (int)Math.Ceiling((double)total / pageSize),
+                page = page
             };
-
-            return ApiResponse<object>.Success(result);
         }
 
-        public async Task<ApiResponse<object>> GetUserDetailAsync(int id)
+        public async Task<object?> GetUserDetailAsync(int id)
         {
             var account = await _repo.GetDetailByIdAsync(id);
-            if (account == null) return ApiResponse<object>.Fail("Không tìm thấy người dùng.", 404);
+            if (account == null) return null;
 
             var customer = account.Customers.FirstOrDefault();
             var totalOrders = customer?.Orders?.Count ?? 0;
             var totalSpent = customer?.Orders?.Sum(o => o.TotalCost) ?? 0;
 
-            return ApiResponse<object>.Success(new
+            return new
             {
-                account.AccountId,
-                UserId = customer?.UserId,
-                account.Username,
-                account.Email,
-                Name = customer?.Name ?? "",
-                Address = customer?.Address ?? "",
-                TotalOrders = totalOrders,
-                TotalSpent = totalSpent,
-                account.CreatedAt
-            });
+                userId = customer?.UserId,
+                accountId = account.AccountId,
+                name = customer?.Name ?? "",
+                username = account.Username,
+                email = account.Email,
+                address = customer?.Address ?? "",
+                isAdmin = false,
+                totalOrders = totalOrders,
+                totalSpent = (decimal)totalSpent,
+                createdAt = account.CreatedAt
+            };
         }
 
-        public async Task<ApiResponse<object>> ResetPasswordAsync(int id)
+        public async Task<object> ResetPasswordAsync(int id)
         {
             var account = await _repo.GetBasicByIdAsync(id);
-            if (account == null) return ApiResponse<object>.Fail("Không tìm thấy người dùng.", 404);
+            if (account == null) return new { message = "NotFound" };
 
-            // Logic hash mật khẩu đồng bộ với AuthRepository/Service
             const string DEFAULT_PASSWORD = "123456";
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(DEFAULT_PASSWORD));
             account.Password = Convert.ToHexString(bytes).ToLower();
 
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(null, $"Đã reset mật khẩu người dùng '{account.Username}' về mặc định: {DEFAULT_PASSWORD}")
-                : ApiResponse<object>.Fail("Không có thay đổi nào được thực hiện hoặc lỗi hệ thống.", 500);
+            if (await _repo.SaveChangesAsync())
+                return new { message = "Đã reset mật khẩu về 123456." };
+
+            return new { message = "Lỗi khi cập nhật mật khẩu." };
         }
     }
 }

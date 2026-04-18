@@ -514,14 +514,11 @@
                     });
 
                     if (res.ok) {
-                        const result = await res.json();
-                        const data = result.data;
-
-                        const token = data.token;
-                        sessionStorage.setItem("token", token);
+                        const data = await res.json();
+                        sessionStorage.setItem("token", data.token);
 
                         // Decode token để lấy role
-                        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+                        const base64 = data.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
                         const payload = JSON.parse(decodeURIComponent(
                             atob(base64).split("").map(c =>
                                 "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
@@ -534,8 +531,7 @@
                             ? "../html/admin.html"
                             : "../html/index.html";
                     } else {
-                        const result = await res.json();
-                        const data = result.data.catch(() => ({}));
+                        const data = await res.json().catch(() => ({}));
                         showErr(data.message || "Sai tài khoản hoặc mật khẩu.");
                     }
                 } catch {

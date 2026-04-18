@@ -5,7 +5,7 @@ using WebAPI.Services.Interfaces;
 namespace WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     [Authorize(Roles = "Admin")]
     public class UsersController : ControllerBase
     {
@@ -18,22 +18,35 @@ namespace WebAPI.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 15)
         {
-            var res = await _service.GetAllUsersAsync(keyword, page, pageSize);
-            return StatusCode(res.StatusCode, res);
+            return Ok(await _service.GetAllUsersAsync(keyword, page, pageSize));
         }
 
         [HttpGet("admin/{id:int}")]
         public async Task<IActionResult> GetUserDetail(int id)
         {
-            var res = await _service.GetUserDetailAsync(id);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.GetUserDetailAsync(id);
+
+            if (result == null)
+            {
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+            }
+
+            return Ok(result);
         }
 
         [HttpPost("admin/{id:int}/reset-password")]
         public async Task<IActionResult> ResetPassword(int id)
         {
-            var res = await _service.ResetPasswordAsync(id);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.ResetPasswordAsync(id);
+            dynamic res = result;
+
+            if (res.message == "NotFound")
+                return NotFound(new { message = "Không tìm thấy người dùng." });
+
+            if (res.message != null)
+                return StatusCode(500, new { message = "Lỗi khi cập nhật mật khẩu." });
+
+            return Ok(result);
         }
     }
 }

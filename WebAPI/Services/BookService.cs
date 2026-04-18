@@ -1,7 +1,6 @@
 ﻿using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MyBookStore.Data.Models;
-using System.Globalization;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
@@ -11,9 +10,12 @@ namespace WebAPI.Services
     {
         private readonly IBookRepository _repo;
 
-        public BookService(IBookRepository repo) => _repo = repo;
+        public BookService(IBookRepository repo)
+        {
+            _repo = repo;
+        }
 
-        private static BookSummaryDto MapToSummary(Book book)
+        private BookSummaryDto MapToSummary(Book book)
         {
             return new BookSummaryDto(
                 book.BookId,
@@ -21,22 +23,21 @@ namespace WebAPI.Services
                 book.Author,
                 book.Price,
                 book.Image,
-                book.Category != null ? book.Category.CategoryName : null,
+                book.Category?.CategoryName,
                 book.NumberStock,
                 book.NumberSold
             );
         }
 
-        public async Task<ApiResponse<BookPagedResultDto>> GetBooksAsync(BookQueryDto queryDto)
+        public async Task<BookPagedResultDto> GetBooksAsync(BookQueryDto queryDto)
         {
             var query = _repo.GetQuery().AsNoTracking();
 
-            // Lọc theo từ khóa
             if (!string.IsNullOrWhiteSpace(queryDto.Keyword))
             {
                 var keyword = queryDto.Keyword.Trim().ToLower();
                 query = query.Where(b => b.Title.ToLower().Contains(keyword) ||
-                        (b.Author != null && b.Author.ToLower().Contains(keyword)));
+                                   (b.Author != null && b.Author.ToLower().Contains(keyword)));
             }
 
             if (queryDto.CategoryId.HasValue)
@@ -48,7 +49,6 @@ namespace WebAPI.Services
             if (queryDto.MaxPrice.HasValue)
                 query = query.Where(b => b.Price <= queryDto.MaxPrice);
 
-            // Sắp xếp
             query = (queryDto.SortBy?.ToLower(), queryDto.SortOrder?.ToLower()) switch
             {
                 ("price", "asc") => query.OrderBy(b => b.Price),
@@ -66,60 +66,57 @@ namespace WebAPI.Services
             var total = await query.CountAsync();
             var totalPages = (int)Math.Ceiling((double)total / queryDto.PageSize);
 
-            var data = await query
+            var books = await query
                 .Skip((queryDto.Page - 1) * queryDto.PageSize)
                 .Take(queryDto.PageSize)
-                .Select(b => MapToSummary(b))
                 .ToListAsync();
 
-            var result = new BookPagedResultDto(total, queryDto.Page, queryDto.PageSize, totalPages, data);
-            return ApiResponse<BookPagedResultDto>.Success(result);
+            var data = books.Select(b => MapToSummary(b)).ToList();
+
+            return new BookPagedResultDto(total, queryDto.Page, queryDto.PageSize, totalPages, data);
         }
 
-        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopNewAsync(int count)
+        public async Task<List<BookSummaryDto>> GetTopNewAsync(int count)
         {
-            var data = await _repo.GetQuery()
+            var books = await _repo.GetQuery()
                 .AsNoTracking()
                 .OrderByDescending(b => b.CreatedAt)
                 .Take(count)
-                .Select(b => MapToSummary(b))
                 .ToListAsync();
 
-            return ApiResponse<List<BookSummaryDto>>.Success(data);
+            return books.Select(b => MapToSummary(b)).ToList();
         }
 
-        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopSellingAsync(int count)
+        public async Task<List<BookSummaryDto>> GetTopSellingAsync(int count)
         {
-            var data = await _repo.GetQuery()
+            var books = await _repo.GetQuery()
                 .AsNoTracking()
                 .OrderByDescending(b => b.NumberSold)
                 .Take(count)
-                .Select(b => MapToSummary(b))
                 .ToListAsync();
 
-            return ApiResponse<List<BookSummaryDto>>.Success(data);
+            return books.Select(b => MapToSummary(b)).ToList();
         }
 
-        public async Task<ApiResponse<List<BookSummaryDto>>> GetTopRatedAsync(int count)
+        public async Task<List<BookSummaryDto>> GetTopRatedAsync(int count)
         {
-            var data = await _repo.GetQuery()
+            var books = await _repo.GetQuery()
                 .AsNoTracking()
+                .Where(b => b.ReviewCount > 0)
                 .OrderByDescending(b => b.AvgRating)
                 .ThenByDescending(b => b.ReviewCount)
                 .Take(count)
-                .Select(b => MapToSummary(b))
                 .ToListAsync();
 
-            return ApiResponse<List<BookSummaryDto>>.Success(data);
+            return books.Select(b => MapToSummary(b)).ToList();
         }
 
-        public async Task<ApiResponse<BookDetailDto>> GetByIdAsync(int id)
+        public async Task<BookDetailDto?> GetByIdAsync(int id)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null)
-                return ApiResponse<BookDetailDto>.Fail("Không tìm thấy sách.", 404);
+            if (book == null) return null;
 
-            var detail = new BookDetailDto(
+            return new BookDetailDto(
                 book.BookId,
                 book.Title ?? "",
                 book.Author ?? "",
@@ -132,22 +129,22 @@ namespace WebAPI.Services
                 book.NumberSold,
                 book.CategoryId,
                 book.Category?.CategoryName,
-                (double)book.AvgRating,
+                Math.Round((double)book.AvgRating, 1),
                 book.ReviewCount
             );
-
-            return ApiResponse<BookDetailDto>.Success(detail);
         }
 
-        public async Task<ApiResponse<object>> CreateAsync(BookUpsertDto dto)
+        public async Task<(string? Error, int? BookId)> CreateAsync(BookUpsertDto dto)
         {
             if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
-                return ApiResponse<object>.Fail("Thể loại không tồn tại.");
+            {
+                return ("Thể loại không tồn tại.", null);
+            }
 
             var book = new Book
             {
                 CategoryId = dto.CategoryId,
-                Author = (dto.Author ?? "").Trim(),
+                Author = dto.Author?.Trim(),
                 Title = dto.Title.Trim(),
                 PublisherYear = dto.PublisherYear,
                 Description = dto.Description?.Trim(),
@@ -163,23 +160,24 @@ namespace WebAPI.Services
             };
 
             _repo.Add(book);
-            if (await _repo.SaveChangesAsync())
-                return ApiResponse<object>.Success(new { bookId = book.BookId }, "Thêm sách thành công.");
+            var success = await _repo.SaveChangesAsync();
 
-            return ApiResponse<object>.Fail("Lỗi hệ thống khi lưu sách.", 500);
+            if (success) return (null, book.BookId);
+            return ("Lỗi hệ thống khi lưu sách.", null);
         }
 
-        public async Task<ApiResponse<object>> UpdateAsync(int id, BookUpsertDto dto)
+        public async Task<string?> UpdateAsync(int id, BookUpsertDto dto)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null)
-                return ApiResponse<object>.Fail("Không tìm thấy sách.", 404);
+            if (book == null) return "Không tìm thấy sách.";
 
             if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
-                return ApiResponse<object>.Fail("Thể loại không tồn tại.");
+            {
+                return "Thể loại không tồn tại.";
+            }
 
             book.CategoryId = dto.CategoryId;
-            book.Author = (dto.Author ?? "").Trim();
+            book.Author = dto.Author?.Trim();
             book.Title = dto.Title.Trim();
             book.PublisherYear = dto.PublisherYear;
             book.Description = dto.Description?.Trim();
@@ -190,26 +188,23 @@ namespace WebAPI.Services
             book.UpdatedAt = DateTime.UtcNow;
 
             _repo.Update(book);
-            if (await _repo.SaveChangesAsync())
-                return ApiResponse<object>.Success(null, "Cập nhật sách thành công.");
-
-            return ApiResponse<object>.Fail("Lỗi hệ thống khi cập nhật sách.", 500);
+            var success = await _repo.SaveChangesAsync();
+            return success ? null : "Lỗi hệ thống khi cập nhật sách.";
         }
 
-        public async Task<ApiResponse<object>> DeleteAsync(int id)
+        public async Task<string?> DeleteAsync(int id)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null)
-                return ApiResponse<object>.Fail("Không tìm thấy sách.", 404);
+            if (book == null) return "Không tìm thấy sách.";
 
             if (await _repo.HasOrderItemsAsync(id))
-                return ApiResponse<object>.Fail("Không thể xóa sách đã có trong đơn hàng.");
+            {
+                return "Không thể xóa sách đã có trong đơn hàng.";
+            }
 
             _repo.Delete(book);
-            if (await _repo.SaveChangesAsync())
-                return ApiResponse<object>.Success(null, "Xóa sách thành công.");
-
-            return ApiResponse<object>.Fail("Lỗi hệ thống khi xóa sách.", 500);
+            var success = await _repo.SaveChangesAsync();
+            return success ? null : "Lỗi hệ thống khi xóa sách.";
         }
     }
 }

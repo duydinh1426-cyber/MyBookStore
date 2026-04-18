@@ -11,21 +11,20 @@ namespace WebAPI.Services
         private readonly IOrderRepository _repo;
         public OrderService(IOrderRepository repo) => _repo = repo;
 
-        #region Helpers
         private void RestoreStock(Order order)
         {
-            foreach (var item in order.OrderItems!)
+            if (order.OrderItems == null) return;
+            foreach (var item in order.OrderItems)
             {
                 item.Book.NumberStock += item.Quantity;
                 item.Book.NumberSold -= item.Quantity;
             }
         }
-        #endregion
 
-        public async Task<ApiResponse<object>> CheckoutAsync(int userId, CheckoutDto dto)
+        public async Task<object> CheckoutAsync(int userId, CheckoutDto dto)
         {
             var cartItems = await _repo.GetCartItemsAsync(userId);
-            if (!cartItems.Any()) return ApiResponse<object>.Fail("Giỏ hàng của bạn đang trống.");
+            if (!cartItems.Any()) return new { message = "Giỏ hàng của bạn đang trống." };
 
             decimal totalCost = 0;
             var orderItems = new List<OrderItem>();
@@ -33,10 +32,9 @@ namespace WebAPI.Services
             foreach (var item in cartItems)
             {
                 if (item.Book.NumberStock < item.Quantity)
-                    return ApiResponse<object>.Fail($"Sách '{item.Book.Title}' chỉ còn {item.Book.NumberStock} cuốn.");
+                    return new { message = $"Sách '{item.Book.Title}' chỉ còn {item.Book.NumberStock} cuốn." };
 
                 totalCost += item.Book.Price * item.Quantity;
-
                 orderItems.Add(new OrderItem
                 {
                     BookId = item.BookId,
@@ -46,7 +44,6 @@ namespace WebAPI.Services
                     UpdatedAt = DateTime.UtcNow
                 });
 
-                // Cập nhật kho
                 item.Book.NumberStock -= item.Quantity;
                 item.Book.NumberSold += item.Quantity;
             }
@@ -57,7 +54,7 @@ namespace WebAPI.Services
                 Phone = dto.Phone.Trim(),
                 Address = dto.Address.Trim(),
                 Note = dto.Note?.Trim(),
-                Status = OrderStatus.PENDING.ToValue(),
+                Status = OrderStatus.pending.ToValue(),
                 TotalCost = totalCost,
                 OrderItems = orderItems,
                 CreatedAt = DateTime.UtcNow,
@@ -67,130 +64,133 @@ namespace WebAPI.Services
             _repo.AddOrder(order);
             _repo.RemoveCartItems(cartItems);
 
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(new { orderId = order.OrderId, total = totalCost }, "Đặt hàng thành công.")
-                : ApiResponse<object>.Fail("Lỗi hệ thống khi xử lý đơn hàng.", 500);
+            if (await _repo.SaveChangesAsync())
+                return new
+                {
+                    message = "Đặt hàng thành công.",
+                    orderId = order.OrderId,
+                    totalCost = totalCost, 
+                    itemCount = orderItems.Count
+                };
+
+            return new { message = "Lỗi hệ thống khi xử lý đơn hàng." };
         }
 
-        public async Task<ApiResponse<object>> GetByIdAsync(int userId, bool isAdmin, int id)
+        public async Task<object?> GetByIdAsync(int userId, bool isAdmin, int id)
         {
             var order = await _repo.GetOrderByIdAsync(id);
-            if (order == null) return ApiResponse<object>.Fail("Không tìm thấy đơn hàng.", 404);
+            if (order == null) return null;
 
-            if (!isAdmin && order.UserId != userId)
-                return ApiResponse<object>.Fail("Bạn không có quyền xem đơn hàng này.", 403);
+            if (!isAdmin && order.UserId != userId) return new { message = "Forbidden" };
 
             var currentStatus = order.Status.ToEnum();
-
-            return ApiResponse<object>.Success(new
+            return new
             {
-                order.OrderId,
-                order.Phone,
-                order.Address,
-                order.TotalCost,
-                Status = order.Status,
-                StatusLabel = currentStatus.ToLabel(),
-                NextStatuses = currentStatus.GetNextStatuses().Select(s => s.ToValue()),
-                IsFinal = currentStatus.isFinal(),
-                Items = order.OrderItems?.Select(oi => new
+                message = "",
+                orderId = order.OrderId,
+                totalCost = order.TotalCost,
+                status = order.Status,
+                phone = order.Phone,
+                address = order.Address,
+                note = order.Note,
+                createdAt = order.CreatedAt,
+                updatedAt = order.UpdatedAt,
+                nextStatuses = currentStatus.GetNextStatuses().Select(s => s.ToValue()),
+                isFinal = currentStatus.IsFinal(),
+                customer = new
                 {
-                    oi.BookId,
-                    oi.Book.Title,
-                    oi.Quantity,
-                    oi.UnitPrice,
-                    SubTotal = oi.Quantity * oi.UnitPrice
+                    userId = order.UserId,
+                    name = order.User?.Name,
+                    email = order.User?.Account?.Email ?? ""
+                },
+                items = order.OrderItems?.Select(oi => new {
+                    orderItemId = oi.OrderItemId,
+                    quantity = oi.Quantity,
+                    unitPrice = oi.UnitPrice,
+                    subTotal = oi.Quantity * oi.UnitPrice,
+                    book = new
+                    {
+                        bookId = oi.BookId,
+                        title = oi.Book.Title,
+                        author = oi.Book.Author,
+                        image = oi.Book.Image
+                    }
                 })
-            });
+            };
         }
 
-        public async Task<ApiResponse<object>> GetUserOrdersAsync(int userId)
+        public async Task<object> GetUserOrdersAsync(int userId, int page, int pageSize, string? status)
         {
-            var orders = await _repo.GetUserOrdersAsync(userId);
-            var data = orders.Select(o => new
-            {
-                o.OrderId,
-                o.TotalCost,
-                o.Status,
-                StatusLabel = o.Status.ToEnum().ToLabel(),
-                o.CreatedAt
-            });
-            return ApiResponse<object>.Success(data);
+            var orders = await _repo.GetUserOrdersAsync(userId, page, pageSize, status);
+            return orders;
         }
 
-        public async Task<ApiResponse<object>> AdminGetAllOrdersAsync(string? status, string? keyword)
+        public async Task<object> AdminGetAllOrdersAsync(string? status, string? keyword)
         {
             var orders = await _repo.GetAllOrdersAdminAsync(status, keyword);
-            var data = orders.Select(o => new
+            return orders.Select(o => new
             {
                 o.OrderId,
-                CustomerName = o.User?.Name,
+                customerName = o.User?.Name,
                 o.TotalCost,
                 o.Status,
-                StatusLabel = o.Status.ToEnum().ToLabel(),
+                statusLabel = o.Status.ToEnum().ToLabel(),
                 o.CreatedAt,
                 o.Phone
-            });
-            return ApiResponse<object>.Success(data);
+            }).ToList();
         }
 
-        public async Task<ApiResponse<object>> CancelAsync(int userId, int id)
+        public async Task<object> CancelAsync(int userId, int id)
         {
             var order = await _repo.GetOrderByIdAsync(id);
-            if (order == null) return ApiResponse<object>.Fail("Không tìm thấy đơn hàng.", 404);
-            if (order.UserId != userId) return ApiResponse<object>.Fail("Bạn không có quyền hủy đơn này.", 403);
+            if (order == null) return new { message = "NotFound" };
+            if (order.UserId != userId) return new { message = "Forbidden" };
 
             var current = order.Status.ToEnum();
-            if (!current.CanTransitionTo(OrderStatus.CANCELLED))
-                return ApiResponse<object>.Fail($"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'.");
+            if (!current.CanTransitionTo(OrderStatus.cancelled))
+                return new { message = $"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'." };
 
             RestoreStock(order);
-            order.Status = OrderStatus.CANCELLED.ToValue();
+            order.Status = OrderStatus.cancelled.ToValue();
             order.UpdatedAt = DateTime.UtcNow;
 
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(null, "Hủy đơn hàng thành công.")
-                : ApiResponse<object>.Fail("Lỗi khi cập nhật trạng thái đơn hàng.", 500);
+            if (await _repo.SaveChangesAsync()) return new { message = "Hủy đơn hàng thành công." };
+            return new { message = "Lỗi hệ thống khi hủy đơn." };
         }
 
-        public async Task<ApiResponse<object>> UpdateStatusAsync(int id, UpdateOrderStatusDto dto)
+        public async Task<object> UpdateStatusAsync(int id, UpdateOrderStatusDto dto)
         {
             var order = await _repo.GetOrderByIdAsync(id);
-            if (order == null) return ApiResponse<object>.Fail("Không tìm thấy đơn hàng.", 404);
+            if (order == null) return new { success = false, message = "NotFound" };
 
             var current = order.Status.ToEnum();
-            if (!current.CanTransitionTo(dto.Status))
-            {
-                var allowed = current.GetNextStatuses().Select(s => s.ToLabel());
-                return ApiResponse<object>.Fail($"Trạng thái không hợp lệ. Chỉ có thể chuyển sang: {string.Join(", ", allowed)}");
-            }
+            var target = dto.GetStatus();  // ← đổi từ dto.Status
 
-            if (dto.Status == OrderStatus.CANCELLED)
-                RestoreStock(order);
+            if (!current.CanTransitionTo(target))
+                return new { success = false, message = $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'" };
 
-            order.Status = dto.Status.ToValue();
+            if (target == OrderStatus.cancelled) RestoreStock(order);
+
+            order.Status = target.ToValue();
             order.UpdatedAt = DateTime.UtcNow;
 
-            return await _repo.SaveChangesAsync()
-                ? ApiResponse<object>.Success(new
+            if (await _repo.SaveChangesAsync())
+                return new
                 {
-                    message = "Cập nhật thành công",
-                    newStatus = dto.Status.ToValue(),
-                    isFinal = dto.Status.isFinal()
-                })
-                : ApiResponse<object>.Fail("Lỗi khi cập nhật trạng thái.", 500);
+                    success = true,
+                    message = "Cập nhật trạng thái thành công",
+                    orderId = order.OrderId,
+                    newStatus = order.Status,
+                    nextStatuses = target.GetNextStatuses().Select(s => s.ToValue()),
+                    isFinal = target.IsFinal()
+                };
+
+            return new { success = false, message = "Lỗi hệ thống khi cập nhật" };
         }
 
-        public async Task<ApiResponse<object>> GetAdminStatsAsync()
+        public async Task<object> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null)
         {
-            try
-            {
-                var stats = await _repo.GetAdminStatsAsync();
-                return ApiResponse<object>.Success(stats);
-            }
-            catch (Exception)
-            {
-                return ApiResponse<object>.Fail("Lỗi khi lấy dữ liệu thống kê.", 500);
-            }
+            return await _repo.GetAdminStatsAsync(from, to);
         }
     }
 }

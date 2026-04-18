@@ -19,7 +19,10 @@ namespace Data.Repositories
             await _db.Reviews.FirstOrDefaultAsync(r => r.UserId == userId && r.BookId == bookId);
 
         public async Task<bool> HasPurchasedAsync(int userId, int bookId) =>
-            await _db.OrderItems.AnyAsync(oi => oi.Order.UserId == userId && oi.BookId == bookId);
+            await _db.OrderItems.AnyAsync(oi =>
+                oi.Order.UserId == userId &&
+                oi.BookId == bookId &&
+                oi.Order.Status == "completed");
 
         public async Task<bool> BookExistsAsync(int bookId) =>
             await _db.Books.AnyAsync(b => b.BookId == bookId);
@@ -39,14 +42,19 @@ namespace Data.Repositories
         public async Task UpdateBookRatingAsync(int bookId)
         {
             var book = await _db.Books.FindAsync(bookId);
-            if (book != null)
-            {
-                var reviews = _db.Reviews.Where(r => r.BookId == bookId);
-                book.ReviewCount = await reviews.CountAsync();
-                book.AvgRating = book.ReviewCount > 0
-                    ? (decimal)await reviews.AverageAsync(r => r.Rating)
-                    : 0;
-            }
+            if (book == null) return;
+
+            var stats = await _db.Reviews
+                .Where(r => r.BookId == bookId)
+                .GroupBy(r => r.BookId)
+                .Select(g => new {
+                    Avg = g.Average(r => (double)r.Rating),
+                    Count = g.Count()
+                })
+                .FirstOrDefaultAsync();
+
+            book.AvgRating = stats != null ? (decimal)Math.Round(stats.Avg, 2) : 0;
+            book.ReviewCount = stats?.Count ?? 0;
         }
 
         public async Task<bool> SaveChangesAsync() => await _db.SaveChangesAsync() > 0;

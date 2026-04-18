@@ -20,42 +20,56 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("book/{bookId:int}")]
-        public async Task<IActionResult> GetByBook(int bookId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] int? rating = null)
+        public async Task<IActionResult> GetByBook(int bookId, int page = 1, int pageSize = 10, int? rating = null)
         {
-            var res = await _service.GetByBookAsync(bookId, page, pageSize, rating);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.GetByBookAsync(bookId, page, pageSize, rating);
+            dynamic res = result;
+            if (res.message == "NotFound") return NotFound(new { message = "Sách không tồn tại." });
+            return Ok(result);
         }
 
         [HttpGet("status/{bookId:int}")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetStatus(int bookId)
         {
-            var res = await _service.GetReviewStatusAsync(GetUserId(), bookId);
-            return StatusCode(res.StatusCode, res);
+            return Ok(await _service.GetReviewStatusAsync(GetUserId(), bookId));
         }
 
         [HttpPost]
         [Authorize(Roles = "Customer")]
-        public async Task<IActionResult> Create([FromBody] CreateReviewDto dto)
+        public async Task<IActionResult> Create(CreateReviewDto dto)
         {
-            var res = await _service.CreateAsync(GetUserId(), dto);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.CreateAsync(GetUserId(), dto);
+            dynamic res = result;
+
+            if (res.message == "NotFound") return NotFound(new { message = "Sách không tồn tại." });
+            if (res.message == "Đánh giá phải từ 1 đến 5 sao." ||
+                res.message == "Bạn cần mua sản phẩm này trước khi đánh giá." ||
+                res.message == "Bạn đã đánh giá sản phẩm này rồi." ||
+                res.message == "Lỗi khi lưu đánh giá.")
+                return BadRequest(result);
+
+            return StatusCode(201, result);
         }
 
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var res = await _service.DeleteAsync(id);
-            return StatusCode(res.StatusCode, res);
+            var result = await _service.DeleteAsync(id);
+            dynamic res = result;
+
+            if (res.message == "NotFound") return NotFound(new { message = "Không tìm thấy đánh giá." });
+            if (res.message == "Lỗi khi xóa đánh giá.") return StatusCode(500, result);
+
+            return Ok(result);
         }
 
         [HttpGet("admin/all")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AdminGetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] int? rating = null, [FromQuery] int? bookId = null)
+        public async Task<IActionResult> AdminGetAll(int page = 1, int pageSize = 20, int? rating = null, int? bookId = null)
         {
-            var res = await _service.AdminGetAllAsync(page, pageSize, rating, bookId);
-            return StatusCode(res.StatusCode, res);
+            return Ok(await _service.AdminGetAllAsync(page, pageSize, rating, bookId));
         }
     }
 }
