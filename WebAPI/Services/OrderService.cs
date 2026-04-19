@@ -26,6 +26,10 @@ namespace WebAPI.Services
             var cartItems = await _repo.GetCartItemsAsync(userId);
             if (!cartItems.Any()) return new { message = "Giỏ hàng của bạn đang trống." };
 
+            var method = dto.PaymentMethod.ToLower();
+            if (method != "cod" && method != "vnpay")
+                return new { message = "Phương thức thanh toán không hợp lệ." };
+
             decimal totalCost = 0;
             var orderItems = new List<OrderItem>();
 
@@ -55,6 +59,8 @@ namespace WebAPI.Services
                 Address = dto.Address.Trim(),
                 Note = dto.Note?.Trim(),
                 Status = OrderStatus.pending.ToValue(),
+                PaymentMethod = method,
+                IsPaid = false,
                 TotalCost = totalCost,
                 OrderItems = orderItems,
                 CreatedAt = DateTime.UtcNow,
@@ -70,7 +76,10 @@ namespace WebAPI.Services
                     message = "Đặt hàng thành công.",
                     orderId = order.OrderId,
                     totalCost = totalCost, 
-                    itemCount = orderItems.Count
+                    itemCount = orderItems.Count,
+                    paymentMethod = method,
+                    // Nếu vnpay thì frontend cần gọi tiếp /api/payment/vnpay/create
+                    requiresPayment = method == "vnpay"
                 };
 
             return new { message = "Lỗi hệ thống khi xử lý đơn hàng." };
@@ -136,7 +145,10 @@ namespace WebAPI.Services
                 o.Status,
                 statusLabel = o.Status.ToEnum().ToLabel(),
                 o.CreatedAt,
-                o.Phone
+                o.Phone,
+                o.PaymentMethod,
+                o.IsPaid,
+                o.Address
             }).ToList();
         }
 
@@ -168,6 +180,15 @@ namespace WebAPI.Services
 
             if (!current.CanTransitionTo(target))
                 return new { success = false, message = $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'" };
+
+            if (target == OrderStatus.confirmed
+                && order.PaymentMethod?.ToLower() == "vnpay"
+                && !order.IsPaid)
+                return new
+                {
+                    success = false,
+                    message = "Không thể xác nhận đơn hàng vì khách chưa thanh toán qua VNPay."
+                };
 
             if (target == OrderStatus.cancelled) RestoreStock(order);
 

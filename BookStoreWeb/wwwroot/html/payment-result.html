@@ -1,0 +1,488 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kết quả thanh toán – Book Store</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@600;700&display=swap">
+    <style>
+        :root {
+            --green: #6ab04c;
+            --green-dark: #4e8a35;
+            --green-light: #f0fff4;
+            --green-border: #b7e4c7;
+            --red: #e74c3c;
+            --red-light: #fff0f0;
+            --red-border: #f5c6c6;
+            --blue: #1a6fb0;
+            --text: #1a1a1a;
+            --muted: #8a9bb0;
+            --border: #e8edf2;
+            --bg: #f5f7fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', 'Segoe UI', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+        }
+
+        /* ── Full page layout ── */
+        .pr-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5rem 1rem 3rem; /* top padding để tránh header */
+        }
+
+        /* ── Card ── */
+        .pr-card {
+            background: #fff;
+            border-radius: 24px;
+            border: 1.5px solid var(--border);
+            padding: 3rem 2.5rem 2.5rem;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 12px 48px rgba(0,0,0,.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+            /* decorative top bar */
+            .pr-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                border-radius: 24px 24px 0 0;
+            }
+
+            .pr-card.success::before {
+                background: linear-gradient(90deg, var(--green), #a8e063);
+            }
+
+            .pr-card.fail::before {
+                background: linear-gradient(90deg, var(--red), #f39c12);
+            }
+
+        /* ── Icon ── */
+        .pr-icon {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            margin: 0 auto 1.6rem;
+            animation: popIn .5s cubic-bezier(.34,1.56,.64,1) forwards;
+        }
+
+        .pr-icon-success {
+            background: var(--green-light);
+            border: 3px solid var(--green-border);
+            color: var(--green);
+        }
+
+        .pr-icon-fail {
+            background: var(--red-light);
+            border: 3px solid var(--red-border);
+            color: var(--red);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0) rotate(-15deg);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* ── Text ── */
+        .pr-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: .5rem;
+            animation: fadeUp .4s .2s both;
+        }
+
+        .pr-sub {
+            font-size: .92rem;
+            color: var(--muted);
+            line-height: 1.65;
+            margin-bottom: 1.75rem;
+            animation: fadeUp .4s .3s both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Meta box ── */
+        .pr-meta {
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.75rem;
+            text-align: left;
+            animation: fadeUp .4s .4s both;
+        }
+
+        .pr-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: .42rem 0;
+            font-size: .875rem;
+            border-bottom: 1px solid #f0f2f5;
+        }
+
+            .pr-meta-row:last-child {
+                border-bottom: none;
+            }
+
+        .pr-meta-label {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .pr-meta-value {
+            font-weight: 700;
+            color: var(--text);
+        }
+
+            .pr-meta-value.success {
+                color: var(--green);
+            }
+
+            .pr-meta-value.fail {
+                color: var(--red);
+            }
+
+        /* ── Buttons ── */
+        .pr-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp .4s .5s both;
+        }
+
+        .pr-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: .72rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: .9rem;
+            font-family: inherit;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: all .2s;
+            white-space: nowrap;
+        }
+
+        .pr-btn-primary {
+            background: var(--green);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(106,176,76,.35);
+        }
+
+            .pr-btn-primary:hover {
+                background: var(--green-dark);
+                color: #fff;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 18px rgba(106,176,76,.4);
+            }
+
+        .pr-btn-outline {
+            background: #fff;
+            color: #4a5568;
+            border: 1.5px solid var(--border);
+        }
+
+            .pr-btn-outline:hover {
+                border-color: var(--green);
+                color: var(--green);
+                transform: translateY(-1px);
+            }
+
+        .pr-btn-retry {
+            background: var(--blue);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(26,111,176,.3);
+        }
+
+            .pr-btn-retry:hover {
+                background: #155a8f;
+                color: #fff;
+                transform: translateY(-1px);
+            }
+
+        /* ── Countdown ── */
+        .pr-countdown {
+            margin-top: 1.4rem;
+            font-size: .78rem;
+            color: var(--muted);
+            animation: fadeUp .4s .6s both;
+        }
+
+        .pr-countdown-ring {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pr-sec {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--green-light);
+            border: 1.5px solid var(--green-border);
+            color: var(--green);
+            font-weight: 700;
+            font-size: .8rem;
+        }
+
+        /* ── Loading ── */
+        .pr-loading {
+            padding: 3rem;
+            color: var(--muted);
+        }
+
+        /* ── Error code badge ── */
+        .pr-code-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--red-light);
+            border: 1px solid var(--red-border);
+            color: var(--red);
+            border-radius: 20px;
+            padding: .18rem .65rem;
+            font-size: .75rem;
+            font-weight: 700;
+        }
+
+        /* ── Divider ── */
+        .pr-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <div class="pr-page">
+        <div class="pr-card" id="prCard">
+            <div class="pr-loading">
+                <div class="spinner-border text-success mb-2" style="width:2rem;height:2rem"></div>
+                <div style="font-size:.88rem">Đang xử lý kết quả...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/header.js"></script>
+    <script>
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const success = params.get("success") === "true";
+            const orderId = params.get("orderId");
+            const code = params.get("code");
+            const card = document.getElementById("prCard");
+
+            function getCodeMessage(c) {
+                const map = {
+                    "07": "Giao dịch bị nghi ngờ gian lận.",
+                    "09": "Thẻ/Tài khoản chưa đăng ký dịch vụ Internet Banking.",
+                    "10": "Xác thực thông tin thẻ sai quá 3 lần.",
+                    "11": "Giao dịch đã hết hạn thanh toán.",
+                    "12": "Thẻ/Tài khoản bị khóa.",
+                    "13": "Sai mật khẩu OTP.",
+                    "24": "Bạn đã hủy giao dịch.",
+                    "51": "Tài khoản không đủ số dư.",
+                    "65": "Vượt quá hạn mức giao dịch trong ngày.",
+                    "75": "Ngân hàng đang bảo trì.",
+                    "79": "Nhập sai mật khẩu thanh toán quá số lần.",
+                    "97": "Chữ ký giao dịch không hợp lệ.",
+                    "99": "Lỗi không xác định.",
+                };
+                return map[c] || "Thanh toán không thành công.";
+            }
+
+            if (success) {
+                card.classList.add("success");
+                card.innerHTML = `
+                        <div class="pr-icon pr-icon-success">
+                            <i class="bi bi-check-lg"></i>
+                        </div>
+                        <div class="pr-title">Thanh toán thành công!</div>
+                        <div class="pr-sub">
+                            Đơn hàng của bạn đã được xác nhận và đang được xử lý.<br>
+                            Cảm ơn bạn đã tin tưởng mua sắm tại <strong style="color:#6ab04c">Book Store</strong>.
+                        </div>
+
+                        ${orderId ? `
+                        <div class="pr-meta">
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-bag me-1"></i>Mã đơn hàng</span>
+                                <span class="pr-meta-value">#${orderId}</span>
+                            </div>
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-credit-card me-1"></i>Phương thức</span>
+                                <span class="pr-meta-value">VNPay</span>
+                            </div>
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-shield-check me-1"></i>Trạng thái</span>
+                                <span class="pr-meta-value success"><i class="bi bi-check-circle-fill me-1"></i>Đã thanh toán</span>
+                            </div>
+                        </div>` : ""}
+
+                        <div class="pr-actions">
+                            <a class="pr-btn pr-btn-primary" href="../html/orders.html">
+                                <i class="bi bi-bag-check-fill"></i> Xem đơn hàng
+                            </a>
+                            <a class="pr-btn pr-btn-outline" href="../html/index.html">
+                                <i class="bi bi-house-fill"></i> Trang chủ
+                            </a>
+                        </div>
+
+                        <div class="pr-countdown">
+                            <div class="pr-countdown-ring">
+                                <i class="bi bi-clock" style="color:#6ab04c"></i>
+                                Tự động chuyển sang đơn hàng sau
+                                <span class="pr-sec" id="prSec">10</span> giây
+                            </div>
+                        </div>`;
+
+                let sec = 10;
+                const secEl = document.getElementById("prSec");
+                const timer = setInterval(() => {
+                    sec--;
+                    if (secEl) secEl.textContent = sec;
+                    if (sec <= 0) {
+                        clearInterval(timer);
+                        window.location.href = "../html/orders.html";
+                    }
+                }, 1000);
+
+            } else {
+                const codeMsg = getCodeMessage(code);
+                card.classList.add("fail");
+                card.innerHTML = `
+                        <div class="pr-icon pr-icon-fail">
+                            <i class="bi bi-x-lg"></i>
+                        </div>
+                        <div class="pr-title">Thanh toán thất bại</div>
+                        <div class="pr-sub">
+                            ${codeMsg}<br>
+                            <span style="font-size:.85rem">Đơn hàng vẫn được giữ lại — bạn có thể thanh toán lại bất cứ lúc nào.</span>
+                        </div>
+
+                        ${orderId ? `
+                        <div class="pr-meta">
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-bag me-1"></i>Mã đơn hàng</span>
+                                <span class="pr-meta-value">#${orderId}</span>
+                            </div>
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-credit-card me-1"></i>Phương thức</span>
+                                <span class="pr-meta-value">VNPay</span>
+                            </div>
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-exclamation-circle me-1"></i>Trạng thái</span>
+                                <span class="pr-meta-value fail"><i class="bi bi-x-circle-fill me-1"></i>Chưa thanh toán</span>
+                            </div>
+                            ${code && code !== "null" ? `
+                            <div class="pr-meta-row">
+                                <span class="pr-meta-label"><i class="bi bi-info-circle me-1"></i>Mã lỗi</span>
+                                <span class="pr-code-badge"><i class="bi bi-exclamation-triangle-fill"></i>${code}</span>
+                            </div>` : ""}
+                        </div>` : ""}
+
+                        <div class="pr-actions">
+                            ${orderId ? `
+                            <button class="pr-btn pr-btn-retry" id="retryBtn" onclick="retryPayment(${orderId})">
+                                <i class="bi bi-arrow-clockwise"></i> Thanh toán lại
+                            </button>` : ""}
+                            <a class="pr-btn pr-btn-outline" href="../html/orders.html">
+                                <i class="bi bi-bag"></i> Đơn hàng của tôi
+                            </a>
+                        </div>`;
+            }
+
+            window.retryPayment = async function (oid) {
+                const token = sessionStorage.getItem("token");
+                if (!token) { window.location.href = "../html/login.html"; return; }
+
+                const btn = document.getElementById("retryBtn");
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang tạo link...';
+                }
+
+                try {
+                    const res = await fetch("https://localhost:7204/api/payment/vnpay/create", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ orderId: oid })
+                    });
+                    const data = await res.json();
+                    if (data.paymentUrl) {
+                        window.location.href = data.paymentUrl;
+                    } else {
+                        alert(data.message || "Không tạo được link thanh toán.");
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Thanh toán lại';
+                        }
+                    }
+                } catch {
+                    alert("Không kết nối được máy chủ.");
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Thanh toán lại';
+                    }
+                }
+            };
+        })();
+    </script>
+</body>
+</html>

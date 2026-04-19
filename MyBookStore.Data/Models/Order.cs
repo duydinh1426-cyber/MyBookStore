@@ -25,13 +25,15 @@ public partial class Order
 
     public string PaymentMethod { get; set; } = null!;
 
-    public string PaymentStatus { get; set; } = null!;
-
     public string? VnpayTxnRef { get; set; }
 
     public DateTime? PaidAt { get; set; }
 
+    public bool IsPaid { get; set; }
+
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     public virtual Customer User { get; set; } = null!;
 }

@@ -1,6 +1,6 @@
-﻿using Data.Repositories.Interfaces;
+﻿using MyBookStore.Data.Models;
+using Data.Repositories.Interfaces;
 using Microsoft.IdentityModel.Tokens;
-using MyBookStore.Data.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;

@@ -47,7 +47,9 @@ namespace Data.Repositories
                     address = o.Address,
                     note = o.Note,
                     createdAt = o.CreatedAt,
-                    itemCount = o.OrderItems != null ? o.OrderItems.Count : 0
+                    itemCount = o.OrderItems != null ? o.OrderItems.Count : 0,
+                    paymentMethod = o.PaymentMethod,
+                    isPaid = o.IsPaid,
                 })
                 .ToListAsync();
 
