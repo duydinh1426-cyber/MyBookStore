@@ -101,5 +101,29 @@ namespace WebAPI.Controllers
             if (message != null) return BadRequest(new { message = message });
             return Ok(new { message = "Mật khẩu đã được cập nhật." });
         }
+
+        [HttpPost("me/change-email/send-otp")]
+        [Authorize]
+        public async Task<IActionResult> ChangeEmailSendOtp([FromBody] SendChangeEmailOtpDto dto)
+        {
+            var accountId = int.Parse(User.FindFirstValue("accountId")!);
+            var error = await _service.ChangeEmailSendOtpAsync(accountId, dto.NewEmail);
+            if (error != null) return BadRequest(new { message = error });
+            return Ok(new { message = "OTP đã được gửi đến email mới." });
+        }
+
+        [HttpPut("me/change-email/verify-otp")]
+        [Authorize]
+        public async Task<IActionResult> ChangeEmailVerifyOtp([FromBody] VerifyChangeEmailOtpDto dto)
+        {
+            var accountId = int.Parse(User.FindFirstValue("accountId")!);
+            var userId = GetUserId();
+            var result = await _service.ChangeEmailVerifyOtpAsync(accountId, userId, dto.NewEmail, dto.Otp);
+            if (result == null) return BadRequest(new { message = "Lỗi hệ thống." });
+
+            dynamic res = result;
+            if (res.success == false) return BadRequest(result);
+            return Ok(result);
+        }
     }
 }

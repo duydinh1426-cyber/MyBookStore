@@ -44,4 +44,15 @@
         string Name,
         bool IsAdmin
     );
+
+    public class SendChangeEmailOtpDto
+    {
+        public string NewEmail { get; set; } = "";
+    }
+
+    public class VerifyChangeEmailOtpDto
+    {
+        public string NewEmail { get; set; } = "";
+        public string Otp { get; set; } = "";
+    }
 }

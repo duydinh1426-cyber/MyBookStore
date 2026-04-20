@@ -496,7 +496,6 @@
                 <thead>
                     <tr>
                         <th>Người dùng</th>
-                        <th>Username</th>
                         <th>Email</th>
                         <th>Địa chỉ</th>
                         <th>Vai trò</th>
@@ -506,7 +505,7 @@
                 </thead>
                 <tbody id="admTbody">
                     <tr>
-                        <td colspan="7" class="adm-empty">
+                        <td colspan="6" class="adm-empty">
                             <div class="spinner-border text-success spinner-border-sm"></div>
                         </td>
                     </tr>
@@ -604,7 +603,7 @@
                 curPage = page;
                 const tbody = document.getElementById("admTbody");
                 const pager = document.getElementById("admPager");
-                tbody.innerHTML = `<tr><td colspan="7" class="adm-empty"><div class="spinner-border text-success spinner-border-sm"></div></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="adm-empty"><div class="spinner-border text-success spinner-border-sm"></div></td></tr>`;
                 pager.innerHTML = "";
 
                 const kw = document.getElementById("admSearch").value.trim();
@@ -621,44 +620,43 @@
                     document.getElementById("admCount").textContent = `Tổng: ${data.total ?? 0} người dùng`;
 
                     if (!users.length) {
-                        tbody.innerHTML = `<tr><td colspan="7" class="adm-empty">Không tìm thấy người dùng nào.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="6" class="adm-empty">Không tìm thấy người dùng nào.</td></tr>`;
                         return;
                     }
 
                     tbody.innerHTML = users.map(u => {
                         const id = u.accountId ?? u.userId ?? u.id;
                         return `
-                        <tr>
-                            <td>
-                                <div style="display:flex;align-items:center;gap:10px">
-                                    <div class="user-avatar">${initials(u.name)}</div>
-                                    <span style="font-weight:600">${u.name || "—"}</span>
-                                </div>
-                            </td>
-                            <td style="color:#4a5568;font-size:.83rem">${u.username || "—"}</td>
-                            <td style="color:#4a5568;font-size:.83rem">${u.email || "—"}</td>
-                            <td style="color:#8a9bb0;font-size:.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-                                title="${u.address || ""}">${u.address || "—"}</td>
-                            <td>
-                                <span class="role-badge ${u.isAdmin ? "role-admin" : "role-customer"}">
-                                    <i class="bi ${u.isAdmin ? "bi-shield-fill" : "bi-person-fill"}"></i>
-                                    ${u.isAdmin ? "Admin" : "Khách hàng"}
-                                </span>
-                            </td>
-                            <td style="font-size:.78rem;color:#8a9bb0">
-                                ${u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—"}
-                            </td>
-                            <td>
-                                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                                    <button class="adm-btn adm-btn-view" onclick="openDetail(${id})">
-                                        <i class="bi bi-eye me-1"></i>Chi tiết
-                                    </button>
-                                    <button class="adm-btn adm-btn-reset" onclick="resetPassword(${id},'${(u.name || '').replace(/'/g, "\\'")}')">
-                                        <i class="bi bi-key me-1"></i>Reset MK
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>`;
+                            <tr>
+                                <td>
+                                    <div style="display:flex;align-items:center;gap:10px">
+                                        <div class="user-avatar">${initials(u.name)}</div>
+                                        <span style="font-weight:600">${u.name || "—"}</span>
+                                    </div>
+                                </td>
+                                <td style="color:#4a5568;font-size:.83rem">${u.email || "—"}</td>
+                                <td style="color:#8a9bb0;font-size:.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                                    title="${u.address || ""}">${u.address || "—"}</td>
+                                <td>
+                                    <span class="role-badge ${u.isAdmin ? "role-admin" : "role-customer"}">
+                                        <i class="bi ${u.isAdmin ? "bi-shield-fill" : "bi-person-fill"}"></i>
+                                        ${u.isAdmin ? "Admin" : "Khách hàng"}
+                                    </span>
+                                </td>
+                                <td style="font-size:.78rem;color:#8a9bb0">
+                                    ${u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—"}
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                                        <button class="adm-btn adm-btn-view" onclick="openDetail(${id})">
+                                            <i class="bi bi-eye me-1"></i>Chi tiết
+                                        </button>
+                                        <button class="adm-btn adm-btn-reset" onclick="resetPassword(${id},'${(u.name || '').replace(/'/g, "\\'")}')">
+                                            <i class="bi bi-key me-1"></i>Reset MK
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>`;
                     }).join("");
 
                     // Pagination
@@ -678,10 +676,10 @@
                     }
 
                 } catch (e) {
-                    tbody.innerHTML = `<tr><td colspan="7" class="adm-empty">
-                        Không tải được dữ liệu.<br>
-                        <small style="font-size:.76rem">Cần endpoint <code>GET /api/users/admin/all</code></small>
-                    </td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" class="adm-empty">
+                            Không tải được dữ liệu.<br>
+                            <small style="font-size:.76rem">Cần endpoint <code>GET /api/users/admin/all</code></small>
+                        </td></tr>`;
                 }
             };
 
@@ -698,39 +696,38 @@
                     const u = await res.json();
 
                     document.getElementById("userModalBody").innerHTML = `
-                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem">
-                        <div class="user-avatar" style="width:54px;height:54px;font-size:1.15rem">${initials(u.name)}</div>
-                        <div>
-                            <div style="font-weight:700;font-size:1.05rem">${u.name || "—"}</div>
-                            <span class="role-badge ${u.isAdmin ? "role-admin" : "role-customer"}" style="margin-top:4px">
-                                <i class="bi ${u.isAdmin ? "bi-shield-fill" : "bi-person-fill"}"></i>
-                                ${u.isAdmin ? "Admin" : "Khách hàng"}
-                            </span>
+                        <div style="display:flex;align-items:center;gap:14px;margin-bottom:1rem">
+                            <div class="user-avatar" style="width:54px;height:54px;font-size:1.15rem">${initials(u.name)}</div>
+                            <div>
+                                <div style="font-weight:700;font-size:1.05rem">${u.name || "—"}</div>
+                                <span class="role-badge ${u.isAdmin ? "role-admin" : "role-customer"}" style="margin-top:4px">
+                                    <i class="bi ${u.isAdmin ? "bi-shield-fill" : "bi-person-fill"}"></i>
+                                    ${u.isAdmin ? "Admin" : "Khách hàng"}
+                                </span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="det-stat">
-                        <div class="det-stat-box">
-                            <span class="val">${u.totalOrders ?? 0}</span>
-                            <div class="lbl">Đơn hàng</div>
+                        <div class="det-stat">
+                            <div class="det-stat-box">
+                                <span class="val">${u.totalOrders ?? 0}</span>
+                                <div class="lbl">Đơn hàng</div>
+                            </div>
+                            <div class="det-stat-box">
+                                <span class="val" style="font-size:.95rem">${fmt(u.totalSpent ?? 0)}</span>
+                                <div class="lbl">Tổng chi tiêu</div>
+                            </div>
                         </div>
-                        <div class="det-stat-box">
-                            <span class="val" style="font-size:.95rem">${fmt(u.totalSpent ?? 0)}</span>
-                            <div class="lbl">Tổng chi tiêu</div>
-                        </div>
-                    </div>
 
-                    <div class="det-row"><span>Username</span><span>${u.username || "—"}</span></div>
-                    <div class="det-row"><span>Email</span><span>${u.email || "—"}</span></div>
-                    <div class="det-row"><span>Địa chỉ</span><span style="max-width:200px">${u.address || "—"}</span></div>
-                    <div class="det-row"><span>Ngày tạo</span><span>${u.createdAt ? new Date(u.createdAt).toLocaleString("vi-VN") : "—"}</span></div>
+                        <div class="det-row"><span>Email</span><span>${u.email || "—"}</span></div>
+                        <div class="det-row"><span>Địa chỉ</span><span style="max-width:200px">${u.address || "—"}</span></div>
+                        <div class="det-row"><span>Ngày tạo</span><span>${u.createdAt ? new Date(u.createdAt).toLocaleString("vi-VN") : "—"}</span></div>
 
-                    <div style="margin-top:1.2rem;padding-top:1rem;border-top:1.5px solid #f0f0f0;display:flex;justify-content:flex-end">
-                        <button class="adm-btn adm-btn-reset"
-                                onclick="resetPassword(${u.accountId ?? u.userId},'${(u.name || '').replace(/'/g, "\\'")}')">
-                            <i class="bi bi-key me-1"></i>Reset mật khẩu
-                        </button>
-                    </div>`;
+                        <div style="margin-top:1.2rem;padding-top:1rem;border-top:1.5px solid #f0f0f0;display:flex;justify-content:flex-end">
+                            <button class="adm-btn adm-btn-reset"
+                                    onclick="resetPassword(${u.accountId ?? u.userId},'${(u.name || '').replace(/'/g, "\\'")}')">
+                                <i class="bi bi-key me-1"></i>Reset mật khẩu
+                            </button>
+                        </div>`;
                 } catch {
                     document.getElementById("userModalBody").innerHTML =
                         `<p class="text-muted text-center py-3">Không tải được thông tin người dùng.</p>`;

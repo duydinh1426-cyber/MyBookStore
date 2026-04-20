@@ -1,15 +1,14 @@
-using Data;
 using Data.Repositories;
 using Data.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using MyBookStore.Data.Models;
 using System.Text;
 using WebAPI.Services;
 using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
 using WebAPI.Services.VnPay;
+using Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

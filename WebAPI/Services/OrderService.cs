@@ -1,6 +1,5 @@
-﻿using Data;
+﻿using MyBookStore.Data.Models;
 using Data.Repositories.Interfaces;
-using MyBookStore.Data.Models;
 using WebAPI.DTOs;
 using WebAPI.Enums;
 using WebAPI.Services.Interfaces;
