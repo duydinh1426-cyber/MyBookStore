@@ -19,7 +19,6 @@ namespace WebAPI.Services
             {
                 var kw = keyword.Trim().ToLower();
                 query = query.Where(a =>
-                    a.Username.ToLower().Contains(kw) ||
                     (a.Email ?? "").ToLower().Contains(kw) ||
                     a.Customers.Any(c => (c.Name ?? "").ToLower().Contains(kw) ||
                                          (c.Address != null && c.Address.ToLower().Contains(kw)))
@@ -35,7 +34,6 @@ namespace WebAPI.Services
                     userId = a.Customers.Select(c => c.UserId).FirstOrDefault(),
                     accountId = a.AccountId,
                     name = a.Customers.Select(c => c.Name).FirstOrDefault() ?? "",
-                    username = a.Username,
                     email = a.Email,
                     address = a.Customers.Select(c => c.Address).FirstOrDefault() ?? "",
                     isAdmin = false,
@@ -66,7 +64,6 @@ namespace WebAPI.Services
                 userId = customer?.UserId,
                 accountId = account.AccountId,
                 name = customer?.Name ?? "",
-                username = account.Username,
                 email = account.Email,
                 address = customer?.Address ?? "",
                 isAdmin = false,
