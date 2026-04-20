@@ -9,6 +9,7 @@ using WebAPI.DTOs;
 using WebAPI.Enums;
 using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
+using Data;
 
 namespace WebAPI.Services
 {
@@ -75,15 +76,11 @@ namespace WebAPI.Services
             if (!_otp.VerifyOtp(dto.Email, dto.Otp, OtpPurpose.REGISTER))
                 return "Mã OTP không chính xác hoặc đã hết hạn.";
 
-            if (await _repo.IsUsernameExistsAsync(dto.Username))
-                return "Tên đăng nhập đã tồn tại.";
-
             if (dto.Password.Length < 6)
                 return "Mật khẩu phải có ít nhất 6 ký tự.";
 
             var account = new Account
             {
-                Username = dto.Username,
                 Password = HashPassword(dto.Password),
                 Email = dto.Email,
                 IsAdmin = false,
@@ -100,7 +97,7 @@ namespace WebAPI.Services
 
         public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
         {
-            var account = await _repo.GetByUsernameAsync(dto.Username);
+            var account = await _repo.GetByEmailAsync(dto.Email);
             if (account == null || account.Password != HashPassword(dto.Password))
                 return null;
 
@@ -148,7 +145,7 @@ namespace WebAPI.Services
             var admin = account.Admins.FirstOrDefault();
 
             return new UserProfileDto(
-                account.AccountId, account.Username ?? "", account.Email ?? "",
+                account.AccountId, account.Email ?? "",
                 account.IsAdmin ? admin?.Name : customer?.Name,
                 account.IsAdmin ? "" : customer?.Address,
                 account.IsAdmin, account.CreatedAt

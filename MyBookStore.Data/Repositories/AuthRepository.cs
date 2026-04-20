@@ -16,14 +16,6 @@ namespace Data.Repositories
 
         public async Task<bool> IsEmailExistsAsync(string email)
             => await _db.Accounts.AnyAsync(a => a.Email == email);
-        public async Task<bool> IsUsernameExistsAsync(string username)
-            => await _db.Accounts.AnyAsync(a => a.Username == username);
-        
-        public async Task<Account?> GetByUsernameAsync(string username)
-            => await _db.Accounts
-                        .Include(a => a.Customers)
-                        .Include(a => a.Admins)
-                        .FirstOrDefaultAsync(a => a.Username == username);
 
         public async Task<Account?> GetByEmailAsync(string email)
             => await _db.Accounts

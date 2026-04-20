@@ -1,4 +1,5 @@
-﻿using Data.Repositories.Interfaces;
+﻿using Data;
+using Data.Repositories.Interfaces;
 using Data.Vnpay;
 using MyBookStore.Data.Models;
 using WebAPI.Services.Interfaces;

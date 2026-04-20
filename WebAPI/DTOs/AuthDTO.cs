@@ -2,7 +2,6 @@
 {
     public record UserProfileDto(
     int AccountId,
-    string Username,
     string Email,
     string? Name,
     string? Address,
@@ -13,13 +12,12 @@
     public record VerifyRegisterOtpDto( // xác thực OTP đăng ký
         string Email,
         string Otp,
-        string Username,
         string Password,
         string Name,
         string? Address
     ); 
     public record LoginDto( // đăng nhập
-        string Username, 
+        string Email,
         string Password
     );
     public record UpdateProfileDto( // cập nhật thông tin cá nhân

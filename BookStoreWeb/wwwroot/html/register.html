@@ -522,15 +522,6 @@
                 <div class="rg-divider-label">Thông tin đăng nhập</div>
 
                 <div class="rg-group">
-                    <label class="rg-label" for="rgUser">Tên đăng nhập <span style="color:#e74c3c">*</span></label>
-                    <div class="rg-input-wrap">
-                        <i class="bi bi-person rg-input-icon"></i>
-                        <input class="rg-input" id="rgUser" type="text" placeholder="Ít nhất 4 ký tự, không dấu" oninput="validateUsername()">
-                    </div>
-                    <div class="rg-err" id="rgUserErr">Tên đăng nhập ít nhất 4 ký tự, không chứa khoảng trắng</div>
-                </div>
-
-                <div class="rg-group">
                     <label class="rg-label" for="rgEmail">Email <span style="color:#e74c3c">*</span></label>
                     <div class="rg-input-wrap">
                         <i class="bi bi-envelope rg-input-icon"></i>
@@ -710,12 +701,11 @@
             window.sendOtp = async function () {
                 document.getElementById("rgAlert").classList.remove("show");
 
-                const okUser = chk("rgUser", "rgUserErr", v => v.length >= 4 && !/\s/.test(v));
                 const okEmail = chk("rgEmail", "rgEmailErr", v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
                 const okPw = chk("rgPw", "rgPwErr", v => v.length >= 6);
                 const okConf = chk("rgConfPw", "rgConfPwErr", () => document.getElementById("rgConfPw").value === document.getElementById("rgPw").value);
                 const okName = chk("rgName", "rgNameErr", v => v.length >= 2);
-                if (!okUser || !okEmail || !okPw || !okConf || !okName) return;
+                if (!okEmail || !okPw || !okConf || !okName) return;
 
                 const btn = document.getElementById("rgSendOtpBtn");
                 btn.disabled = true;
@@ -778,7 +768,6 @@
                 const payload = {
                     email: document.getElementById("rgEmail").value.trim(),
                     otp: document.getElementById("rgOtp").value.trim(),
-                    username: document.getElementById("rgUser").value.trim(),
                     password: document.getElementById("rgPw").value,
                     name: document.getElementById("rgName").value.trim(),
                     address: document.getElementById("rgAddress").value.trim() || null,

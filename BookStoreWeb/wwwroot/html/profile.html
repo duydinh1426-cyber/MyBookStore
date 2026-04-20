@@ -400,14 +400,6 @@
             <div class="pf-card">
                 <div class="pf-card-title"><i class="bi bi-pencil-square"></i> Thông tin cá nhân</div>
 
-                <div class="mb-3">
-                    <label class="pf-label">Tên đăng nhập</label>
-                    <div class="pf-readonly-chip"><i class="bi bi-shield-lock"></i><span id="pfUsername">—</span></div>
-                    <div style="font-size:.75rem;color:#8a9bb0;margin-top:4px">Tên đăng nhập không thể thay đổi</div>
-                </div>
-
-                <hr class="pf-divider">
-
                 <div class="row g-3">
                     <div class="col-12">
                         <label class="pf-label" for="pfName">Họ và tên <span style="color:#e74c3c">*</span></label>
@@ -607,7 +599,6 @@
                     const initials = (d.name || "?").split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
                     document.getElementById("pfAvatarCircle").textContent = initials;
                     document.getElementById("pfAvatarName").textContent = d.name || "—";
-                    document.getElementById("pfUsername").textContent = d.username || "—";
                     if (d.createdAt) document.getElementById("pfSince").textContent = "Thành viên từ " + new Date(d.createdAt).toLocaleDateString("vi-VN");
 
                     document.getElementById("pfName").value = d.name || "";

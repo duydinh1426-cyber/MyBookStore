@@ -422,13 +422,13 @@
                 <span id="lgErrMsg">Sai tài khoản hoặc mật khẩu</span>
             </div>
 
-            <!-- Username -->
+            <!-- Tìm và thay cả block lg-group username: -->
             <div class="lg-group">
-                <label class="lg-label" for="lgUser">Tên đăng nhập</label>
+                <label class="lg-label" for="lgUser">Email</label>
                 <div class="lg-input-wrap">
-                    <i class="bi bi-person lg-input-icon"></i>
-                    <input class="lg-input" id="lgUser" type="text"
-                           placeholder="Nhập tên đăng nhập"
+                    <i class="bi bi-envelope lg-input-icon"></i>
+                    <input class="lg-input" id="lgUser" type="email"
+                           placeholder="Nhập email của bạn"
                            onkeydown="if(event.key==='Enter')document.getElementById('lgPass').focus()">
                 </div>
             </div>
@@ -499,7 +499,8 @@
                 const username = document.getElementById("lgUser").value.trim();
                 const password = document.getElementById("lgPass").value;
 
-                if (!username) { showErr("Vui lòng nhập tên đăng nhập."); return; }
+                if (!username) { showErr("Vui lòng nhập email."); return; }
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username)) { showErr("Email không hợp lệ."); return; }
                 if (!password) { showErr("Vui lòng nhập mật khẩu."); return; }
 
                 const btn = document.getElementById("lgBtn");
@@ -510,7 +511,7 @@
                     const res = await fetch(`${API}/auth/login`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username, password })
+                        body: JSON.stringify({ email: username, password })
                     });
 
                     if (res.ok) {
