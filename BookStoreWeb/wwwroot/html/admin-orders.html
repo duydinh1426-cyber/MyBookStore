@@ -36,7 +36,6 @@
                 color: #6ab04c
             }
 
-        /* stats */
         .adm-stats {
             display: flex;
             gap: 12px;
@@ -83,7 +82,6 @@
             color: #e74c3c
         }
 
-        /* toolbar */
         .adm-bar {
             display: flex;
             gap: 10px;
@@ -124,7 +122,6 @@
                 border-color: #6ab04c
             }
 
-        /* table */
         .adm-table-wrap {
             background: #fff;
             border-radius: 14px;
@@ -172,7 +169,6 @@
             vertical-align: middle
         }
 
-        /* status badge */
         .adm-badge {
             display: inline-flex;
             align-items: center;
@@ -213,7 +209,35 @@
             border: 1px solid #f5c6c6
         }
 
-        /* ── Action buttons (state machine) ── */
+        /* Badge thanh toán */
+        .pay-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: .2rem .55rem;
+            border-radius: 20px;
+            font-size: .72rem;
+            font-weight: 700
+        }
+
+        .pay-paid {
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1px solid #b7e4c7
+        }
+
+        .pay-unpaid {
+            background: #eaf4ff;
+            color: #1a6fb0;
+            border: 1px solid #a8d0f0
+        }
+
+        .pay-cod {
+            background: #f8f9fa;
+            color: #8a9bb0;
+            border: 1px solid #e8edf2
+        }
+
         .action-wrap {
             display: flex;
             gap: 4px;
@@ -221,7 +245,6 @@
             align-items: center
         }
 
-        /* Nút chuyển trạng thái */
         .act-btn {
             border-radius: 7px;
             padding: .28rem .7rem;
@@ -234,9 +257,9 @@
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 4px
         }
-        /* confirmed */
+
         .act-confirm {
             background: #e8f4fd;
             color: #2980b9;
@@ -247,7 +270,7 @@
                 background: #2980b9;
                 color: #fff
             }
-        /* shipping */
+
         .act-ship {
             background: #eaf4ff;
             color: #1a6fb0;
@@ -258,7 +281,7 @@
                 background: #1a6fb0;
                 color: #fff
             }
-        /* completed */
+
         .act-complete {
             background: #f0fff4;
             color: #27ae60;
@@ -269,7 +292,7 @@
                 background: #27ae60;
                 color: #fff
             }
-        /* cancelled */
+
         .act-cancel {
             background: #fff0f0;
             color: #e74c3c;
@@ -280,7 +303,7 @@
                 background: #e74c3c;
                 color: #fff
             }
-        /* detail */
+
         .act-detail {
             background: #f5f5f5;
             color: #4a5568;
@@ -292,7 +315,7 @@
                 color: #fff;
                 border-color: #6ab04c
             }
-        /* final state */
+
         .act-final {
             font-size: .74rem;
             color: #aaa;
@@ -300,13 +323,11 @@
             padding: .28rem 0
         }
 
-        /* loading spinner on button */
         .act-btn:disabled {
             opacity: .6;
             cursor: not-allowed
         }
 
-        /* pager */
         .adm-pager {
             display: flex;
             justify-content: center;
@@ -346,7 +367,6 @@
                 cursor: not-allowed
             }
 
-        /* detail modal */
         .modal-content {
             border-radius: 14px;
             border: none
@@ -411,7 +431,6 @@
                     color: #6ab04c
                 }
 
-        /* modal action buttons */
         .modal-act-wrap {
             display: flex;
             gap: 8px;
@@ -432,7 +451,7 @@
             border: 1.5px solid transparent;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 6px
         }
 
             .modal-act-btn:disabled {
@@ -491,13 +510,14 @@
                         <th>Địa chỉ</th>
                         <th>Tổng tiền</th>
                         <th>Ngày đặt</th>
+                        <th>Thanh toán</th>
                         <th>Trạng thái</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
                 <tbody id="admTbody">
                     <tr>
-                        <td colspan="7" class="adm-empty">
+                        <td colspan="8" class="adm-empty">
                             <div class="spinner-border text-success spinner-border-sm"></div>
                         </td>
                     </tr>
@@ -548,11 +568,6 @@
             let curPage = 1, searchTimer = null;
             const PAGE_SIZE = 15;
 
-            /* ════════════════════════════════════════════
-               STATE MACHINE (mirror backend)
-               Dùng để render đúng nút ngay trên frontend
-               mà không cần đợi backend từ chối
-            ════════════════════════════════════════════ */
             const TRANSITIONS = {
                 pending: ["confirmed", "cancelled"],
                 confirmed: ["shipping", "cancelled"],
@@ -581,35 +596,41 @@
                 return `<span class="adm-badge ${m.cls}"><i class="bi ${m.icon}"></i>${m.label}</span>`;
             }
 
-            /* Render nút hành động cho 1 row trong bảng */
+            function payBadge(paymentMethod, isPaid) {
+                const method = (paymentMethod ?? "").toLowerCase();
+                if (method !== "vnpay") {
+                    return `<span class="pay-badge pay-cod"><i class="bi bi-cash-stack"></i>COD</span>`;
+                }
+                return isPaid
+                    ? `<span class="pay-badge pay-paid"><i class="bi bi-check-circle-fill"></i>Đã TT</span>`
+                    : `<span class="pay-badge pay-unpaid"><i class="bi bi-credit-card"></i>Chưa TT</span>`;
+            }
+
             function renderActionBtns(orderId, status) {
                 const next = TRANSITIONS[status] ?? [];
-
                 if (next.length === 0) {
                     return `<div class="action-wrap">
-                                <span class="act-final">—</span>
-                                <button class="act-btn act-detail" onclick="openDetail(${orderId})">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>`;
+                                    <span class="act-final">—</span>
+                                    <button class="act-btn act-detail" onclick="openDetail(${orderId})">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>`;
                 }
-
                 const btns = next.map(ns => {
                     const m = ACTION_BTN[ns];
                     if (!m) return "";
                     return `<button class="act-btn ${m.cls}"
-                                    id="actbtn_${orderId}_${ns}"
-                                    onclick="doTransition(${orderId},'${ns}',this)">
-                                <i class="bi ${m.icon}"></i>${m.label}
-                            </button>`;
+                                        id="actbtn_${orderId}_${ns}"
+                                        onclick="doTransition(${orderId},'${ns}',this)">
+                                    <i class="bi ${m.icon}"></i>${m.label}
+                                </button>`;
                 }).join("");
-
                 return `<div class="action-wrap" id="actions_${orderId}">
-                            ${btns}
-                            <button class="act-btn act-detail" onclick="openDetail(${orderId})">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>`;
+                                ${btns}
+                                <button class="act-btn act-detail" onclick="openDetail(${orderId})">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>`;
             }
 
             /* ── Load stats ── */
@@ -633,8 +654,8 @@
                 curPage = page;
                 const tbody = document.getElementById("admTbody");
                 const pager = document.getElementById("admPager");
-                tbody.innerHTML = `<tr><td colspan="7" class="adm-empty">
-                    <div class="spinner-border text-success spinner-border-sm"></div></td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="8" class="adm-empty">
+                        <div class="spinner-border text-success spinner-border-sm"></div></td></tr>`;
                 pager.innerHTML = "";
 
                 const keyword = document.getElementById("admSearch").value.trim();
@@ -651,26 +672,27 @@
                     const totalPages = data.totalPages ?? 1;
 
                     if (!orders.length) {
-                        tbody.innerHTML = `<tr><td colspan="7" class="adm-empty">Không có đơn hàng nào.</td></tr>`;
+                        tbody.innerHTML = `<tr><td colspan="8" class="adm-empty">Không có đơn hàng nào.</td></tr>`;
                         return;
                     }
 
                     tbody.innerHTML = orders.map(o => `
-                    <tr id="row_${o.orderId}">
-                        <td><span style="font-weight:700">#${o.orderId}</span></td>
-                        <td>
-                            <div style="font-weight:600;font-size:.86rem">${o.customerName ?? ""}</div>
-                            <div style="font-size:.75rem;color:#8a9bb0">${o.phone ?? ""}</div>
-                        </td>
-                        <td style="font-size:.82rem;color:#4a5568;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
-                            title="${o.address ?? ""}">${o.address ?? ""}</td>
-                        <td style="font-weight:700;color:#6ab04c">${fmt(o.totalCost ?? 0)}</td>
-                        <td style="font-size:.78rem;color:#8a9bb0">
-                            ${o.createdAt ? new Date(o.createdAt).toLocaleDateString("vi-VN") : ""}
-                        </td>
-                        <td id="badge_${o.orderId}">${badge(o.status)}</td>
-                        <td>${renderActionBtns(o.orderId, o.status)}</td>
-                    </tr>`).join("");
+                        <tr id="row_${o.orderId}">
+                            <td><span style="font-weight:700">#${o.orderId}</span></td>
+                            <td>
+                                <div style="font-weight:600;font-size:.86rem">${o.customerName ?? ""}</div>
+                                <div style="font-size:.75rem;color:#8a9bb0">${o.phone ?? ""}</div>
+                            </td>
+                            <td style="font-size:.82rem;color:#4a5568;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                                title="${o.address ?? ""}">${o.address ?? ""}</td>
+                            <td style="font-weight:700;color:#6ab04c">${fmt(o.totalCost ?? 0)}</td>
+                            <td style="font-size:.78rem;color:#8a9bb0">
+                                ${o.createdAt ? new Date(o.createdAt).toLocaleDateString("vi-VN") : ""}
+                            </td>
+                            <td id="paybadge_${o.orderId}">${payBadge(o.paymentMethod, o.isPaid)}</td>
+                            <td id="badge_${o.orderId}">${badge(o.status)}</td>
+                            <td>${renderActionBtns(o.orderId, o.status)}</td>
+                        </tr>`).join("");
 
                     if (totalPages > 1) {
                         let html = `<button class="adm-pg" ${page === 1 ? "disabled" : ""} onclick="loadOrders(${page - 1})"><i class="bi bi-chevron-left"></i></button>`;
@@ -680,18 +702,15 @@
                         pager.innerHTML = html;
                     }
                 } catch {
-                    tbody.innerHTML = `<tr><td colspan="7" class="adm-empty">Không tải được dữ liệu.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" class="adm-empty">Không tải được dữ liệu.</td></tr>`;
                 }
             };
 
-            /* ── Chuyển trạng thái (từ nút trong bảng) ── */
+            /* ── Chuyển trạng thái ── */
             window.doTransition = async function (orderId, newStatus, btn) {
-                // Xác nhận trước khi huỷ
                 if (newStatus === "cancelled") {
                     if (!confirm(`Bạn chắc chắn muốn huỷ đơn hàng #${orderId}?`)) return;
                 }
-
-                // Disable tất cả nút trong row để tránh double-click
                 const wrap = document.getElementById(`actions_${orderId}`);
                 wrap?.querySelectorAll("button").forEach(b => b.disabled = true);
                 const origHTML = btn.innerHTML;
@@ -706,26 +725,19 @@
 
                     if (!res.ok) {
                         alert(data.message || "Cập nhật thất bại.");
-                        // Restore buttons
                         wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
                         btn.innerHTML = origHTML;
                         return;
                     }
 
-                    // Cập nhật badge trạng thái inline (không reload cả trang)
                     const badgeEl = document.getElementById(`badge_${orderId}`);
                     if (badgeEl) badgeEl.innerHTML = badge(data.newStatus);
-
-                    // Cập nhật lại nút hành động theo trạng thái mới
                     if (wrap) wrap.outerHTML = renderActionBtns(orderId, data.newStatus);
 
-                    // Flash row xanh
                     const row = document.getElementById(`row_${orderId}`);
                     if (row) { row.style.background = "#f0fff4"; setTimeout(() => row.style.background = "", 1400); }
 
-                    // Refresh stats
                     loadStats();
-
                 } catch {
                     alert("Không kết nối được máy chủ.");
                     wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
@@ -746,81 +758,81 @@
                     if (!res.ok) throw new Error();
                     const o = await res.json();
                     const items = o.items ?? [];
+                    const isVnpay = (o.paymentMethod ?? "").toLowerCase() === "vnpay";
 
                     const itemsHtml = items.map(it => {
                         const src = imgSrc(it.book?.image ?? "");
                         return `
-                        <div class="od-item">
-                            ${src ? `<img class="od-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
-                            <div class="od-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                            <div style="flex:1;min-width:0">
-                                <div style="font-weight:600;font-size:.86rem">${it.book?.title ?? ""}</div>
-                                <div style="font-size:.76rem;color:#8a9bb0">${it.book?.author ?? ""}</div>
-                                <div style="font-size:.82rem;color:#4a5568;margin-top:2px">
-                                    SL: ${it.quantity} × ${fmt(it.unitPrice)}
+                            <div class="od-item">
+                                ${src ? `<img class="od-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                                <div class="od-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-weight:600;font-size:.86rem">${it.book?.title ?? ""}</div>
+                                    <div style="font-size:.76rem;color:#8a9bb0">${it.book?.author ?? ""}</div>
+                                    <div style="font-size:.82rem;color:#4a5568;margin-top:2px">SL: ${it.quantity} × ${fmt(it.unitPrice)}</div>
                                 </div>
-                            </div>
-                            <div style="font-weight:700;color:#6ab04c;font-size:.88rem;flex-shrink:0">
-                                ${fmt(it.subTotal)}
-                            </div>
-                        </div>`;
+                                <div style="font-weight:700;color:#6ab04c;font-size:.88rem;flex-shrink:0">${fmt(it.subTotal)}</div>
+                            </div>`;
                     }).join("");
 
-                    // Render nút hành động trong modal
                     const nextStatuses = o.nextStatuses ?? (TRANSITIONS[o.status] ?? []);
                     const isFinal = o.isFinal ?? (nextStatuses.length === 0);
 
                     const modalActionBtns = isFinal
-                        ? `<p style="font-size:.82rem;color:#aaa;margin:0;font-style:italic">
-                               Đơn hàng đã ở trạng thái cuối, không thể thay đổi.
-                           </p>`
+                        ? `<p style="font-size:.82rem;color:#aaa;margin:0;font-style:italic">Đơn hàng đã ở trạng thái cuối, không thể thay đổi.</p>`
                         : nextStatuses.map(ns => {
                             const m = ACTION_BTN[ns];
                             if (!m) return "";
-                            return `<button class="modal-act-btn ${m.cls}"
-                                            onclick="doTransitionModal(${o.orderId},'${ns}',this)">
-                                        <i class="bi ${m.icon}"></i>${m.label}
-                                    </button>`;
+                            return `<button class="modal-act-btn ${m.cls}" onclick="doTransitionModal(${o.orderId},'${ns}',this)">
+                                            <i class="bi ${m.icon}"></i>${m.label}
+                                        </button>`;
                         }).join("");
 
+                    // Thông tin thanh toán VNPay
+                    const vnpayInfo = isVnpay ? `
+                            <div class="od-row">
+                                <span>Phương thức</span>
+                                <span style="font-weight:600;color:#1a6fb0"><i class="bi bi-credit-card me-1"></i>VNPay</span>
+                            </div>
+                            <div class="od-row">
+                                <span>Trạng thái TT</span>
+                                <span>${o.isPaid
+                            ? `<span style="color:#27ae60;font-weight:700"><i class="bi bi-check-circle-fill me-1"></i>Đã thanh toán</span>`
+                            : `<span style="color:#1a6fb0;font-weight:700"><i class="bi bi-clock me-1"></i>Chưa thanh toán</span>`
+                        }</span>
+                            </div>
+                            ${o.paidAt ? `<div class="od-row"><span>Thời gian TT</span><span>${new Date(o.paidAt).toLocaleString("vi-VN")}</span></div>` : ""}
+                        ` : `
+                            <div class="od-row">
+                                <span>Phương thức</span>
+                                <span style="font-weight:600;color:#4a5568"><i class="bi bi-cash-stack me-1"></i>COD</span>
+                            </div>
+                        `;
+
                     document.getElementById("orderModalBody").innerHTML = `
-                    <div class="row g-3">
-                        <div class="col-12 col-sm-6">
-                            <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a9bb0;margin-bottom:.6rem">
-                                Thông tin giao hàng
+                        <div class="row g-3">
+                            <div class="col-12 col-sm-6">
+                                <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a9bb0;margin-bottom:.6rem">Thông tin giao hàng</div>
+                                <div class="od-row"><span>Khách hàng</span><span style="font-weight:600">${o.customer?.name ?? ""}</span></div>
+                                <div class="od-row"><span>SĐT</span><span>${o.phone ?? ""}</span></div>
+                                <div class="od-row"><span>Địa chỉ</span><span style="text-align:right;max-width:60%">${o.address ?? ""}</span></div>
+                                ${o.note ? `<div class="od-row"><span>Ghi chú</span><span>${o.note}</span></div>` : ""}
                             </div>
-                            <div class="od-row"><span>Khách hàng</span><span style="font-weight:600">${o.customer?.name ?? ""}</span></div>
-                            <div class="od-row"><span>SĐT</span><span>${o.phone ?? ""}</span></div>
-                            <div class="od-row"><span>Địa chỉ</span><span style="text-align:right;max-width:60%">${o.address ?? ""}</span></div>
-                            ${o.note ? `<div class="od-row"><span>Ghi chú</span><span>${o.note}</span></div>` : ""}
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a9bb0;margin-bottom:.6rem">
-                                Trạng thái đơn
+                            <div class="col-12 col-sm-6">
+                                <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a9bb0;margin-bottom:.6rem">Trạng thái & Thanh toán</div>
+                                <div class="od-row"><span>Ngày đặt</span><span>${o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : ""}</span></div>
+                                <div class="od-row"><span>Cập nhật</span><span>${o.updatedAt ? new Date(o.updatedAt).toLocaleString("vi-VN") : ""}</span></div>
+                                <div class="od-row"><span>Trạng thái</span><span id="modalBadge_${o.orderId}">${badge(o.status)}</span></div>
+                                ${vnpayInfo}
                             </div>
-                            <div class="od-row"><span>Ngày đặt</span>
-                                <span>${o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : ""}</span></div>
-                            <div class="od-row"><span>Cập nhật</span>
-                                <span>${o.updatedAt ? new Date(o.updatedAt).toLocaleString("vi-VN") : ""}</span></div>
-                            <div class="od-row"><span>Trạng thái</span>
-                                <span id="modalBadge_${o.orderId}">${badge(o.status)}</span></div>
                         </div>
-                    </div>
-
-                    <hr style="border-color:#f0f0f0;margin:1rem 0">
-
-                    <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a9bb0;margin-bottom:.6rem">
-                        Sản phẩm (${items.length})
-                    </div>
-                    ${itemsHtml}
-                    <div style="margin-top:.8rem">
-                        <div class="od-row total"><span>Tổng cộng</span><span>${fmt(o.totalCost ?? 0)}</span></div>
-                    </div>
-
-                    <!-- Nút hành động trong modal -->
-                    <div class="modal-act-wrap" id="modalActions_${o.orderId}">
-                        ${modalActionBtns}
-                    </div>`;
+                        <hr style="border-color:#f0f0f0;margin:1rem 0">
+                        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#8a9bb0;margin-bottom:.6rem">Sản phẩm (${items.length})</div>
+                        ${itemsHtml}
+                        <div style="margin-top:.8rem">
+                            <div class="od-row total"><span>Tổng cộng</span><span>${fmt(o.totalCost ?? 0)}</span></div>
+                        </div>
+                        <div class="modal-act-wrap" id="modalActions_${o.orderId}">${modalActionBtns}</div>`;
 
                 } catch {
                     document.getElementById("orderModalBody").innerHTML =
@@ -833,7 +845,6 @@
                 if (newStatus === "cancelled") {
                     if (!confirm(`Bạn chắc chắn muốn huỷ đơn hàng #${orderId}?`)) return;
                 }
-
                 const wrap = document.getElementById(`modalActions_${orderId}`);
                 wrap?.querySelectorAll("button").forEach(b => b.disabled = true);
                 const orig = btn.innerHTML;
@@ -853,11 +864,9 @@
                         return;
                     }
 
-                    // Cập nhật badge trong modal
                     const mBadge = document.getElementById(`modalBadge_${orderId}`);
                     if (mBadge) mBadge.innerHTML = badge(data.newStatus);
 
-                    // Cập nhật nút trong modal
                     const next = data.nextStatuses ?? (TRANSITIONS[data.newStatus] ?? []);
                     const isFin = data.isFinal ?? (next.length === 0);
                     if (wrap) {
@@ -865,21 +874,18 @@
                             ? `<p style="font-size:.82rem;color:#aaa;margin:0;font-style:italic">Đơn hàng đã ở trạng thái cuối, không thể thay đổi.</p>`
                             : next.map(ns => {
                                 const m = ACTION_BTN[ns]; if (!m) return "";
-                                return `<button class="modal-act-btn ${m.cls}"
-                                                onclick="doTransitionModal(${orderId},'${ns}',this)">
-                                            <i class="bi ${m.icon}"></i>${m.label}
-                                        </button>`;
+                                return `<button class="modal-act-btn ${m.cls}" onclick="doTransitionModal(${orderId},'${ns}',this)">
+                                                <i class="bi ${m.icon}"></i>${m.label}
+                                            </button>`;
                             }).join("");
                     }
 
-                    // Cập nhật badge + nút trong bảng phía sau (nếu row còn visible)
                     const badgeEl = document.getElementById(`badge_${orderId}`);
                     if (badgeEl) badgeEl.innerHTML = badge(data.newStatus);
                     const actWrap = document.getElementById(`actions_${orderId}`);
                     if (actWrap) actWrap.outerHTML = renderActionBtns(orderId, data.newStatus);
 
                     loadStats();
-
                 } catch {
                     alert("Không kết nối được máy chủ.");
                     wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
@@ -887,7 +893,6 @@
                 }
             };
 
-            /* ── Debounce search ── */
             window.debounceSearch = function () {
                 clearTimeout(searchTimer);
                 searchTimer = setTimeout(() => loadOrders(1), 400);

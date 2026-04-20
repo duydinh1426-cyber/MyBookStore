@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using MyBookStore.Data.Models;
 
-namespace Data;
+namespace MyBookStore.Data.Models;
 
 public partial class DBContext : DbContext
 {
@@ -32,9 +31,12 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<OrderItem> OrderItems { get; set; }
 
+    public virtual DbSet<Payment> Payments { get; set; }
+
     public virtual DbSet<Review> Reviews { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=.;Database=BookStore;Trusted_Connection=True;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -67,6 +69,8 @@ public partial class DBContext : DbContext
 
             entity.ToTable("Admin");
 
+            entity.HasIndex(e => e.AccountId, "IX_Admin_accountID");
+
             entity.Property(e => e.UserId).HasColumnName("userID");
             entity.Property(e => e.AccountId).HasColumnName("accountID");
             entity.Property(e => e.Address)
@@ -84,6 +88,8 @@ public partial class DBContext : DbContext
         modelBuilder.Entity<Book>(entity =>
         {
             entity.HasKey(e => e.BookId).HasName("PK__Books__8BE5A12DB125D8F5");
+
+            entity.HasIndex(e => e.CategoryId, "IX_Books_categoryID");
 
             entity.Property(e => e.BookId).HasColumnName("bookID");
             entity.Property(e => e.Author)
@@ -129,6 +135,8 @@ public partial class DBContext : DbContext
         {
             entity.HasKey(e => e.CartItemId).HasName("PK__CartItem__283983969832BF7D");
 
+            entity.HasIndex(e => e.BookId, "IX_CartItems_bookID");
+
             entity.HasIndex(e => new { e.UserId, e.BookId }, "UQ_CartItems_User_Book").IsUnique();
 
             entity.Property(e => e.CartItemId).HasColumnName("cartItemID");
@@ -169,6 +177,8 @@ public partial class DBContext : DbContext
         {
             entity.HasKey(e => e.UserId).HasName("PK__Customer__CB9A1CDF94FA0D39");
 
+            entity.HasIndex(e => e.AccountId, "IX_Customers_accountID");
+
             entity.Property(e => e.UserId).HasColumnName("userID");
             entity.Property(e => e.AccountId).HasColumnName("accountID");
             entity.Property(e => e.Address)
@@ -187,6 +197,8 @@ public partial class DBContext : DbContext
         {
             entity.HasKey(e => e.OrderId).HasName("PK__Orders__0809337DA53FA60D");
 
+            entity.HasIndex(e => e.UserId, "IX_Orders_userID");
+
             entity.Property(e => e.OrderId).HasColumnName("orderID");
             entity.Property(e => e.Address)
                 .HasMaxLength(255)
@@ -203,10 +215,6 @@ public partial class DBContext : DbContext
                 .HasMaxLength(20)
                 .HasDefaultValue("cod")
                 .HasColumnName("paymentMethod");
-            entity.Property(e => e.PaymentStatus)
-                .HasMaxLength(20)
-                .HasDefaultValue("unpaid")
-                .HasColumnName("paymentStatus");
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
                 .IsUnicode(false)
@@ -237,6 +245,10 @@ public partial class DBContext : DbContext
         {
             entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__3724BD72430C392B");
 
+            entity.HasIndex(e => e.BookId, "IX_OrderItems_bookID");
+
+            entity.HasIndex(e => e.OrderId, "IX_OrderItems_orderID");
+
             entity.Property(e => e.OrderItemId).HasColumnName("orderItemID");
             entity.Property(e => e.BookId).HasColumnName("bookID");
             entity.Property(e => e.CreatedAt)
@@ -263,9 +275,31 @@ public partial class DBContext : DbContext
                 .HasConstraintName("FK__OrderItem__order__68487DD7");
         });
 
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.PaymentId).HasName("PK__Payments__9B556A3805634263");
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.PaymentMethod)
+                .HasMaxLength(20)
+                .HasDefaultValue("vnpay");
+            entity.Property(e => e.TransactionId).HasMaxLength(100);
+            entity.Property(e => e.VnPayResponseCode).HasMaxLength(10);
+
+            entity.HasOne(d => d.Order).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Payments_Orders");
+        });
+
         modelBuilder.Entity<Review>(entity =>
         {
             entity.HasKey(e => e.ReviewId).HasName("PK__Reviews__2ECD6E24C9589E32");
+
+            entity.HasIndex(e => e.BookId, "IX_Reviews_bookID");
 
             entity.HasIndex(e => new { e.UserId, e.BookId }, "UQ_Reviews_User_Book").IsUnique();
 

@@ -80,6 +80,15 @@
                 box-shadow: 0 4px 20px rgba(0,0,0,.07)
             }
 
+            /* Left border màu theo trạng thái thanh toán */
+            .oh-card.unpaid-vnpay {
+                border-left: 3px solid #1a6fb0
+            }
+
+            .oh-card.paid-vnpay {
+                border-left: 3px solid #27ae60
+            }
+
         .oh-head {
             display: flex;
             align-items: center;
@@ -142,6 +151,53 @@
             color: #e74c3c;
             border: 1px solid #f5c6c6
         }
+
+        /* Payment banner — hiện khi chưa thanh toán VNPay */
+        .oh-pay-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: .6rem 1.2rem;
+            background: #eaf4ff;
+            border-bottom: 1px solid #c5dff5;
+            flex-wrap: wrap
+        }
+
+        .oh-pay-banner-text {
+            font-size: .81rem;
+            color: #1a6fb0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .oh-btn-pay-now {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #1a6fb0;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: .32rem .9rem;
+            font-size: .8rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .15s;
+            white-space: nowrap
+        }
+
+            .oh-btn-pay-now:hover {
+                background: #155a8f
+            }
+
+            .oh-btn-pay-now:disabled {
+                background: #8ab8d8;
+                cursor: not-allowed
+            }
 
         .oh-body {
             padding: .85rem 1.2rem
@@ -353,6 +409,35 @@
                 color: #4a5568;
                 margin-bottom: .35rem
             }
+
+        /* Badge thanh toán */
+        .pay-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: .2rem .6rem;
+            border-radius: 20px;
+            font-size: .72rem;
+            font-weight: 700
+        }
+
+        .pay-badge-paid {
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1px solid #b7e4c7
+        }
+
+        .pay-badge-unpaid {
+            background: #eaf4ff;
+            color: #1a6fb0;
+            border: 1px solid #a8d0f0
+        }
+
+        .pay-badge-cod {
+            background: #f8f9fa;
+            color: #8a9bb0;
+            border: 1px solid #e8edf2
+        }
     </style>
 </head>
 <body>
@@ -381,12 +466,10 @@
                 <div class="modal-body" style="padding:2rem 1.5rem;text-align:center">
                     <div style="width:64px;height:64px;border-radius:50%;background:#fff0f0;
                         border:2.5px solid #f5c6c6;display:flex;align-items:center;
-                        justify-content:center;font-size:1.8rem;color:#e74c3c;
-                        margin:0 auto 1.1rem">
+                        justify-content:center;font-size:1.8rem;color:#e74c3c;margin:0 auto 1.1rem">
                         <i class="bi bi-bag-x"></i>
                     </div>
-                    <div style="font-family:'Playfair Display',serif;font-size:1.15rem;
-                        font-weight:700;color:#1a1a1a;margin-bottom:.45rem">
+                    <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:#1a1a1a;margin-bottom:.45rem">
                         Hủy đơn hàng?
                     </div>
                     <div style="font-size:.86rem;color:#8a9bb0;margin-bottom:1.4rem;line-height:1.6">
@@ -395,17 +478,17 @@
                     </div>
                     <div style="display:flex;gap:10px">
                         <button data-bs-dismiss="modal"
-                                style="flex:1;border:1.5px solid #e8edf2;background:#fff;
-                               border-radius:10px;padding:.65rem;font-size:.88rem;
-                               font-weight:600;cursor:pointer;font-family:inherit;color:#4a5568;transition:all .15s"
+                                style="flex:1;border:1.5px solid #e8edf2;background:#fff;border-radius:10px;
+                                       padding:.65rem;font-size:.88rem;font-weight:600;cursor:pointer;
+                                       font-family:inherit;color:#4a5568;transition:all .15s"
                                 onmouseover="this.style.borderColor='#6ab04c';this.style.color='#6ab04c'"
                                 onmouseout="this.style.borderColor='#e8edf2';this.style.color='#4a5568'">
                             Không, giữ lại
                         </button>
                         <button id="cancelConfirmBtn"
-                                style="flex:1;background:#e74c3c;color:#fff;border:none;
-                               border-radius:10px;padding:.65rem;font-size:.88rem;
-                               font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s"
+                                style="flex:1;background:#e74c3c;color:#fff;border:none;border-radius:10px;
+                                       padding:.65rem;font-size:.88rem;font-weight:700;cursor:pointer;
+                                       font-family:inherit;transition:background .15s"
                                 onmouseover="this.style.background='#c0392b'"
                                 onmouseout="this.style.background='#e74c3c'">
                             <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
@@ -431,6 +514,9 @@
             });
             const fmt = n => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
+            if (!isLoggedIn()) { window.location.href = "../html/login.html"; return; }
+
+            /* ── Toast ── */
             function showToast(msg, type = "success") {
                 let wrap = document.getElementById("_ohToastWrap");
                 if (!wrap) {
@@ -447,14 +533,14 @@
                 const c = colors[type] || colors.success;
                 const t = document.createElement("div");
                 t.style.cssText = `background:${c.bg};border:1.5px solid ${c.border};border-radius:10px;
-                    padding:.65rem 1rem;font-size:.84rem;font-family:'DM Sans',sans-serif;
-                    box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:flex-start;
-                    gap:8px;min-width:260px;max-width:340px;pointer-events:all;animation:_ohSlide .2s ease`;
+                        padding:.65rem 1rem;font-size:.84rem;font-family:'DM Sans',sans-serif;
+                        box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:flex-start;
+                        gap:8px;min-width:260px;max-width:340px;pointer-events:all;animation:_ohSlide .2s ease`;
                 t.innerHTML = `
-                    <i class="bi ${c.icon}" style="color:${c.iconColor};font-size:1rem;flex-shrink:0;margin-top:1px"></i>
-                    <span style="flex:1;line-height:1.4">${msg}</span>
-                    <i class="bi bi-x" style="cursor:pointer;color:#aaa;font-size:1rem;flex-shrink:0"
-                       onclick="this.closest('div').remove()"></i>`;
+                        <i class="bi ${c.icon}" style="color:${c.iconColor};font-size:1rem;flex-shrink:0;margin-top:1px"></i>
+                        <span style="flex:1;line-height:1.4">${msg}</span>
+                        <i class="bi bi-x" style="cursor:pointer;color:#aaa;font-size:1rem;flex-shrink:0"
+                           onclick="this.closest('div').remove()"></i>`;
                 wrap.appendChild(t);
                 setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, 4000);
             }
@@ -470,8 +556,6 @@
                 if (/^https?:\/\//i.test(raw)) return raw;
                 return IMG_URL + "/images/" + raw.replace(/^\/?(images\/)?/, "");
             };
-
-            if (!isLoggedIn()) { window.location.href = "../html/login.html"; return; }
 
             let curStatus = "", curPage = 1;
             const PAGE_SIZE = 6;
@@ -490,8 +574,19 @@
                 return `<span class="oh-badge ${m.cls}"><i class="bi ${m.icon}"></i>${m.label}</span>`;
             }
 
-            /* ── load ── */
-            async function load(page = 1, status = "") {
+            /* ── Badge thanh toán — dùng data từ detail ── */
+            function payBadge(paymentMethod, isPaid) {
+                const method = (paymentMethod ?? "").toLowerCase();
+                if (method !== "vnpay") {
+                    return `<span class="pay-badge pay-badge-cod"><i class="bi bi-cash-stack"></i>COD</span>`;
+                }
+                return isPaid
+                    ? `<span class="pay-badge pay-badge-paid"><i class="bi bi-check-circle-fill"></i>Đã thanh toán</span>`
+                    : `<span class="pay-badge pay-badge-unpaid"><i class="bi bi-credit-card"></i>Chưa thanh toán</span>`;
+            }
+
+            /* ── Load ── */
+            window.load = async function (page = 1, status = "") {
                 curPage = page; curStatus = status;
                 const list = document.getElementById("ohList");
                 const pager = document.getElementById("ohPager");
@@ -510,19 +605,17 @@
 
                     if (!orders.length) {
                         list.innerHTML = `
-                        <div class="oh-empty">
-                            <i class="bi bi-bag-x"></i>
-                            <p>Chưa có đơn hàng nào</p>
-                            <small>Hãy mua sắm và quay lại đây nhé!</small>
-                        </div>`;
+                                <div class="oh-empty">
+                                    <i class="bi bi-bag-x"></i>
+                                    <p>Chưa có đơn hàng nào</p>
+                                    <small>Hãy mua sắm và quay lại đây nhé!</small>
+                                </div>`;
                         return;
                     }
 
-                    // Load chi tiết từng đơn song song
+                    // Lấy detail để có paymentMethod + isPaid chính xác
                     const details = await Promise.all(orders.map(o => fetchDetail(o.orderId)));
 
-                    // Với đơn completed: load review status cho từng sách
-                    // reviewMaps[i] = { bookId: canReview(bool) }
                     const reviewMaps = await Promise.all(
                         orders.map((o, i) =>
                             o.status === "completed"
@@ -534,18 +627,19 @@
                     list.innerHTML = orders.map((o, i) => renderCard(o, details[i], reviewMaps[i])).join("");
 
                     if (totalPages > 1) {
-                        let html = `<button class="oh-pg" ${page === 1 ? "disabled" : ""} onclick="load(${page - 1},'${status}')"><i class="bi bi-chevron-left"></i></button>`;
+                        const s = curStatus; // snapshot tại thời điểm render
+                        let html = `<button class="oh-pg" ${page === 1 ? "disabled" : ""} onclick="window.load(${page - 1},'${s}')"><i class="bi bi-chevron-left"></i></button>`;
                         for (let pg = 1; pg <= totalPages; pg++)
-                            html += `<button class="oh-pg ${pg === page ? "active" : ""}" onclick="load(${pg},'${status}')">${pg}</button>`;
-                        html += `<button class="oh-pg" ${page === totalPages ? "disabled" : ""} onclick="load(${page + 1},'${status}')"><i class="bi bi-chevron-right"></i></button>`;
+                            html += `<button class="oh-pg ${pg === page ? "active" : ""}" onclick="window.load(${pg},'${s}')">${pg}</button>`;
+                        html += `<button class="oh-pg" ${page === totalPages ? "disabled" : ""} onclick="window.load(${page + 1},'${s}')"><i class="bi bi-chevron-right"></i></button>`;
                         pager.innerHTML = html;
                     }
                 } catch {
                     list.innerHTML = `
-                    <div class="oh-empty">
-                        <i class="bi bi-wifi-off"></i>
-                        <p>Không tải được đơn hàng</p><small>Vui lòng thử lại sau.</small>
-                    </div>`;
+                            <div class="oh-empty">
+                                <i class="bi bi-wifi-off"></i>
+                                <p>Không tải được đơn hàng</p><small>Vui lòng thử lại sau.</small>
+                            </div>`;
                 }
             }
 
@@ -556,131 +650,182 @@
                 } catch { return null; }
             }
 
-            // Lấy review status cho tất cả sách trong 1 đơn hoàn thành
-            // Trả về map: { bookId: true (chưa đánh giá) | false (đã đánh giá) }
             async function fetchReviewMap(detail) {
                 if (!detail?.items?.length) return {};
-                const bookIds = [...new Set(detail.items.map(it => it.book?.bookId ?? it.book?.bookId ?? 0).filter(Boolean))];
+                const bookIds = [...new Set(detail.items.map(it => it.book?.bookId ?? 0).filter(Boolean))];
                 const results = await Promise.all(
                     bookIds.map(async bid => {
                         try {
                             const res = await fetch(`${API}/reviews/status/${bid}`, { headers: authHeaders() });
                             const data = await res.json();
-                            // canReview=true → chưa đánh giá → hiện nút
-                            // canReview=false, reason=already_reviewed → đã đánh giá → ẩn nút
                             return { bid, canReview: data.canReview === true };
-                        } catch {
-                            return { bid, canReview: true }; // lỗi → vẫn hiện nút
-                        }
+                        } catch { return { bid, canReview: true }; }
                     })
                 );
                 return Object.fromEntries(results.map(r => [r.bid, r.canReview]));
             }
 
-            /* ── render 1 card ── */
+            /* ── Render card ── */
             function renderCard(o, detail, reviewMap = {}) {
                 const id = o.orderId;
                 const status = o.status ?? "";
                 const total = o.totalCost ?? 0;
-                const phone = o.phone ?? "";
-                const address = o.address ?? "";
-                const note = o.note ?? "";
+                const phone = detail?.phone ?? o.phone ?? "";
+                const address = detail?.address ?? o.address ?? "";
+                const note = detail?.note ?? o.note ?? "";
                 const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : "";
                 const items = detail?.items ?? [];
                 const SHOW = 2;
 
+                // ── Ưu tiên data từ detail vì đầy đủ và chính xác hơn ──
+                const paymentMethod = (detail?.paymentMethod ?? o.paymentMethod ?? "").toLowerCase();
+                const isVnpay = paymentMethod === "vnpay";
+                const isPaid = detail?.isPaid ?? o.isPaid ?? false;
+                const isCancelled = status === "cancelled";
+
+                // Card border class
+                const cardBorderCls = isVnpay
+                    ? (isPaid ? "paid-vnpay" : (isCancelled ? "" : "unpaid-vnpay"))
+                    : "";
+
+                /* items HTML */
                 const itemHtml = (list) => list.map(it => {
                     const src = imgSrc(it.book?.image ?? "");
                     const name = it.book?.title ?? "Sách";
-                    const bookId = it.book?.bookId ?? it.book?.bookId ?? 0;
+                    const bookId = it.book?.bookId ?? 0;
                     const qty = it.quantity ?? 1;
                     const sub = it.subTotal ?? (it.unitPrice * qty);
-                    const canReview = reviewMap[bookId]; // true=chưa đánh giá, false=đã đánh giá, undefined=không áp dụng
+                    const canReview = reviewMap[bookId];
 
-                    // Xác định nút hiển thị
                     let reviewBtn = "";
                     if (status === "completed" && bookId) {
                         if (canReview === false) {
-                            // Đã đánh giá → hiện badge xanh
                             reviewBtn = `
-                            <span style="display:inline-flex;align-items:center;gap:4px;
-                                         background:#f0fff4;color:#27ae60;border:1.5px solid #b7e4c7;
-                                         border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
-                                         font-weight:700;white-space:nowrap;flex-shrink:0">
-                                <i class="bi bi-check-circle-fill"></i> Đã đánh giá
-                            </span>`;
+                                    <span style="display:inline-flex;align-items:center;gap:4px;
+                                                 background:#f0fff4;color:#27ae60;border:1.5px solid #b7e4c7;
+                                                 border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
+                                                 font-weight:700;white-space:nowrap;flex-shrink:0">
+                                        <i class="bi bi-check-circle-fill"></i> Đã đánh giá
+                                    </span>`;
                         } else {
-                            // Chưa đánh giá (canReview=true hoặc undefined) → hiện nút vàng
                             reviewBtn = `
-                            <a href="review.html?bookId=${bookId}&orderId=${id}"
-                               style="display:inline-flex;align-items:center;gap:4px;
-                                      background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;
-                                      border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
-                                      font-weight:700;text-decoration:none;white-space:nowrap;
-                                      flex-shrink:0;transition:all .15s"
-                               onmouseover="this.style.background='#f39c12';this.style.color='#fff';this.style.borderColor='#f39c12'"
-                               onmouseout="this.style.background='#fff8ec';this.style.color='#d68910';this.style.borderColor='#ffe0a0'">
-                                <i class="bi bi-star-fill"></i> Đánh giá
-                            </a>`;
+                                    <a href="review.html?bookId=${bookId}&orderId=${id}"
+                                       style="display:inline-flex;align-items:center;gap:4px;
+                                              background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;
+                                              border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
+                                              font-weight:700;text-decoration:none;white-space:nowrap;
+                                              flex-shrink:0;transition:all .15s"
+                                       onmouseover="this.style.background='#f39c12';this.style.color='#fff';this.style.borderColor='#f39c12'"
+                                       onmouseout="this.style.background='#fff8ec';this.style.color='#d68910';this.style.borderColor='#ffe0a0'">
+                                        <i class="bi bi-star-fill"></i> Đánh giá
+                                    </a>`;
                         }
                     }
 
                     return `
-                    <div class="oh-item">
-                        ${src ? `<img class="oh-item-img" src="${src}" alt="${name}"
-                                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`: ``}
-                        <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                        <div style="flex:1;min-width:0">
-                            <div class="oh-item-name">${name}</div>
-                            <div class="oh-item-meta">SL: ${qty}</div>
-                            <div class="oh-item-price">${fmt(sub)}</div>
-                        </div>
-                        ${reviewBtn}
-                    </div>`;
+                            <div class="oh-item">
+                                ${src ? `<img class="oh-item-img" src="${src}" alt="${name}"
+                                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                                <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                                <div style="flex:1;min-width:0">
+                                    <div class="oh-item-name">${name}</div>
+                                    <div class="oh-item-meta">SL: ${qty}</div>
+                                    <div class="oh-item-price">${fmt(sub)}</div>
+                                </div>
+                                ${reviewBtn}
+                            </div>`;
                 }).join("");
 
                 const visibleItems = items.slice(0, SHOW);
                 const hiddenItems = items.slice(SHOW);
                 const hasMore = hiddenItems.length > 0;
 
+                // Banner nhắc thanh toán VNPay — chỉ khi chưa thanh toán và chưa hủy
+                // Banner nhắc thanh toán VNPay — chỉ khi chưa thanh toán và chưa hủy
+                const payBanner = (isVnpay && !isPaid && !isCancelled) ? `
+                    <div class="oh-pay-banner">
+                        <div style="flex:1">
+                            <div class="oh-pay-banner-text">
+                                <i class="bi bi-exclamation-circle-fill"></i>
+                                Đơn hàng chưa được thanh toán
+                            </div>
+                            <div style="font-size:.76rem;color:#4a88b8;margin-top:3px;padding-left:22px">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Đơn hàng sẽ không được xác nhận cho đến khi bạn hoàn tất thanh toán.
+                            </div>
+                        </div>
+                        <button class="oh-btn-pay-now" id="paybtn_${id}" onclick="retryVnpay(${id})">
+                            <i class="bi bi-credit-card-fill"></i> Thanh toán ngay
+                        </button>
+                    </div>` : "";
+
                 return `
-                <div class="oh-card" id="card_${id}">
-                    <div class="oh-head">
-                        <div>
-                            <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
-                            ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
-                        </div>
-                        ${badge(status)}
-                    </div>
-                    <div class="oh-body">
-                        ${itemHtml(visibleItems)}
-                        ${hasMore ? `
-                        <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
-                        <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
-                            <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
-                        </button>`: ""}
-                        ${(phone || address) ? `
-                        <div class="oh-ship" id="ship_${id}">
-                            ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
-                            ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
-                            ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
-                        </div>`: ""}
-                    </div>
-                    <div class="oh-foot">
-                        <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
-                        <div style="display:flex;gap:6px;flex-wrap:wrap">
-                            ${(phone || address) ? `
-                            <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
-                                <i class="bi bi-geo-alt me-1"></i>Địa chỉ
-                            </button>`: ""}
-                            ${status === "pending" ? `
-                            <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id})">
-                                <i class="bi bi-x-circle me-1"></i>Hủy đơn
-                            </button>`: ""}
-                        </div>
-                    </div>
-                </div>`;
+                        <div class="oh-card ${cardBorderCls}" id="card_${id}">
+                            <div class="oh-head">
+                                <div>
+                                    <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
+                                    ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
+                                </div>
+                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                                    ${payBadge(paymentMethod, isPaid)}
+                                    ${badge(status)}
+                                </div>
+                            </div>
+
+                            ${payBanner}
+
+                            <div class="oh-body">
+                                ${itemHtml(visibleItems)}
+                                ${hasMore ? `
+                                <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
+                                <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
+                                    <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
+                                </button>` : ""}
+                                ${(phone || address) ? `
+                                <div class="oh-ship" id="ship_${id}">
+                                    ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
+                                    ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
+                                    ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
+                                </div>` : ""}
+                            </div>
+
+                            <div class="oh-foot">
+                                <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
+                                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                                    ${(phone || address) ? `
+                                    <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
+                                        <i class="bi bi-geo-alt me-1"></i>Địa chỉ
+                                    </button>` : ""}
+                                    ${status === "pending" ? `
+                                    <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id})">
+                                        <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                                    </button>` : ""}
+                                </div>
+                            </div>
+                        </div>`;
             }
+
+            /* ── Thanh toán lại VNPay ── */
+            window.retryVnpay = async function (orderId) {
+                const btn = document.getElementById(`paybtn_${orderId}`);
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...'; }
+                try {
+                    const res = await fetch(`${API}/payment/vnpay/create`, {
+                        method: "POST", headers: authHeaders(),
+                        body: JSON.stringify({ orderId })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.paymentUrl) {
+                        showToast(data.message || "Không tạo được link thanh toán.", "error");
+                        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card-fill"></i> Thanh toán ngay'; }
+                        return;
+                    }
+                    window.location.href = data.paymentUrl;
+                } catch {
+                    showToast("Không kết nối được máy chủ.", "error");
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card-fill"></i> Thanh toán ngay'; }
+                }
+            };
 
             window.toggleExtra = function (id) {
                 const el = document.getElementById(`extra_${id}`);
@@ -737,7 +882,7 @@
             window.filterTab = function (btn, status) {
                 document.querySelectorAll(".oh-tab").forEach(t => t.classList.remove("active"));
                 btn.classList.add("active");
-                load(1, status);
+                window.load(1, status);
             };
 
             const _initStatus = new URLSearchParams(window.location.search).get("status") || "";

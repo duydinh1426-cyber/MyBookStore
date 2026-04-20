@@ -7,7 +7,7 @@ namespace WebAPI.Services.Interfaces
         Task<object> CheckoutAsync(int userId, CheckoutDto dto);
         Task<object?> GetByIdAsync(int userId, bool isAdmin, int id);
         Task<object> GetUserOrdersAsync(int userId, int page, int pageSize, string? status);
-        Task<object> AdminGetAllOrdersAsync(string? status, string? keyword);
+        Task<object> AdminGetAllOrdersAsync(string? status, string? keyword, int page, int pageSize);
         Task<object> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null);
         Task<object> CancelAsync(int userId, int id);
         Task<object> UpdateStatusAsync(int id, UpdateOrderStatusDto dto);

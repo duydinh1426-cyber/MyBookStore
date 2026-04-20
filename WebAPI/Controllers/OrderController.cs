@@ -79,9 +79,13 @@ namespace WebAPI.Controllers
 
         [HttpGet("admin/all")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AdminGetAll([FromQuery] string? status, [FromQuery] string? keyword)
+        public async Task<IActionResult> AdminGetAll(
+            [FromQuery] string? status,
+            [FromQuery] string? keyword,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 15)
         {
-            return Ok(await _service.AdminGetAllOrdersAsync(status, keyword));
+            return Ok(await _service.AdminGetAllOrdersAsync(status, keyword, page, pageSize));
         }
 
         [HttpPut("admin/{id:int}/status")]
