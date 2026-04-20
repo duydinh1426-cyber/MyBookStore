@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Data.Models.Vnpay
+namespace Data.Vnpay
 {
     public partial class PaymentInformationModel
     {

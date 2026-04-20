@@ -1,5 +1,5 @@
 ﻿using WebAPI.Libraries;  // ← sửa từ Data.Libraries thành WebAPI.Libraries
-using Data.Models.Vnpay;
+using Data.Vnpay;
 
 namespace WebAPI.Services.VnPay
 {

@@ -134,22 +134,9 @@ namespace WebAPI.Services
             return orders;
         }
 
-        public async Task<object> AdminGetAllOrdersAsync(string? status, string? keyword)
+        public async Task<object> AdminGetAllOrdersAsync(string? status, string? keyword, int page, int pageSize)
         {
-            var orders = await _repo.GetAllOrdersAdminAsync(status, keyword);
-            return orders.Select(o => new
-            {
-                o.OrderId,
-                customerName = o.User?.Name,
-                o.TotalCost,
-                o.Status,
-                statusLabel = o.Status.ToEnum().ToLabel(),
-                o.CreatedAt,
-                o.Phone,
-                o.PaymentMethod,
-                o.IsPaid,
-                o.Address
-            }).ToList();
+            return await _repo.GetAllOrdersAdminAsync(status, keyword, page, pageSize);
         }
 
         public async Task<object> CancelAsync(int userId, int id)

@@ -63,7 +63,7 @@ namespace Data.Repositories
             };
         }
 
-        public async Task<List<Order>> GetAllOrdersAdminAsync(string? status, string? keyword)
+        public async Task<object> GetAllOrdersAdminAsync(string? status, string? keyword, int page, int pageSize)
         {
             var query = _db.Orders.Include(o => o.User).AsQueryable();
 
@@ -72,12 +72,40 @@ namespace Data.Repositories
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                query = query.Where(o => o.OrderId.ToString() == keyword ||
-                                         (o.Phone ?? "").Contains(keyword) ||
-                                         (o.User.Name ?? "").Contains(keyword));
+                query = query.Where(o =>
+                    o.OrderId.ToString() == keyword ||
+                    (o.Phone ?? "").Contains(keyword) ||
+                    (o.User.Name ?? "").Contains(keyword));
             }
 
-            return await query.OrderByDescending(o => o.CreatedAt).ToListAsync();
+            var total = await query.CountAsync();
+
+            var data = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(o => new
+                {
+                    o.OrderId,
+                    customerName = o.User != null ? o.User.Name : "",
+                    o.TotalCost,
+                    o.Status,
+                    o.CreatedAt,
+                    o.Phone,
+                    o.PaymentMethod,
+                    o.IsPaid,
+                    o.Address
+                })
+                .ToListAsync();
+
+            return new
+            {
+                total,
+                page,
+                pageSize,
+                totalPages = (int)Math.Ceiling(total / (double)pageSize),
+                data
+            };
         }
 
         public async Task<List<CartItem>> GetCartItemsAsync(int userId)

@@ -1,4 +1,4 @@
-﻿using Data.Models.Vnpay;
+﻿using Data.Vnpay;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;

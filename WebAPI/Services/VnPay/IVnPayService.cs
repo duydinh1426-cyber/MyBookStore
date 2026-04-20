@@ -1,4 +1,4 @@
-﻿using Data.Models.Vnpay;
+﻿using Data.Vnpay;
 
 namespace WebAPI.Services.VnPay
 {

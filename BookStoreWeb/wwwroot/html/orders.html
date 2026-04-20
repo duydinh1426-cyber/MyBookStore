@@ -586,7 +586,7 @@
             }
 
             /* ── Load ── */
-            async function load(page = 1, status = "") {
+            window.load = async function (page = 1, status = "") {
                 curPage = page; curStatus = status;
                 const list = document.getElementById("ohList");
                 const pager = document.getElementById("ohPager");
@@ -627,10 +627,11 @@
                     list.innerHTML = orders.map((o, i) => renderCard(o, details[i], reviewMaps[i])).join("");
 
                     if (totalPages > 1) {
-                        let html = `<button class="oh-pg" ${page === 1 ? "disabled" : ""} onclick="load(${page - 1},'${status}')"><i class="bi bi-chevron-left"></i></button>`;
+                        const s = curStatus; // snapshot tại thời điểm render
+                        let html = `<button class="oh-pg" ${page === 1 ? "disabled" : ""} onclick="window.load(${page - 1},'${s}')"><i class="bi bi-chevron-left"></i></button>`;
                         for (let pg = 1; pg <= totalPages; pg++)
-                            html += `<button class="oh-pg ${pg === page ? "active" : ""}" onclick="load(${pg},'${status}')">${pg}</button>`;
-                        html += `<button class="oh-pg" ${page === totalPages ? "disabled" : ""} onclick="load(${page + 1},'${status}')"><i class="bi bi-chevron-right"></i></button>`;
+                            html += `<button class="oh-pg ${pg === page ? "active" : ""}" onclick="window.load(${pg},'${s}')">${pg}</button>`;
+                        html += `<button class="oh-pg" ${page === totalPages ? "disabled" : ""} onclick="window.load(${page + 1},'${s}')"><i class="bi bi-chevron-right"></i></button>`;
                         pager.innerHTML = html;
                     }
                 } catch {
@@ -881,7 +882,7 @@
             window.filterTab = function (btn, status) {
                 document.querySelectorAll(".oh-tab").forEach(t => t.classList.remove("active"));
                 btn.classList.add("active");
-                load(1, status);
+                window.load(1, status);
             };
 
             const _initStatus = new URLSearchParams(window.location.search).get("status") || "";

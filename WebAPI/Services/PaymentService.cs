@@ -1,5 +1,5 @@
-﻿using Data.Models.Vnpay;
-using Data.Repositories.Interfaces;
+﻿using Data.Repositories.Interfaces;
+using Data.Vnpay;
 using MyBookStore.Data.Models;
 using WebAPI.Services.Interfaces;
 using WebAPI.Services.VnPay;
