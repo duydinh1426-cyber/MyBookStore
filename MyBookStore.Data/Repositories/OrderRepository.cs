@@ -164,5 +164,28 @@ namespace Data.Repositories
         public void RemoveCartItems(IEnumerable<CartItem> items) => _db.CartItems.RemoveRange(items);
 
         public async Task<bool> SaveChangesAsync() => await _db.SaveChangesAsync() > 0;
-    }
+
+		public void AddRefundRequest(RefundRequest r) => _db.RefundRequests.Add(r);
+
+		public async Task<List<RefundRequest>> GetRefundRequestsAsync(string? status)
+		{
+			var q = _db.RefundRequests
+				.Include(r => r.Order)
+				.Include(r => r.User)
+				.AsQueryable();
+
+			if (!string.IsNullOrEmpty(status))
+				q = q.Where(r => r.Status == status);
+
+			return await q.OrderByDescending(r => r.CreatedAt).ToListAsync();
+		}
+
+		public async Task<RefundRequest?> GetRefundRequestByIdAsync(int id)
+		{
+			return await _db.RefundRequests
+				.Include(r => r.Order).ThenInclude(o => o.User)
+				.Include(r => r.User)
+				.FirstOrDefaultAsync(r => r.RefundRequestId == id);
+		}
+	}
 }

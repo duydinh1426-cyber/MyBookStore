@@ -9,7 +9,6 @@ using WebAPI.DTOs;
 using WebAPI.Enums;
 using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
-using Data;
 
 namespace WebAPI.Services
 {
@@ -216,6 +215,49 @@ namespace WebAPI.Services
             _repo.UpdateAccount(account);
             await _repo.SaveChangesAsync();
             return null;
+        }
+
+        public async Task<string?> ChangeEmailSendOtpAsync(int accountId, string newEmail)
+        {
+            if (string.IsNullOrEmpty(newEmail) || !newEmail.Contains('@'))
+                return "Email không hợp lệ.";
+
+            var account = await _repo.GetByIdAsync(accountId);
+            if (account == null) return "Tài khoản không tồn tại.";
+
+            if (newEmail == account.Email) return "Email mới phải khác email hiện tại.";
+
+            if (await _repo.IsEmailExistsAsync(newEmail))
+                return "Email này đã được sử dụng bởi tài khoản khác.";
+
+            var otp = _otp.GenerateOtp(newEmail, OtpPurpose.CHANGE_EMAIL);
+            await _email.SendOtpAsync(newEmail, otp, OtpPurpose.CHANGE_EMAIL);
+            return null;
+        }
+
+        public async Task<object?> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp)
+        {
+            if (!_otp.VerifyOtp(newEmail, otp, OtpPurpose.CHANGE_EMAIL))
+                return new { success = false, message = "Mã OTP không hợp lệ hoặc đã hết hạn." };
+
+            var account = await _repo.GetByIdAsync(accountId);
+            if (account == null) return new { success = false, message = "Tài khoản không tồn tại." };
+
+            if (await _repo.IsEmailExistsAsync(newEmail))
+                return new { success = false, message = "Email này đã được sử dụng." };
+
+            account.Email = newEmail.Trim();
+            _repo.UpdateAccount(account);
+            await _repo.SaveChangesAsync();
+
+            var customer = account.Customers.FirstOrDefault();
+            return new
+            {
+                success = true,
+                message = "Cập nhật email thành công.",
+                token = GenerateJwt(account, userId, customer?.Name ?? ""),
+                email = account.Email
+            };
         }
     }
 }

@@ -25,7 +25,8 @@
         }
 
         .pf-title {
-            font-family: 'Playfair Display',serif;font-size: 1.75rem;
+            font-family: 'Playfair Display',serif;
+            font-size: 1.75rem;
             font-weight: 700;
             color: #1a1a1a;
             margin-bottom: 1.5rem;
@@ -257,7 +258,7 @@
                 color: #c0392b
             }
 
-        /* Username chip */
+        /* Readonly chip */
         .pf-readonly-chip {
             display: inline-flex;
             align-items: center;
@@ -282,11 +283,7 @@
             margin: 1.1rem 0;
         }
 
-        /* OTP step inside password card */
-        #pwStep2 {
-            display: none
-        }
-
+        /* OTP info box */
         .pf-otp-info {
             display: flex;
             align-items: flex-start;
@@ -343,6 +340,33 @@
                 color: #4e8a35
             }
 
+        /* Email row display */
+        .pf-email-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pf-change-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: .8rem;
+            font-weight: 700;
+            color: #6ab04c;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: color .15s;
+            font-family: inherit;
+        }
+
+            .pf-change-link:hover {
+                color: #4e8a35
+            }
+
         /* Skeleton */
         .pf-skeleton {
             background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);
@@ -360,6 +384,15 @@
                 background-position: -200% 0
             }
         }
+
+        /* Steps */
+        .pf-step {
+            display: none
+        }
+
+            .pf-step.active {
+                display: block
+            }
     </style>
 </head>
 <body>
@@ -396,9 +429,27 @@
                 </div>
             </div>
 
-            <!-- Thông tin cá nhân -->
+            <!-- ══════════════════════════════════════════
+                 CARD: Thông tin cá nhân (Tên + Địa chỉ)
+            ══════════════════════════════════════════ -->
             <div class="pf-card">
                 <div class="pf-card-title"><i class="bi bi-pencil-square"></i> Thông tin cá nhân</div>
+
+                <!-- Email hiển thị readonly -->
+                <div class="mb-3">
+                    <label class="pf-label">Email</label>
+                    <div class="pf-email-row">
+                        <div class="pf-readonly-chip">
+                            <i class="bi bi-envelope"></i>
+                            <span id="pfEmailDisplay">—</span>
+                        </div>
+                        <button class="pf-change-link" onclick="startChangeEmail()">
+                            <i class="bi bi-pencil"></i> Đổi email
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="pf-divider">
 
                 <div class="row g-3">
                     <div class="col-12">
@@ -406,12 +457,7 @@
                         <input class="pf-input" id="pfName" type="text" placeholder="Nguyễn Văn A">
                         <div class="pf-err" id="pfNameErr">Vui lòng nhập họ tên (ít nhất 2 ký tự)</div>
                     </div>
-                    <div class="col-12 col-sm-6">
-                        <label class="pf-label" for="pfEmail">Email <span style="color:#e74c3c">*</span></label>
-                        <input class="pf-input" id="pfEmail" type="email" placeholder="email@example.com">
-                        <div class="pf-err" id="pfEmailErr">Email không hợp lệ</div>
-                    </div>
-                    <div class="col-12 col-sm-6">
+                    <div class="col-12">
                         <label class="pf-label" for="pfAddress">Địa chỉ</label>
                         <input class="pf-input" id="pfAddress" type="text" placeholder="Số nhà, đường, phường, quận...">
                     </div>
@@ -432,11 +478,84 @@
                 </div>
             </div>
 
-            <!-- Đổi mật khẩu -->
+            <!-- ══════════════════════════════════════════
+                 CARD: Đổi email (3 bước)
+            ══════════════════════════════════════════ -->
+            <div class="pf-card" id="emailCard" style="display:none">
+                <div class="pf-card-title"><i class="bi bi-envelope-fill"></i> Đổi địa chỉ email</div>
+
+                <!-- Bước 1: Nhập email mới -->
+                <div id="emStep1" class="pf-step active">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="pf-label" for="pfNewEmail">Email mới <span style="color:#e74c3c">*</span></label>
+                            <input class="pf-input" id="pfNewEmail" type="email" placeholder="email_moi@example.com">
+                            <div class="pf-err" id="pfNewEmailErr">Email không hợp lệ</div>
+                        </div>
+                    </div>
+
+                    <div class="pf-alert" id="emStep1Alert">
+                        <i class="bi bi-exclamation-circle-fill" style="flex-shrink:0;margin-top:1px"></i>
+                        <span id="emStep1AlertMsg"></span>
+                    </div>
+
+                    <div style="margin-top:1rem;display:flex;gap:8px;flex-wrap:wrap">
+                        <button class="pf-btn pf-btn-primary" id="emSendOtpBtn" onclick="sendEmailOtp()">
+                            <i class="bi bi-send"></i> Gửi mã OTP
+                        </button>
+                        <button class="pf-btn pf-btn-outline" onclick="cancelChangeEmail()">
+                            Huỷ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bước 2: Nhập OTP -->
+                <div id="emStep2" class="pf-step">
+                    <button class="pf-back-btn" onclick="goToEmStep(1)">
+                        <i class="bi bi-arrow-left"></i> Quay lại
+                    </button>
+
+                    <div class="pf-otp-info">
+                        <i class="bi bi-envelope-check-fill"></i>
+                        <span>Mã OTP đã gửi đến <strong id="emNewEmailDisplay"></strong>. Kiểm tra hộp thư (và mục Spam).</span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="pf-label" for="pfEmailOtp">Mã OTP <span style="color:#e74c3c">*</span></label>
+                            <input class="pf-input" id="pfEmailOtp" type="text" placeholder="Nhập 6 chữ số"
+                                   maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                                   oninput="this.value=this.value.replace(/\D/g,'')">
+                            <div class="pf-err" id="pfEmailOtpErr">Vui lòng nhập mã OTP 6 chữ số</div>
+                        </div>
+                    </div>
+
+                    <div class="pf-alert" id="emStep2Alert">
+                        <i class="bi bi-check-circle-fill" style="flex-shrink:0;margin-top:1px"></i>
+                        <span id="emStep2AlertMsg"></span>
+                    </div>
+
+                    <div style="margin-top:1rem">
+                        <button class="pf-btn pf-btn-primary" id="emVerifyBtn" onclick="verifyEmailOtp()">
+                            <i class="bi bi-check-lg"></i> Xác nhận đổi email
+                        </button>
+                    </div>
+
+                    <div class="pf-otp-resend">
+                        Không nhận được mã?
+                        <span id="emCountdown">Gửi lại sau <strong id="emTimer">60</strong>s</span>
+                        <a id="emResendBtn" style="display:none" onclick="resendEmailOtp()">Gửi lại OTP</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════════
+                 CARD: Đổi mật khẩu
+            ══════════════════════════════════════════ -->
             <div class="pf-card">
                 <div class="pf-card-title"><i class="bi bi-lock-fill"></i> Đổi mật khẩu</div>
 
-                <!-- ── Bước 1: Xác nhận mật khẩu cũ ── -->
+                <!-- Bước 1: Xác nhận mật khẩu cũ -->
                 <div id="pwStep1">
                     <div class="row g-3">
                         <div class="col-12">
@@ -461,8 +580,8 @@
                     </div>
                 </div>
 
-                <!-- ── Bước 2: Nhập OTP + Mật khẩu mới ── -->
-                <div id="pwStep2">
+                <!-- Bước 2: Nhập OTP + Mật khẩu mới -->
+                <div id="pwStep2" style="display:none">
                     <button class="pf-back-btn" onclick="goBackToPwStep1()">
                         <i class="bi bi-arrow-left"></i> Quay lại
                     </button>
@@ -475,12 +594,10 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="pf-label" for="pfOtp">Mã OTP <span style="color:#e74c3c">*</span></label>
-                            <div class="pf-pw-wrap" style="position:relative">
-                                <input class="pf-input" id="pfOtp" type="text" placeholder="Nhập 6 chữ số"
-                                       maxlength="6" inputmode="numeric" autocomplete="one-time-code"
-                                       style="padding-left:.9rem"
-                                       oninput="this.value=this.value.replace(/\D/g,'')">
-                            </div>
+                            <input class="pf-input" id="pfOtp" type="text" placeholder="Nhập 6 chữ số"
+                                   maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+                                   style="padding-left:.9rem"
+                                   oninput="this.value=this.value.replace(/\D/g,'')">
                             <div class="pf-err" id="pfOtpErr">Vui lòng nhập mã OTP 6 chữ số</div>
                         </div>
 
@@ -539,7 +656,8 @@
         (function () {
             const API = "https://localhost:7204/api";
             let _original = {};
-            let _pwCountdown;
+            let _pwCountdown, _emCountdown;
+            let _pendingNewEmail = "";
 
             const getToken = () => sessionStorage.getItem("token");
             const authHeaders = () => ({ "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` });
@@ -570,23 +688,27 @@
                 ico.className = inp.type === "password" ? "bi bi-eye" : "bi bi-eye-slash";
             };
 
-            /* ── Countdown ── */
-            function startCountdown() {
-                clearInterval(_pwCountdown);
+            /* ── Countdown factory ── */
+            function startCountdown(timerId, countdownId, resendId, intervalRef, onDone) {
+                clearInterval(intervalRef.val);
                 let s = 60;
-                document.getElementById("pfTimer").textContent = s;
-                document.getElementById("pfCountdown").style.display = "inline";
-                document.getElementById("pfResendBtn").style.display = "none";
-                _pwCountdown = setInterval(() => {
+                document.getElementById(timerId).textContent = s;
+                document.getElementById(countdownId).style.display = "inline";
+                document.getElementById(resendId).style.display = "none";
+                intervalRef.val = setInterval(() => {
                     s--;
-                    document.getElementById("pfTimer").textContent = s;
+                    document.getElementById(timerId).textContent = s;
                     if (s <= 0) {
-                        clearInterval(_pwCountdown);
-                        document.getElementById("pfCountdown").style.display = "none";
-                        document.getElementById("pfResendBtn").style.display = "inline";
+                        clearInterval(intervalRef.val);
+                        document.getElementById(countdownId).style.display = "none";
+                        document.getElementById(resendId).style.display = "inline";
+                        if (onDone) onDone();
                     }
                 }, 1000);
             }
+
+            const pwCd = { val: null };
+            const emCd = { val: null };
 
             /* ── Load profile ── */
             async function loadProfile() {
@@ -599,45 +721,42 @@
                     const initials = (d.name || "?").split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
                     document.getElementById("pfAvatarCircle").textContent = initials;
                     document.getElementById("pfAvatarName").textContent = d.name || "—";
+                    document.getElementById("pfEmailDisplay").textContent = d.email || "—";
                     if (d.createdAt) document.getElementById("pfSince").textContent = "Thành viên từ " + new Date(d.createdAt).toLocaleDateString("vi-VN");
 
                     document.getElementById("pfName").value = d.name || "";
-                    document.getElementById("pfEmail").value = d.email || "";
                     document.getElementById("pfAddress").value = d.address || "";
 
                     document.getElementById("pfLoading").style.display = "none";
                     document.getElementById("pfContent").style.display = "block";
                 } catch {
                     document.getElementById("pfLoading").innerHTML = `
-                    <div class="pf-card" style="text-align:center;padding:2.5rem;color:#8a9bb0">
-                        <i class="bi bi-wifi-off" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
-                        Không tải được thông tin. Vui lòng thử lại.
-                    </div>`;
+                            <div class="pf-card" style="text-align:center;padding:2.5rem;color:#8a9bb0">
+                                <i class="bi bi-wifi-off" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+                                Không tải được thông tin. Vui lòng thử lại.
+                            </div>`;
                 }
             }
 
             /* ── Reset profile form ── */
             window.resetProfile = function () {
                 document.getElementById("pfName").value = _original.name;
-                document.getElementById("pfEmail").value = _original.email;
                 document.getElementById("pfAddress").value = _original.address;
-                ["pfName", "pfEmail", "pfAddress"].forEach(id => document.getElementById(id).classList.remove("error"));
-                ["pfNameErr", "pfEmailErr"].forEach(id => document.getElementById(id).classList.remove("show"));
+                ["pfName"].forEach(id => document.getElementById(id).classList.remove("error"));
+                ["pfNameErr"].forEach(id => document.getElementById(id).classList.remove("show"));
                 document.getElementById("pfInfoAlert").classList.remove("show");
             };
 
-            /* ── Save profile ── */
+            /* ── Save profile (Tên + Địa chỉ) ── */
             window.saveProfile = async function () {
                 const okName = chk("pfName", "pfNameErr", v => v.length >= 2);
-                const okEmail = chk("pfEmail", "pfEmailErr", v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
-                if (!okName || !okEmail) return;
+                if (!okName) return;
 
                 const btn = document.getElementById("pfSaveBtn");
                 btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
 
                 const payload = {
                     name: document.getElementById("pfName").value.trim(),
-                    email: document.getElementById("pfEmail").value.trim(),
                     address: document.getElementById("pfAddress").value.trim(),
                 };
 
@@ -652,13 +771,142 @@
                         const initials = newName.split(" ").filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("");
                         document.getElementById("pfAvatarCircle").textContent = initials;
                         document.getElementById("pfAvatarName").textContent = newName;
-                        _original = { name: newName, email: data.email || payload.email, address: data.address || payload.address };
+                        _original.name = newName;
+                        _original.address = data.address || payload.address;
                         showAlert("pfInfoAlert", "pfInfoAlertMsg", "Cập nhật thông tin thành công!", "success");
                     }
                 } catch {
                     showAlert("pfInfoAlert", "pfInfoAlertMsg", "Không kết nối được máy chủ.", "error");
                 } finally {
                     btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Lưu thay đổi';
+                }
+            };
+
+            /* ══════════════════════════════════════════════
+               ĐỔI EMAIL
+            ══════════════════════════════════════════════ */
+
+            window.startChangeEmail = function () {
+                document.getElementById("emailCard").style.display = "block";
+                document.getElementById("pfNewEmail").value = "";
+                document.getElementById("pfEmailOtp").value = "";
+                document.getElementById("emStep1Alert").classList.remove("show");
+                document.getElementById("emStep2Alert").classList.remove("show");
+                goToEmStep(1);
+                document.getElementById("emailCard").scrollIntoView({ behavior: "smooth", block: "nearest" });
+            };
+
+            window.cancelChangeEmail = function () {
+                clearInterval(emCd.val);
+                document.getElementById("emailCard").style.display = "none";
+            };
+
+            window.goToEmStep = function (step) {
+                document.querySelectorAll("#emailCard .pf-step").forEach(el => el.classList.remove("active"));
+                document.getElementById(`emStep${step}`).classList.add("active");
+            };
+
+            /* Bước 1 — Gửi OTP đến email mới */
+            window.sendEmailOtp = async function () {
+                document.getElementById("emStep1Alert").classList.remove("show");
+                const okEmail = chk("pfNewEmail", "pfNewEmailErr", v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+                if (!okEmail) return;
+
+                const newEmail = document.getElementById("pfNewEmail").value.trim();
+                if (newEmail === _original.email) {
+                    document.getElementById("pfNewEmail").classList.add("error");
+                    document.getElementById("pfNewEmailErr").textContent = "Email mới phải khác email hiện tại.";
+                    document.getElementById("pfNewEmailErr").classList.add("show");
+                    return;
+                }
+
+                const btn = document.getElementById("emSendOtpBtn");
+                btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang gửi OTP...';
+
+                try {
+                    const res = await fetch(`${API}/auth/me/change-email/send-otp`, {
+                        method: "POST", headers: authHeaders(),
+                        body: JSON.stringify({ newEmail })
+                    });
+                    const data = await res.json().catch(() => ({}));
+
+                    if (res.ok) {
+                        _pendingNewEmail = newEmail;
+                        document.getElementById("emNewEmailDisplay").textContent = newEmail;
+                        document.getElementById("pfEmailOtp").value = "";
+                        document.getElementById("emStep2Alert").classList.remove("show");
+                        goToEmStep(2);
+                        startCountdown("emTimer", "emCountdown", "emResendBtn", emCd);
+                    } else {
+                        showAlert("emStep1Alert", "emStep1AlertMsg", data.message || "Không thể gửi OTP.", "error");
+                    }
+                } catch {
+                    showAlert("emStep1Alert", "emStep1AlertMsg", "Không kết nối được máy chủ.", "error");
+                } finally {
+                    btn.disabled = false; btn.innerHTML = '<i class="bi bi-send"></i> Gửi mã OTP';
+                }
+            };
+
+            /* Gửi lại OTP email */
+            window.resendEmailOtp = async function () {
+                try {
+                    const res = await fetch(`${API}/auth/me/change-email/send-otp`, {
+                        method: "POST", headers: authHeaders(),
+                        body: JSON.stringify({ newEmail: _pendingNewEmail })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                        showAlert("emStep2Alert", "emStep2AlertMsg", "Đã gửi lại OTP.", "success");
+                        startCountdown("emTimer", "emCountdown", "emResendBtn", emCd);
+                    } else {
+                        showAlert("emStep2Alert", "emStep2AlertMsg", data.message || "Không thể gửi lại OTP.", "error");
+                    }
+                } catch {
+                    showAlert("emStep2Alert", "emStep2AlertMsg", "Không kết nối được máy chủ.", "error");
+                }
+            };
+
+            /* Bước 2 — Verify OTP */
+            window.verifyEmailOtp = async function () {
+                const okOtp = chk("pfEmailOtp", "pfEmailOtpErr", v => v.length === 6);
+                if (!okOtp) return;
+
+                const btn = document.getElementById("emVerifyBtn");
+                btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xác nhận...';
+
+                try {
+                    const res = await fetch(`${API}/auth/me/change-email/verify-otp`, {
+                        method: "PUT", headers: authHeaders(),
+                        body: JSON.stringify({
+                            newEmail: _pendingNewEmail,
+                            otp: document.getElementById("pfEmailOtp").value.trim()
+                        })
+                    });
+                    const data = await res.json().catch(() => ({}));
+
+                    if (!res.ok) {
+                        showAlert("emStep2Alert", "emStep2AlertMsg", data.message || "Xác nhận thất bại.", "error");
+                    } else {
+                        if (data.token) sessionStorage.setItem("token", data.token);
+
+                        // Cập nhật UI email
+                        _original.email = _pendingNewEmail;
+                        document.getElementById("pfEmailDisplay").textContent = _pendingNewEmail;
+
+                        clearInterval(emCd.val);
+                        showAlert("emStep2Alert", "emStep2AlertMsg", "Đổi email thành công!", "success");
+
+                        // Đóng card sau 2s
+                        setTimeout(() => {
+                            document.getElementById("emailCard").style.display = "none";
+                            goToEmStep(1);
+                            _pendingNewEmail = "";
+                        }, 2000);
+                    }
+                } catch {
+                    showAlert("emStep2Alert", "emStep2AlertMsg", "Không kết nối được máy chủ.", "error");
+                } finally {
+                    btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i> Xác nhận đổi email';
                 }
             };
 
@@ -680,7 +928,6 @@
                     });
                     const data = await res.json().catch(() => ({}));
                     if (res.ok) {
-                        // Chuyển sang bước 2
                         document.getElementById("pwStep1").style.display = "none";
                         document.getElementById("pwStep2").style.display = "block";
                         document.getElementById("pfOtp").value = "";
@@ -689,7 +936,7 @@
                         document.getElementById("pfStrengthBar").style.width = "0";
                         document.getElementById("pfStrengthLabel").textContent = "";
                         document.getElementById("pfPwAlert").classList.remove("show");
-                        startCountdown();
+                        startCountdown("pfTimer", "pfCountdown", "pfResendBtn", pwCd);
                     } else {
                         showAlert("pfPwStep1Alert", "pfPwStep1AlertMsg", data.message || "Xác nhận thất bại.", "error");
                     }
@@ -700,7 +947,7 @@
                 }
             };
 
-            /* ── Gửi lại OTP đổi mật khẩu ── */
+            /* ── Gửi lại OTP mật khẩu ── */
             window.resendPasswordOtp = async function () {
                 try {
                     const res = await fetch(`${API}/auth/me/change-password/send-otp`, {
@@ -710,7 +957,7 @@
                     const data = await res.json().catch(() => ({}));
                     if (res.ok) {
                         showAlert("pfPwAlert", "pfPwAlertMsg", "Đã gửi lại OTP về email.", "success");
-                        startCountdown();
+                        startCountdown("pfTimer", "pfCountdown", "pfResendBtn", pwCd);
                     } else {
                         showAlert("pfPwAlert", "pfPwAlertMsg", data.message || "Không thể gửi lại OTP.", "error");
                     }
@@ -731,23 +978,21 @@
                 const btn = document.getElementById("pfPwBtn");
                 btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
 
-                const payload = {
-                    otp: document.getElementById("pfOtp").value.trim(),
-                    newPassword: document.getElementById("pfNewPw").value,
-                    confirmPassword: document.getElementById("pfConfirmPw").value,
-                };
-
                 try {
                     const res = await fetch(`${API}/auth/me/change-password/verify-otp`, {
-                        method: "PUT", headers: authHeaders(), body: JSON.stringify(payload)
+                        method: "PUT", headers: authHeaders(),
+                        body: JSON.stringify({
+                            otp: document.getElementById("pfOtp").value.trim(),
+                            newPassword: document.getElementById("pfNewPw").value,
+                            confirmPassword: document.getElementById("pfConfirmPw").value,
+                        })
                     });
                     const data = await res.json().catch(() => ({}));
                     if (!res.ok) {
                         showAlert("pfPwAlert", "pfPwAlertMsg", data.message || "Đổi mật khẩu thất bại.", "error");
                     } else {
-                        clearInterval(_pwCountdown);
+                        clearInterval(pwCd.val);
                         showAlert("pfPwAlert", "pfPwAlertMsg", "Đổi mật khẩu thành công!", "success");
-                        // Reset về bước 1 sau 2s
                         setTimeout(() => {
                             document.getElementById("pwStep2").style.display = "none";
                             document.getElementById("pwStep1").style.display = "block";
@@ -765,7 +1010,7 @@
 
             /* ── Quay lại bước 1 đổi mật khẩu ── */
             window.goBackToPwStep1 = function () {
-                clearInterval(_pwCountdown);
+                clearInterval(pwCd.val);
                 document.getElementById("pwStep2").style.display = "none";
                 document.getElementById("pwStep1").style.display = "block";
                 document.getElementById("pfPwAlert").classList.remove("show");
@@ -779,11 +1024,18 @@
                 let score = 0;
                 if (v.length >= 6) score++; if (v.length >= 10) score++;
                 if (/[A-Z]/.test(v)) score++; if (/[0-9]/.test(v)) score++; if (/[^A-Za-z0-9]/.test(v)) score++;
-                const lv = [{ w: "20%", bg: "#e74c3c", t: "Rất yếu" }, { w: "40%", bg: "#e67e22", t: "Yếu" }, { w: "60%", bg: "#f39c12", t: "Trung bình" }, { w: "80%", bg: "#2ecc71", t: "Mạnh" }, { w: "100%", bg: "#27ae60", t: "Rất mạnh" }][Math.min(score, 4)];
-                bar.style.width = lv.w; bar.style.background = lv.bg; lbl.textContent = lv.t; lbl.style.color = lv.bg;
+                const lv = [
+                    { w: "20%", bg: "#e74c3c", t: "Rất yếu" },
+                    { w: "40%", bg: "#e67e22", t: "Yếu" },
+                    { w: "60%", bg: "#f39c12", t: "Trung bình" },
+                    { w: "80%", bg: "#2ecc71", t: "Mạnh" },
+                    { w: "100%", bg: "#27ae60", t: "Rất mạnh" }
+                ][Math.min(score, 4)];
+                bar.style.width = lv.w; bar.style.background = lv.bg;
+                lbl.textContent = lv.t; lbl.style.color = lv.bg;
             });
 
-            /* ── Live confirm ── */
+            /* ── Live confirm password ── */
             document.getElementById("pfConfirmPw").addEventListener("input", function () {
                 const match = this.value === document.getElementById("pfNewPw").value;
                 this.classList.toggle("error", !match && this.value.length > 0);

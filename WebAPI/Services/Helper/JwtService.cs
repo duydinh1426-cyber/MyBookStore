@@ -1,6 +1,5 @@
-﻿using MyBookStore.Data.Models;
-using Data;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.IdentityModel.Tokens;
+using MyBookStore.Data.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;

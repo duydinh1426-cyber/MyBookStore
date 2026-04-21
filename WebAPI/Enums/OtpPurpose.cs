@@ -4,6 +4,7 @@
     {
         REGISTER,
         FORGOT_PASSWORD,
-        CHANGE_PASSWORD
+        CHANGE_PASSWORD,
+        CHANGE_EMAIL
     }
 }

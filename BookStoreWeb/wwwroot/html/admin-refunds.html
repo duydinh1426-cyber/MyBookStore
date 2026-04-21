@@ -1,0 +1,688 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý hoàn tiền – Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&subset=vietnamese&display=swap">
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: 'DM Sans','Segoe UI',sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh
+        }
+
+        .adm-wrap {
+            max-width: 1150px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem
+        }
+
+        .adm-title {
+            font-family: 'Playfair Display',serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 1.5rem
+        }
+
+            .adm-title i {
+                color: #6ab04c
+            }
+
+        .adm-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem
+        }
+
+        .adm-stat {
+            flex: 1;
+            min-width: 140px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1.5px solid #e8edf2;
+            padding: .9rem 1.1rem
+        }
+
+        .adm-stat-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #1a1a1a;
+            line-height: 1
+        }
+
+        .adm-stat-lbl {
+            font-size: .75rem;
+            color: #8a9bb0;
+            margin-top: 4px;
+            font-weight: 500
+        }
+
+        .orange {
+            color: #f39c12
+        }
+
+        .green {
+            color: #6ab04c
+        }
+
+        .red {
+            color: #e74c3c
+        }
+
+        .adm-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 1.1rem;
+            align-items: center
+        }
+
+        .adm-sel {
+            border: 1.5px solid #e8edf2;
+            border-radius: 10px;
+            padding: .55rem .8rem;
+            font-family: inherit;
+            font-size: .85rem;
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+            color: #4a5568
+        }
+
+            .adm-sel:focus {
+                border-color: #6ab04c
+            }
+
+        .adm-table-wrap {
+            background: #fff;
+            border-radius: 14px;
+            border: 1.5px solid #e8edf2;
+            overflow: hidden
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        thead tr {
+            background: #fafafa;
+            border-bottom: 1.5px solid #e8edf2
+        }
+
+        th {
+            padding: .75rem 1rem;
+            font-size: .78rem;
+            font-weight: 700;
+            color: #8a9bb0;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            white-space: nowrap
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #f2f2f2;
+            transition: background .12s
+        }
+
+            tbody tr:last-child {
+                border-bottom: none
+            }
+
+            tbody tr:hover {
+                background: #fafffe
+            }
+
+        td {
+            padding: .75rem 1rem;
+            font-size: .86rem;
+            color: #1a1a1a;
+            vertical-align: middle
+        }
+
+        .rf-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: .22rem .65rem;
+            border-radius: 20px;
+            font-size: .74rem;
+            font-weight: 700
+        }
+
+        .rf-pending {
+            background: #fff8ec;
+            color: #d68910;
+            border: 1px solid #ffe0a0
+        }
+
+        .rf-completed {
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1px solid #b7e4c7
+        }
+
+        .bank-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border-radius: 8px;
+            padding: .28rem .65rem;
+            font-size: .76rem;
+            font-weight: 600
+        }
+
+        .bank-ok {
+            background: #f0fff4;
+            border: 1.5px solid #b7e4c7;
+            color: #27ae60
+        }
+
+        .bank-warn {
+            background: #fff8ec;
+            border: 1.5px solid #ffe0a0;
+            color: #d68910
+        }
+
+        .act-btn {
+            border-radius: 7px;
+            padding: .28rem .7rem;
+            font-size: .76rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .15s;
+            border: 1.5px solid transparent;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px
+        }
+
+        .act-detail {
+            background: #f5f5f5;
+            color: #4a5568;
+            border-color: #e8edf2
+        }
+
+            .act-detail:hover {
+                background: #6ab04c;
+                color: #fff;
+                border-color: #6ab04c
+            }
+
+        .act-resolve {
+            background: #f0fff4;
+            color: #27ae60;
+            border-color: #b7e4c7
+        }
+
+            .act-resolve:hover {
+                background: #27ae60;
+                color: #fff
+            }
+
+            .act-resolve:disabled {
+                opacity: .5;
+                cursor: not-allowed
+            }
+
+        .adm-empty {
+            text-align: center;
+            padding: 2.5rem;
+            color: #8a9bb0;
+            font-size: .9rem
+        }
+
+        .modal-content {
+            border-radius: 14px;
+            border: none
+        }
+
+        .modal-header {
+            border: none;
+            padding-bottom: 0
+        }
+
+        .rf-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: .85rem;
+            padding: .38rem 0;
+            color: #4a5568;
+            border-bottom: 1px solid #f5f5f5;
+            gap: 10px
+        }
+
+            .rf-info-row:last-child {
+                border-bottom: none
+            }
+
+            .rf-info-row > span:first-child {
+                flex-shrink: 0;
+                color: #8a9bb0;
+                min-width: 110px
+            }
+
+            .rf-info-row > *:last-child {
+                text-align: right;
+                color: #1a1a1a;
+                font-weight: 600;
+                word-break: break-all
+            }
+
+        .rf-section {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: #8a9bb0;
+            margin: 1rem 0 .5rem;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .pf-label {
+            font-size: .83rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 5px;
+            display: block
+        }
+
+        .pf-input {
+            width: 100%;
+            border: 1.5px solid #e8edf2;
+            border-radius: 10px;
+            padding: .62rem .9rem;
+            font-family: inherit;
+            font-size: .91rem;
+            outline: none;
+            transition: border-color .15s;
+            color: #1a1a1a;
+            background: #fff
+        }
+
+            .pf-input:focus {
+                border-color: #6ab04c;
+                box-shadow: 0 0 0 3px rgba(106,176,76,.12)
+            }
+
+        .pf-btn {
+            border-radius: 10px;
+            padding: .62rem 1.4rem;
+            font-size: .9rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none
+        }
+
+        .pf-btn-primary {
+            background: #6ab04c;
+            color: #fff
+        }
+
+            .pf-btn-primary:hover {
+                background: #4e8a35
+            }
+
+            .pf-btn-primary:disabled {
+                background: #ccc;
+                cursor: not-allowed
+            }
+
+        .pf-btn-outline {
+            background: none;
+            border: 1.5px solid #e8edf2;
+            color: #4a5568
+        }
+
+            .pf-btn-outline:hover {
+                border-color: #6ab04c;
+                color: #6ab04c
+            }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #b0bec5;
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 4px;
+            transition: color .15s;
+            font-size: .85rem
+        }
+
+            .copy-btn:hover {
+                color: #6ab04c
+            }
+
+        .no-bank-box {
+            background: #fff8ec;
+            border: 1.5px solid #ffe0a0;
+            border-radius: 10px;
+            padding: .7rem .9rem;
+            font-size: .82rem;
+            color: #d68910;
+            display: flex;
+            gap: 8px;
+            align-items: flex-start
+        }
+
+            .no-bank-box i {
+                flex-shrink: 0;
+                margin-top: 2px
+            }
+
+        .bank-info-box {
+            background: #f0fff4;
+            border: 1.5px solid #b7e4c7;
+            border-radius: 10px;
+            padding: .7rem .9rem
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <div class="adm-wrap">
+        <h2 class="adm-title"><i class="bi bi-arrow-return-left"></i> Quản lý hoàn tiền</h2>
+
+        <div class="adm-stats">
+            <div class="adm-stat"><div class="adm-stat-val" id="stTotal">—</div><div class="adm-stat-lbl">Tổng yêu cầu</div></div>
+            <div class="adm-stat"><div class="adm-stat-val orange" id="stPending">—</div><div class="adm-stat-lbl">Chờ xử lý</div></div>
+            <div class="adm-stat"><div class="adm-stat-val green" id="stDone">—</div><div class="adm-stat-lbl">Đã hoàn tiền</div></div>
+            <div class="adm-stat"><div class="adm-stat-val red" id="stAmount">—</div><div class="adm-stat-lbl">Tổng tiền cần hoàn</div></div>
+        </div>
+
+        <div class="adm-bar">
+            <select class="adm-sel" id="rfStatus" onchange="loadRefunds()">
+                <option value="">Tất cả</option>
+                <option value="pending">Chờ xử lý</option>
+                <option value="completed">Đã hoàn tiền</option>
+            </select>
+        </div>
+
+        <div class="adm-table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Đơn hàng</th>
+                        <th>Khách hàng</th>
+                        <th>Ngân hàng</th>
+                        <th>Số tiền</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="rfTbody">
+                    <tr><td colspan="8" class="adm-empty"><div class="spinner-border text-success spinner-border-sm"></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="rfModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:500px">
+            <div class="modal-content shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="rfModalTitle">Chi tiết hoàn tiền</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4" id="rfModalBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/header.js"></script>
+    <script>
+    (function () {
+        const API = "https://localhost:7204/api";
+        const getToken = () => sessionStorage.getItem("token");
+        const auth = () => ({ "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` });
+        const fmt = n => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
+        if (!getToken()) { window.location.href = "../html/login.html"; return; }
+
+        let _cur = null, _allCache = [];
+
+        /* ── Stats ── */
+        function updateStats(all) {
+            const pend = all.filter(r => r.status === "pending");
+            document.getElementById("stTotal").textContent   = all.length;
+            document.getElementById("stPending").textContent = pend.length;
+            document.getElementById("stDone").textContent    = all.filter(r => r.status === "completed").length;
+            document.getElementById("stAmount").textContent  = fmt(pend.reduce((s, r) => s + (r.amount ?? 0), 0));
+        }
+
+        function statusBadge(s) {
+            return s === "pending"
+                ? `<span class="rf-badge rf-pending"><i class="bi bi-hourglass-split"></i>Chờ xử lý</span>`
+                : `<span class="rf-badge rf-completed"><i class="bi bi-check-circle-fill"></i>Đã hoàn tiền</span>`;
+        }
+
+        function bankChip(r) {
+            return r.hasBankInfo
+                ? `<span class="bank-chip bank-ok"><i class="bi bi-bank"></i>${r.bankName}</span>`
+                : `<span class="bank-chip bank-warn"><i class="bi bi-exclamation-triangle"></i>Chưa có</span>`;
+        }
+
+        window.copyText = function (text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const o = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check-lg" style="color:#27ae60"></i>';
+                setTimeout(() => btn.innerHTML = o, 1500);
+            });
+        };
+
+        /* ── Load list ── */
+        window.loadRefunds = async function () {
+            const tbody = document.getElementById("rfTbody");
+            tbody.innerHTML = `<tr><td colspan="8" class="adm-empty"><div class="spinner-border text-success spinner-border-sm"></div></td></tr>`;
+            const status = document.getElementById("rfStatus").value;
+            try {
+                const [r1, r2] = await Promise.all([
+                    fetch(`${API}/orders/admin/refunds`, { headers: auth() }),
+                    fetch(`${API}/orders/admin/refunds${status ? "?status=" + status : ""}`, { headers: auth() })
+                ]);
+                _allCache = r1.ok ? await r1.json() : [];
+                const list = r2.ok ? await r2.json() : [];
+                updateStats(_allCache);
+
+                if (!list.length) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="adm-empty">Không có yêu cầu hoàn tiền nào.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = list.map(r => `
+                    <tr id="rfrow_${r.refundRequestId}">
+                        <td><b>#${r.refundRequestId}</b></td>
+                        <td><span style="font-weight:700;color:#6ab04c">#${r.orderId}</span></td>
+                        <td>
+                            <div style="font-weight:600">${r.customer?.name ?? "—"}</div>
+                            <div style="font-size:.75rem;color:#8a9bb0">${r.customer?.phone ?? ""}</div>
+                            <div style="font-size:.75rem;color:#8a9bb0">${r.customer?.email ?? ""}</div>
+                        </td>
+                        <td>${bankChip(r)}</td>
+                        <td style="font-weight:800;color:#e74c3c">${fmt(r.amount ?? 0)}</td>
+                        <td style="font-size:.78rem;color:#8a9bb0">
+                            ${r.createdAt ? new Date(r.createdAt).toLocaleString("vi-VN") : ""}
+                            ${r.resolvedAt ? `<div style="color:#27ae60"><i class="bi bi-check2"></i> ${new Date(r.resolvedAt).toLocaleString("vi-VN")}</div>` : ""}
+                        </td>
+                        <td id="rfbadge_${r.refundRequestId}">${statusBadge(r.status)}</td>
+                        <td>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap">
+                                <button class="act-btn act-detail" onclick="openModal(${r.refundRequestId})">
+                                    <i class="bi bi-eye"></i> Chi tiết
+                                </button>
+                                ${r.status === "pending" ? `
+                                <button class="act-btn act-resolve" id="rfbtn_${r.refundRequestId}"
+                                    onclick="openModal(${r.refundRequestId}, true)">
+                                    <i class="bi bi-check-lg"></i> Hoàn tiền
+                                </button>` : ""}
+                            </div>
+                        </td>
+                    </tr>`).join("");
+            } catch {
+                tbody.innerHTML = `<tr><td colspan="8" class="adm-empty">Không tải được dữ liệu.</td></tr>`;
+            }
+        };
+
+        /* ── Mở modal ── */
+        window.openModal = function (id, resolve = false) {
+            _cur = _allCache.find(r => r.refundRequestId === id) ?? null;
+            if (!_cur) return;
+            document.getElementById("rfModalTitle").textContent = `Yêu cầu hoàn tiền #${id}`;
+            renderModal(_cur, resolve);
+            new bootstrap.Modal(document.getElementById("rfModal")).show();
+        };
+
+        function renderModal(r, showForm) {
+            const bankBlock = r.hasBankInfo ? `
+                <div class="bank-info-box">
+                    <div class="rf-info-row">
+                        <span>Ngân hàng</span>
+                        <span style="color:#27ae60;font-weight:700">${r.bankName}</span>
+                    </div>
+                    <div class="rf-info-row">
+                        <span>Số tài khoản</span>
+                        <span style="display:flex;align-items:center;gap:5px">
+                            <b>${r.bankAccountNumber}</b>
+                            <button class="copy-btn" onclick="copyText('${r.bankAccountNumber}',this)"><i class="bi bi-clipboard"></i></button>
+                        </span>
+                    </div>
+                    <div class="rf-info-row" style="border:none">
+                        <span>Chủ tài khoản</span>
+                        <span style="display:flex;align-items:center;gap:5px">
+                            <b>${r.bankAccountName}</b>
+                            <button class="copy-btn" onclick="copyText('${r.bankAccountName}',this)"><i class="bi bi-clipboard"></i></button>
+                        </span>
+                    </div>
+                </div>` : `
+                <div class="no-bank-box">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Khách chưa cung cấp thông tin ngân hàng. Vui lòng liên hệ khách qua SĐT / email để lấy thông tin trước khi chuyển tiền.</span>
+                </div>`;
+
+            const actionBlock = r.status === "completed" ? `
+                <div style="margin-top:1rem">
+                    <button class="pf-btn pf-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                </div>` : showForm ? `
+                <hr style="border-color:#f0f0f0;margin:1rem 0">
+                <div class="mb-3">
+                    <label class="pf-label">Ghi chú <span style="font-weight:400;color:#aaa">(tuỳ chọn)</span></label>
+                    <textarea class="pf-input" id="adminNoteInput" rows="2" style="resize:none"
+                        placeholder="VD: Đã chuyển khoản lúc 14:30..."></textarea>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <button class="pf-btn pf-btn-outline" data-bs-dismiss="modal" style="flex:1">Huỷ</button>
+                    <button class="pf-btn pf-btn-primary" id="confirmBtn" style="flex:1" onclick="doResolve()">
+                        <i class="bi bi-check-lg"></i> Xác nhận đã hoàn tiền
+                    </button>
+                </div>` : `
+                <div style="margin-top:1rem;display:flex;gap:10px">
+                    <button class="pf-btn pf-btn-outline" data-bs-dismiss="modal" style="flex:1">Đóng</button>
+                    <button class="pf-btn pf-btn-primary" style="flex:1"
+                        onclick="document.getElementById('rfModalBody').innerHTML='';renderModal(_cur,true)">
+                        <i class="bi bi-check-lg"></i> Tiến hành hoàn tiền
+                    </button>
+                </div>`;
+
+            document.getElementById("rfModalBody").innerHTML = `
+                <!-- Số tiền -->
+                <div style="background:#fff0f0;border:1.5px solid #f5c6c6;border-radius:12px;text-align:center;padding:.6rem 1rem;margin-bottom:.5rem">
+                    <div style="font-size:1.6rem;font-weight:800;color:#e74c3c;padding:.4rem 0">${fmt(r.amount ?? 0)}</div>
+                    <div style="font-size:.76rem;color:#8a9bb0;margin-bottom:.3rem">cần hoàn cho khách</div>
+                </div>
+
+                <!-- Thông tin đơn -->
+                <div class="rf-section"><i class="bi bi-bag"></i>Thông tin đơn hàng</div>
+                <div class="rf-info-row"><span>Mã yêu cầu</span><span>#${r.refundRequestId}</span></div>
+                <div class="rf-info-row"><span>Đơn hàng</span><span>#${r.orderId}</span></div>
+                <div class="rf-info-row"><span>Khách hàng</span><span>${r.customer?.name ?? "—"}</span></div>
+                <div class="rf-info-row"><span>SĐT</span>
+                    <span style="display:flex;align-items:center;gap:5px">
+                        ${r.customer?.phone ?? "—"}
+                        ${r.customer?.phone ? `<button class="copy-btn" onclick="copyText('${r.customer.phone}',this)"><i class="bi bi-clipboard"></i></button>` : ""}
+                    </span>
+                </div>
+                <div class="rf-info-row"><span>Email</span>
+                    <span style="display:flex;align-items:center;gap:5px">
+                        ${r.customer?.email ?? "—"}
+                        ${r.customer?.email ? `<button class="copy-btn" onclick="copyText('${r.customer.email}',this)"><i class="bi bi-clipboard"></i></button>` : ""}
+                    </span>
+                </div>
+                <div class="rf-info-row"><span>Lý do hủy</span><span>${r.note || "Không có"}</span></div>
+                <div class="rf-info-row"><span>Trạng thái</span><span>${statusBadge(r.status)}</span></div>
+                ${r.adminNote ? `<div class="rf-info-row"><span>Ghi chú admin</span><span>${r.adminNote}</span></div>` : ""}
+                ${r.resolvedAt ? `<div class="rf-info-row"><span>Hoàn tiền lúc</span><span>${new Date(r.resolvedAt).toLocaleString("vi-VN")}</span></div>` : ""}
+
+                <!-- Thông tin ngân hàng -->
+                <div class="rf-section"><i class="bi bi-bank"></i>Thông tin ngân hàng</div>
+                ${bankBlock}
+
+                ${actionBlock}`;
+        }
+
+        /* ── Xác nhận hoàn tiền ── */
+        window.doResolve = async function () {
+            if (!_cur) return;
+            const btn = document.getElementById("confirmBtn");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
+            const adminNote = document.getElementById("adminNoteInput")?.value.trim() ?? "";
+
+            try {
+                const res = await fetch(`${API}/orders/admin/refunds/${_cur.refundRequestId}/resolve`, {
+                    method: "PUT", headers: auth(),
+                    body: JSON.stringify({ adminNote })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById("rfModal"))?.hide();
+                    const id = _cur.refundRequestId;
+                    document.getElementById(`rfbadge_${id}`)?.replaceWith((() => {
+                        const el = document.createElement("td");
+                        el.id = `rfbadge_${id}`;
+                        el.innerHTML = statusBadge("completed");
+                        return el;
+                    })());
+                    document.getElementById(`rfbtn_${id}`)?.remove();
+                    const row = document.getElementById(`rfrow_${id}`);
+                    if (row) { row.style.background = "#f0fff4"; setTimeout(() => row.style.background = "", 1500); }
+                    loadRefunds();
+                } else {
+                    alert(data.message || "Xử lý thất bại.");
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg"></i> Xác nhận đã hoàn tiền';
+                }
+            } catch {
+                alert("Không kết nối được máy chủ.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i> Xác nhận đã hoàn tiền';
+            }
+        };
+
+        loadRefunds();
+    })();
+    </script>
+</body>
+</html>

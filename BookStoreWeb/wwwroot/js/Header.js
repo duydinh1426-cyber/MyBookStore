@@ -19,6 +19,7 @@
             { label: "Quản lý sách", href: "admin-books.html", icon: "bi-journals" },
             { label: "Người dùng", href: "admin-users.html", icon: "bi-people" },
             { label: "Đơn hàng", href: "admin-orders.html", icon: "bi-bag-check" },
+            { label: "Hoàn tiền", href: "admin-refunds.html", icon: "bi-bag-check" },
             { label: "Đánh giá", href: "admin-reviews.html", icon: "bi-star-half" },
             { label: "Thống kê", href: "admin-stats.html", icon: "bi-bar-chart" },
         ],
@@ -32,7 +33,6 @@
         try {
             const token = sessionStorage.getItem("token");
             if (!token) return null;
-            // Giải mã UTF-8 đúng cách → fix lỗi tiếng Việt trong tên
             const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
             const json = decodeURIComponent(
                 atob(base64).split("").map(c =>
@@ -58,18 +58,15 @@
     }
     function getToken() { return sessionStorage.getItem("token"); }
 
-    // Kiểm tra token còn hạn không (so sánh exp trong JWT với thời gian hiện tại)
     function isTokenExpired() {
         const p = getTokenPayload();
         if (!p || !p.exp) return true;
-        // p.exp là Unix timestamp (giây), Date.now() là ms
         return p.exp * 1000 < Date.now();
     }
 
     function isLoggedIn() {
         if (!getToken()) return false;
         if (isTokenExpired()) {
-            // Token hết hạn → tự động đăng xuất
             sessionStorage.removeItem("token");
             return false;
         }
@@ -84,20 +81,17 @@
         return window.location.pathname.split("/").pop() || "index.html";
     }
 
-    // Trang chỉ dành cho Admin
     const ADMIN_PAGES = [
         "admin.html", "admin-books.html", "admin-orders.html",
         "admin-users.html", "admin-stats.html", "admin-reviews.html"
     ];
 
-    // Trang Customer — Admin KHÔNG được vào
     const CUSTOMER_PAGES = [
         "index.html", "books.html", "checkout.html",
         "order-history.html", "favorites.html",
         "orders.html"
     ];
 
-    // Trang cần đăng nhập
     const LOGIN_REQUIRED_PAGES = [
         "checkout.html", "order-history.html",
         "favorites.html", "profile.html", "orders.html"
@@ -108,31 +102,18 @@
         const loggedIn = isLoggedIn();
         const role = loggedIn ? getRole() : null;
 
-        // Chưa đăng nhập vào trang Admin → login
         if (!loggedIn && ADMIN_PAGES.includes(page)) {
-            window.location.replace("login.html");
-            return;
+            window.location.replace("login.html"); return;
         }
-
-        // Chưa đăng nhập vào trang cần login → login
         if (!loggedIn && LOGIN_REQUIRED_PAGES.includes(page)) {
-            window.location.replace("login.html");
-            return;
+            window.location.replace("login.html"); return;
         }
-
-        // Đã đăng nhập nhưng không đọc được role (token lỗi) → không redirect
         if (loggedIn && !role) return;
-
-        // Admin vào trang Customer → dashboard
         if (role === "Admin" && CUSTOMER_PAGES.includes(page)) {
-            window.location.replace("admin.html");
-            return;
+            window.location.replace("admin.html"); return;
         }
-
-        // Customer vào trang Admin → trang chủ
         if (role === "Customer" && ADMIN_PAGES.includes(page)) {
-            window.location.replace("index.html");
-            return;
+            window.location.replace("index.html"); return;
         }
     }
 
@@ -159,6 +140,51 @@
         el.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i>${msg}`;
         c.appendChild(el);
         setTimeout(() => el.remove(), 3000);
+    }
+
+    /* ── CUSTOM CONFIRM DIALOG ── */
+    function showConfirmDialog({ icon = "bi-trash", iconBg = "#fff0f0", iconColor = "#e74c3c", title, message, okLabel = "Xác nhận", okColor = "#e74c3c", okHover = "#c0392b", onOk }) {
+        // Xóa dialog cũ nếu còn
+        document.getElementById("hcConfirmBackdrop")?.remove();
+
+        const backdrop = document.createElement("div");
+        backdrop.id = "hcConfirmBackdrop";
+        backdrop.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;font-family:'DM Sans',sans-serif;";
+
+        backdrop.innerHTML = `
+            <div id="hcConfirmBox" style="background:#fff;border-radius:16px;padding:2rem;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.2);transform:scale(.95);transition:transform .2s;text-align:center;">
+                <div style="width:56px;height:56px;border-radius:50%;background:${iconBg};display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.5rem;color:${iconColor};">
+                    <i class="bi ${icon}"></i>
+                </div>
+                <div style="font-weight:700;font-size:1rem;margin-bottom:.5rem;color:#1a1a1a;">${title}</div>
+                <div style="font-size:.84rem;color:#666;margin-bottom:1.5rem;line-height:1.55;">${message}</div>
+                <div style="display:flex;gap:10px;justify-content:center;">
+                    <button id="hcConfirmCancel" style="padding:.5rem 1.3rem;border-radius:8px;background:#f5f7fa;color:#1a1a1a;border:1.5px solid #e8edf2;font-family:inherit;font-size:.86rem;font-weight:600;cursor:pointer;">Hủy</button>
+                    <button id="hcConfirmOk" style="padding:.5rem 1.4rem;border-radius:8px;background:${okColor};color:#fff;border:none;font-family:inherit;font-size:.86rem;font-weight:600;cursor:pointer;">${okLabel}</button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(backdrop);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            backdrop.style.opacity = "1";
+            document.getElementById("hcConfirmBox").style.transform = "scale(1)";
+        });
+
+        function closeDialog() {
+            backdrop.style.opacity = "0";
+            document.getElementById("hcConfirmBox").style.transform = "scale(.95)";
+            setTimeout(() => backdrop.remove(), 200);
+        }
+
+        document.getElementById("hcConfirmCancel").onclick = closeDialog;
+        backdrop.addEventListener("click", e => { if (e.target === backdrop) closeDialog(); });
+
+        const okBtn = document.getElementById("hcConfirmOk");
+        okBtn.onmouseenter = () => okBtn.style.background = okHover;
+        okBtn.onmouseleave = () => okBtn.style.background = okColor;
+        okBtn.onclick = () => { closeDialog(); onOk(); };
     }
 
     /* ── BUILD NAV ── */
@@ -249,7 +275,6 @@
             .hc-empty p{margin:0 0 4px;font-weight:500}
             .hc-empty small{font-size:.82rem}
             .hc-item{display:flex;gap:12px;padding:.9rem 0;border-bottom:1px solid #e8edf2;animation:cartDrawerFadeUp .2s ease}
-            /* Fix ảnh cart drawer */
             .hc-item-img{width:64px;height:86px;object-fit:cover;object-position:center top;border-radius:6px;flex-shrink:0;background:#f0f7eb;display:block}
             .hc-item-img-ph{width:64px;height:86px;border-radius:6px;background:#f0f7eb;display:flex;align-items:center;justify-content:center;color:#6ab04c;font-size:1.5rem;flex-shrink:0}
             .hc-item-info{flex:1;min-width:0}
@@ -437,13 +462,24 @@
                 _cartFetch(); _cartLoadCount();
             } catch { showToast("Lỗi kết nối", "error"); }
         },
-        async clearAll() {
-            if (!confirm("Xóa toàn bộ giỏ hàng?")) return;
-            try {
-                await fetch(`${API}/cart`, { method: "DELETE", headers: authHeaders() });
-                showToast("Đã xóa toàn bộ giỏ hàng");
-                _cartFetch(); _cartLoadCount();
-            } catch { showToast("Lỗi kết nối", "error"); }
+        clearAll() {
+            showConfirmDialog({
+                icon: "bi-trash",
+                iconBg: "#fff0f0",
+                iconColor: "#e74c3c",
+                title: "Xóa toàn bộ giỏ hàng?",
+                message: "Tất cả sản phẩm trong giỏ hàng sẽ bị xóa.<br>Bạn có chắc chắn muốn tiếp tục không?",
+                okLabel: "Xóa tất cả",
+                okColor: "#e74c3c",
+                okHover: "#c0392b",
+                onOk: async () => {
+                    try {
+                        await fetch(`${API}/cart`, { method: "DELETE", headers: authHeaders() });
+                        showToast("Đã xóa toàn bộ giỏ hàng");
+                        _cartFetch(); _cartLoadCount();
+                    } catch { showToast("Lỗi kết nối", "error"); }
+                }
+            });
         },
         checkout() { this.close(); window.location.href = "checkout.html"; },
         refreshBadge() { _cartLoadCount(); }
@@ -467,7 +503,6 @@
     injectCSS("https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css", "bootstrap-icons-css");
     injectCSS("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Playfair+Display:wght@500;600;700&display=swap", "google-fonts");
 
-    // Chạy guard NGAY LẬP TỨC — trước khi DOM render để tránh flash nội dung sai
     guardPage();
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderHeader);

@@ -60,20 +60,18 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
+
         [HttpPut("{id:int}/cancel")]
         [Authorize(Roles = "Customer")]
-        public async Task<IActionResult> Cancel(int id)
+        public async Task<IActionResult> Cancel(int id, [FromBody] CancelOrderDto? dto = null)
         {
-            var result = await _service.CancelAsync(GetUserId(), id);
+            var result = await _service.CancelAsync(GetUserId(), id, dto);
             dynamic res = result;
-
             if (res.message == "NotFound") return NotFound(new { message = "Không tìm thấy đơn hàng." });
             if (res.message == "Forbidden") return Forbid();
-
             string msg = res.message;
             if (msg != null && (msg.StartsWith("Không thể") || msg.StartsWith("Lỗi hệ thống")))
                 return BadRequest(result);
-
             return Ok(result);
         }
 
@@ -106,6 +104,21 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> GetAdminStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
             return Ok(await _service.GetAdminStatsAsync(from, to));
+        }
+
+        [HttpGet("admin/refunds")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetRefunds([FromQuery] string? status)
+            => Ok(await _service.GetRefundRequestsAsync(status));
+
+        [HttpPut("admin/refunds/{refundId:int}/resolve")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ResolveRefund(int refundId, ResolveRefundDto dto)
+        {
+            var result = await _service.ResolveRefundAsync(refundId, dto.AdminNote);
+            dynamic res = result;
+            if (res.success == false) return BadRequest(result);
+            return Ok(result);
         }
     }
 }

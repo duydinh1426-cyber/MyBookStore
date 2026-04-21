@@ -1,7 +1,6 @@
-﻿using Data;
+﻿using MyBookStore.Data.Models;
 using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using MyBookStore.Data.Models;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 

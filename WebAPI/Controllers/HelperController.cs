@@ -1,21 +1,26 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Services.Interfaces;
+using WebAPI.DTOs;
+using WebAPI.Services.Helper;
 
 namespace WebAPI.Controllers
 {
-    [Route("api/upload")]
+    [Route("api")]
     [ApiController]
-    public class UploadController : ControllerBase
+    public class HelperController : ControllerBase
     {
         private readonly IFileService _fileService;
+        private readonly IEmailService _emailService;
 
-        public UploadController(IFileService fileService)
+        public HelperController(IFileService fileService, IEmailService emailService)
         {
             _fileService = fileService;
+            _emailService = emailService;
         }
 
-        [HttpPost("image")]
+        // ================== UPLOAD ==================
+        [HttpPost("upload/image")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
@@ -27,7 +32,6 @@ namespace WebAPI.Controllers
                 return BadRequest(new { message = res.message });
             }
 
-
             return Ok(new
             {
                 message = "Upload thành công.",
@@ -36,8 +40,7 @@ namespace WebAPI.Controllers
             });
         }
 
-        // Endpoint xóa ảnh (nếu cần dùng cho Admin)
-        [HttpDelete("image/{fileName}")]
+        [HttpDelete("upload/image/{fileName}")]
         [Authorize(Roles = "Admin")]
         public IActionResult DeleteImage(string fileName)
         {
@@ -45,9 +48,24 @@ namespace WebAPI.Controllers
             dynamic res = result;
 
             if (res.message == "NotFound")
-                return NotFound(new { message = "Tập tin không tồn tại trên hệ thống." });
+                return NotFound(new { message = "Tập tin không tồn tại." });
 
             return Ok(new { message = "Đã xóa ảnh thành công." });
+        }
+
+        // ================== CONTACT ==================
+        [HttpPost("contact/send")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Send([FromBody] ContactDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Message))
+            {
+                return BadRequest(new { message = "Email và nội dung không được để trống." });
+            }
+
+            await _emailService.SendContactAsync(dto.Name ?? "Khách hàng", dto.Email, dto.Message);
+
+            return Ok(new { message = "Gửi thành công" });
         }
     }
 }

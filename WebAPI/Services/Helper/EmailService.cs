@@ -7,14 +7,28 @@ namespace WebAPI.Services.Helper
     public interface IEmailService
     {
         Task SendOtpAsync(string toEmail, string otp, OtpPurpose purpose);
+        Task SendContactAsync(string name, string fromEmail, string messageContent);
     }
 
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _cfg;
-        public EmailService(IConfiguration cfg)
+        public EmailService(IConfiguration cfg) => _cfg = cfg;
+
+        // Hàm gửi mail chung cho cả OTP và Contact
+        private async Task SendEmailInternalAsync(string toEmail, string subject, string htmlBody)
         {
-            _cfg = cfg;
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("BookStore System", _cfg["Email:From"]));
+            message.To.Add(MailboxAddress.Parse(toEmail));
+            message.Subject = subject;
+            message.Body = new TextPart("html") { Text = htmlBody };
+
+            using var smtp = new SmtpClient();
+            await smtp.ConnectAsync(_cfg["Email:Host"], int.Parse(_cfg["Email:Port"]!), MailKit.Security.SecureSocketOptions.StartTls);
+            await smtp.AuthenticateAsync(_cfg["Email:Username"], _cfg["Email:Password"]);
+            await smtp.SendAsync(message);
+            await smtp.DisconnectAsync(true);
         }
 
         public async Task SendOtpAsync(string toEmail, string otp, OtpPurpose purpose)
@@ -37,18 +51,22 @@ namespace WebAPI.Services.Helper
                     <p>Mã này có hiệu lực trong 5 phút. Vui lòng không chia sẻ mã này cho bất kỳ ai.</p>
                 </div>
                 """;
+            await SendEmailInternalAsync(toEmail, subject, body);
+        }
 
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("BookStore System", _cfg["Email:From"] ?? ""));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = subject;
-            message.Body = new TextPart("html") { Text = body };
+        public async Task SendContactAsync(string name, string fromEmail, string messageContent)
+        {
+            var subject = $"Liên hệ mới từ khách hàng: {name}";
+            var body = $"""
+            <h3>Thông tin liên hệ mới</h3>
+            <p><strong>Người gửi:</strong> {name}</p>
+            <p><strong>Email:</strong> {fromEmail}</p>
+            <p><strong>Nội dung:</strong></p>
+            <p>{messageContent}</p>
+            """;
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync(_cfg["Email:Host"], int.Parse(_cfg["Email:Port"]!), MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(_cfg["Email:Username"], _cfg["Email:Password"]);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            // Gửi về email quản trị (Admin)
+            await SendEmailInternalAsync(_cfg["Email:AdminEmail"] ?? _cfg["Email:From"]!, subject, body);
         }
     }
 }

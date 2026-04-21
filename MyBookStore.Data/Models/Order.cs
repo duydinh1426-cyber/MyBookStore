@@ -35,5 +35,7 @@ public partial class Order
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
+    public virtual ICollection<RefundRequest> RefundRequests { get; set; } = new List<RefundRequest>();
+
     public virtual Customer User { get; set; } = null!;
 }
