@@ -12,5 +12,8 @@ namespace Data.Repositories.Interfaces
         void AddOrder(Order order);
         void RemoveCartItems(IEnumerable<CartItem> items);
         Task<bool> SaveChangesAsync();
+        void AddRefundRequest(RefundRequest r);
+        Task<List<RefundRequest>> GetRefundRequestsAsync(string? status);
+        Task<RefundRequest?> GetRefundRequestByIdAsync(int id);
     }
 }

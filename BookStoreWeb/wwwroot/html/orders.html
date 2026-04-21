@@ -461,39 +461,119 @@
 
     <!-- Modal xác nhận hủy đơn -->
     <div class="modal fade" id="cancelModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+        <div class="modal-dialog modal-dialog-centered" style="max-width:440px">
             <div class="modal-content" style="border-radius:16px;border:none">
-                <div class="modal-body" style="padding:2rem 1.5rem;text-align:center">
-                    <div style="width:64px;height:64px;border-radius:50%;background:#fff0f0;
+                <div class="modal-body" style="padding:2rem 1.5rem">
+
+                    <!-- Header -->
+                    <div style="text-align:center;margin-bottom:1.1rem">
+                        <div style="width:64px;height:64px;border-radius:50%;background:#fff0f0;
                         border:2.5px solid #f5c6c6;display:flex;align-items:center;
-                        justify-content:center;font-size:1.8rem;color:#e74c3c;margin:0 auto 1.1rem">
-                        <i class="bi bi-bag-x"></i>
+                        justify-content:center;font-size:1.8rem;color:#e74c3c;margin:0 auto .9rem">
+                            <i class="bi bi-bag-x"></i>
+                        </div>
+                        <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:#1a1a1a;margin-bottom:.3rem">
+                            Hủy đơn hàng?
+                        </div>
+                        <div style="font-size:.85rem;color:#8a9bb0">
+                            Bạn chắc chắn muốn hủy <strong id="cancelOrderLabel" style="color:#1a1a1a"></strong>?
+                        </div>
                     </div>
-                    <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:#1a1a1a;margin-bottom:.45rem">
-                        Hủy đơn hàng?
+
+                    <!-- Banner hoàn tiền VNPay — ẩn mặc định -->
+                    <div id="cancelRefundBanner" style="display:none;
+                    background:#eaf4ff;border:1.5px solid #a8d0f0;border-radius:10px;
+                    padding:.65rem .9rem;font-size:.82rem;color:#1a6fb0;
+                    margin-bottom:1rem">
+                        <div style="display:flex;align-items:flex-start;gap:7px">
+                            <i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:2px"></i>
+                            <span>Đơn đã thanh toán qua <b>VNPay</b>. Vui lòng cung cấp thông tin ngân hàng để admin hoàn tiền <b id="cancelRefundAmtText"></b> thủ công.</span>
+                        </div>
                     </div>
-                    <div style="font-size:.86rem;color:#8a9bb0;margin-bottom:1.4rem;line-height:1.6">
-                        Bạn chắc chắn muốn hủy <strong id="cancelOrderLabel" style="color:#1a1a1a"></strong>?<br>
-                        Hành động này không thể hoàn tác.
+
+                    <!-- Lý do hủy — luôn hiện -->
+                    <div style="margin-bottom:.85rem">
+                        <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:5px">
+                            Lý do hủy <span style="font-weight:400;color:#aaa">(không bắt buộc)</span>
+                        </label>
+                        <textarea id="cancelNoteInput" rows="2"
+                                  style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
+                               padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
+                               outline:none;resize:none;color:#1a1a1a;transition:border-color .15s"
+                                  onfocus="this.style.borderColor='#6ab04c'"
+                                  onblur="this.style.borderColor='#e8edf2'"
+                                  placeholder="Nhập lý do hủy..."></textarea>
                     </div>
+
+                    <!-- Form ngân hàng — chỉ hiện với VNPay đã TT -->
+                    <div id="cancelBankForm" style="display:none">
+                        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8a9bb0;margin-bottom:.6rem">
+                            <i class="bi bi-bank me-1"></i>Thông tin nhận hoàn tiền
+                        </div>
+
+                        <div style="margin-bottom:.65rem">
+                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">
+                                Ngân hàng <span style="color:#e74c3c">*</span>
+                            </label>
+                            <input id="cancelBankName" type="text"
+                                   style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
+                                   padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
+                                   outline:none;color:#1a1a1a;transition:border-color .15s"
+                                   onfocus="this.style.borderColor='#6ab04c'"
+                                   onblur="this.style.borderColor='#e8edf2'"
+                                   placeholder="VD: Vietcombank, BIDV, Techcombank...">
+                            <div id="cancelBankNameErr" style="display:none;font-size:.76rem;color:#e74c3c;margin-top:3px">Vui lòng nhập tên ngân hàng</div>
+                        </div>
+
+                        <div style="margin-bottom:.65rem">
+                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">
+                                Số tài khoản <span style="color:#e74c3c">*</span>
+                            </label>
+                            <input id="cancelBankNumber" type="text" inputmode="numeric"
+                                   style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
+                                   padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
+                                   outline:none;color:#1a1a1a;transition:border-color .15s"
+                                   onfocus="this.style.borderColor='#6ab04c'"
+                                   onblur="this.style.borderColor='#e8edf2'"
+                                   placeholder="Nhập số tài khoản">
+                            <div id="cancelBankNumberErr" style="display:none;font-size:.76rem;color:#e74c3c;margin-top:3px">Vui lòng nhập số tài khoản</div>
+                        </div>
+
+                        <div style="margin-bottom:.85rem">
+                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">
+                                Tên chủ tài khoản <span style="color:#e74c3c">*</span>
+                            </label>
+                            <input id="cancelBankAccountName" type="text"
+                                   style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
+                                   padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
+                                   outline:none;color:#1a1a1a;transition:border-color .15s;text-transform:uppercase"
+                                   onfocus="this.style.borderColor='#6ab04c'"
+                                   onblur="this.style.borderColor='#e8edf2'"
+                                   placeholder="VD: NGUYEN VAN A">
+                            <div id="cancelBankAccountNameErr" style="display:none;font-size:.76rem;color:#e74c3c;margin-top:3px">Vui lòng nhập tên chủ tài khoản</div>
+                        </div>
+                    </div>
+
+                    <!-- Nút -->
                     <div style="display:flex;gap:10px">
                         <button data-bs-dismiss="modal"
                                 style="flex:1;border:1.5px solid #e8edf2;background:#fff;border-radius:10px;
-                                       padding:.65rem;font-size:.88rem;font-weight:600;cursor:pointer;
-                                       font-family:inherit;color:#4a5568;transition:all .15s"
+                               padding:.65rem;font-size:.88rem;font-weight:600;cursor:pointer;
+                               font-family:inherit;color:#4a5568;transition:all .15s"
                                 onmouseover="this.style.borderColor='#6ab04c';this.style.color='#6ab04c'"
                                 onmouseout="this.style.borderColor='#e8edf2';this.style.color='#4a5568'">
                             Không, giữ lại
                         </button>
                         <button id="cancelConfirmBtn"
                                 style="flex:1;background:#e74c3c;color:#fff;border:none;border-radius:10px;
-                                       padding:.65rem;font-size:.88rem;font-weight:700;cursor:pointer;
-                                       font-family:inherit;transition:background .15s"
+                               padding:.65rem;font-size:.88rem;font-weight:700;cursor:pointer;
+                               font-family:inherit;transition:background .15s"
                                 onmouseover="this.style.background='#c0392b'"
                                 onmouseout="this.style.background='#e74c3c'">
                             <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
                         </button>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -796,8 +876,9 @@
                                     <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
                                         <i class="bi bi-geo-alt me-1"></i>Địa chỉ
                                     </button>` : ""}
-                                    ${status === "pending" ? `
-                                    <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id})">
+                                   ${(status === "pending" || status === "confirmed" || status === "shipping") ? `
+                                    <button class="oh-btn oh-btn-danger"
+                                        onclick="cancelOrder(${id}, ${isVnpay}, ${isPaid}, ${total})">
                                         <i class="bi bi-x-circle me-1"></i>Hủy đơn
                                     </button>` : ""}
                                 </div>
@@ -847,28 +928,102 @@
                     : `<i class="bi bi-geo-alt me-1"></i>Địa chỉ`;
             };
 
+            let _cancelRequiresRefund = false;
+            let _cancelRefundAmount = 0;
             let _cancelId = null;
-            window.cancelOrder = function (id) {
+            window.cancelOrder = function (id, isVnpay, isPaid, amount) {
                 _cancelId = id;
+                _cancelRequiresRefund = isVnpay && isPaid;
+                _cancelRefundAmount = amount;
+
                 document.getElementById("cancelOrderLabel").textContent = `đơn hàng #${id}`;
+                document.getElementById("cancelNoteInput").value = "";
+
+                const banner = document.getElementById("cancelRefundBanner");
+                const bankForm = document.getElementById("cancelBankForm");
+
+                if (_cancelRequiresRefund) {
+                    document.getElementById("cancelRefundAmtText").textContent = fmt(amount);
+                    banner.style.display = "block";
+                    bankForm.style.display = "block";
+                    // Reset form ngân hàng
+                    ["cancelBankName", "cancelBankNumber", "cancelBankAccountName"].forEach(id => {
+                        document.getElementById(id).value = "";
+                        document.getElementById(id).style.borderColor = "#e8edf2";
+                    });
+                    ["cancelBankNameErr", "cancelBankNumberErr", "cancelBankAccountNameErr"].forEach(id => {
+                        document.getElementById(id).style.display = "none";
+                    });
+                } else {
+                    banner.style.display = "none";
+                    bankForm.style.display = "none";
+                }
+
                 const btn = document.getElementById("cancelConfirmBtn");
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Xác nhận hủy';
+
                 new bootstrap.Modal(document.getElementById("cancelModal")).show();
             };
 
             document.getElementById("cancelConfirmBtn").addEventListener("click", async function () {
                 if (!_cancelId) return;
+
+                // Validate form ngân hàng nếu cần
+                if (_cancelRequiresRefund) {
+                    let valid = true;
+                    const fields = [
+                        { id: "cancelBankName", errId: "cancelBankNameErr" },
+                        { id: "cancelBankNumber", errId: "cancelBankNumberErr" },
+                        { id: "cancelBankAccountName", errId: "cancelBankAccountNameErr" },
+                    ];
+                    fields.forEach(f => {
+                        const val = document.getElementById(f.id).value.trim();
+                        const err = document.getElementById(f.errId);
+                        if (!val) {
+                            document.getElementById(f.id).style.borderColor = "#e74c3c";
+                            err.style.display = "block";
+                            valid = false;
+                        } else {
+                            document.getElementById(f.id).style.borderColor = "#e8edf2";
+                            err.style.display = "none";
+                        }
+                    });
+                    if (!valid) return;
+                }
+
                 const btn = this;
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang hủy...';
+
+                const body = {
+                    note: document.getElementById("cancelNoteInput").value.trim() || null,
+                    ..._cancelRequiresRefund && {
+                        bankName: document.getElementById("cancelBankName").value.trim(),
+                        bankAccountNumber: document.getElementById("cancelBankNumber").value.trim(),
+                        bankAccountName: document.getElementById("cancelBankAccountName").value.trim().toUpperCase(),
+                    }
+                };
+
                 try {
-                    const res = await fetch(`${API}/orders/${_cancelId}/cancel`, { method: "PUT", headers: authHeaders() });
+                    const res = await fetch(`${API}/orders/${_cancelId}/cancel`, {
+                        method: "PUT",
+                        headers: authHeaders(),
+                        body: JSON.stringify(body)
+                    });
                     const data = await res.json();
                     bootstrap.Modal.getInstance(document.getElementById("cancelModal"))?.hide();
+
                     setTimeout(() => {
-                        if (res.ok) { showToast(data.message || "Đã hủy đơn hàng thành công.", "success"); load(curPage, curStatus); }
-                        else showToast(data.message || "Hủy đơn thất bại.", "error");
+                        if (res.ok) {
+                            const msg = data.requiresRefund
+                                ? `Đã hủy đơn. Yêu cầu hoàn tiền ${fmt(_cancelRefundAmount)} đã gửi đến admin.`
+                                : (data.message || "Đã hủy đơn hàng thành công.");
+                            showToast(msg, data.requiresRefund ? "warn" : "success");
+                            window.load(curPage, curStatus);
+                        } else {
+                            showToast(data.message || "Hủy đơn thất bại.", "error");
+                        }
                     }, 300);
                 } catch {
                     bootstrap.Modal.getInstance(document.getElementById("cancelModal"))?.hide();

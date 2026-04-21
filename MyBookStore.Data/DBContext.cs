@@ -34,9 +34,12 @@ public partial class DBContext : DbContext
 
     public virtual DbSet<Payment> Payments { get; set; }
 
+    public virtual DbSet<RefundRequest> RefundRequests { get; set; }
+
     public virtual DbSet<Review> Reviews { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=.;Database=BookStore;Trusted_Connection=True;TrustServerCertificate=True;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -290,6 +293,36 @@ public partial class DBContext : DbContext
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Payments_Orders");
+        });
+
+        modelBuilder.Entity<RefundRequest>(entity =>
+        {
+            entity.HasKey(e => e.RefundRequestId).HasName("PK__RefundRe__A67BF22931117AF7");
+
+            entity.Property(e => e.Amount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.BankAccountName)
+                .HasMaxLength(200)
+                .HasDefaultValue("");
+            entity.Property(e => e.BankAccountNumber)
+                .HasMaxLength(100)
+                .HasDefaultValue("");
+            entity.Property(e => e.BankName)
+                .HasMaxLength(200)
+                .HasDefaultValue("");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getutcdate())");
+            entity.Property(e => e.Status)
+                .HasMaxLength(50)
+                .HasDefaultValue("pending");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.RefundRequests)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RefundRequests_Orders");
+
+            entity.HasOne(d => d.User).WithMany(p => p.RefundRequests)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_RefundRequests_Customers");
         });
 
         modelBuilder.Entity<Review>(entity =>

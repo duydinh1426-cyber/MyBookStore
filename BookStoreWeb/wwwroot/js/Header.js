@@ -19,6 +19,7 @@
             { label: "Quản lý sách", href: "admin-books.html", icon: "bi-journals" },
             { label: "Người dùng", href: "admin-users.html", icon: "bi-people" },
             { label: "Đơn hàng", href: "admin-orders.html", icon: "bi-bag-check" },
+            { label: "Hoàn tiền", href: "admin-refunds.html", icon: "bi-bag-check" },
             { label: "Đánh giá", href: "admin-reviews.html", icon: "bi-star-half" },
             { label: "Thống kê", href: "admin-stats.html", icon: "bi-bar-chart" },
         ],
@@ -504,91 +505,6 @@
 
     guardPage();
 
-    function initLayout() {
-        renderHeader();
-        renderFooter();
-    }
-
-    if (document.readyState === "loading")
-        document.addEventListener("DOMContentLoaded", initLayout);
-    else
-        initLayout();
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderHeader);
+    else renderHeader();
 })();
-function renderFooter() {
-    const placeholder = document.getElementById("footer-placeholder");
-    if (!placeholder) return;
-
-    placeholder.innerHTML = `
-    <style>
-        .site-footer{background:#1a2332;color:#c8d4e0;font-family:'DM Sans',sans-serif;margin-top:3rem}
-        .footer-topbar{background:#6ab04c;padding:.7rem 0}
-        .footer-topbar-inner{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;flex-wrap:wrap}
-        .footer-topbar-text,.footer-topbar-phone{color:#fff;font-weight:600;font-size:.82rem}
-        .footer-body{padding:2.8rem 2rem;max-width:1400px;margin:auto}
-        .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1.5fr;gap:2rem}
-        .footer-col-title{font-size:.7rem;font-weight:700;color:#fff;border-bottom:2px solid #6ab04c;margin-bottom:1rem}
-        .footer-links{list-style:none;padding:0}
-        .footer-links li a{color:#8a9bb0;font-size:.83rem;text-decoration:none}
-        .footer-links li a:hover{color:#fff}
-        .footer-bottom{padding:1rem 2rem;display:flex;justify-content:space-between}
-        .footer-copy{font-size:.78rem;color:#4a5568}
-    </style>
-
-    <footer class="site-footer">
-
-        <div class="footer-topbar">
-            <div class="footer-topbar-inner">
-                <div class="footer-topbar-text">
-                    <i class="bi bi-truck"></i>
-                    Miễn phí vận chuyển cho đơn hàng từ 299.000đ
-                </div>
-                <a href="tel:19001234" class="footer-topbar-phone">
-                    <i class="bi bi-telephone-fill"></i>
-                    Hotline: 1900 1234
-                </a>
-            </div>
-        </div>
-
-        <div class="footer-body">
-            <div class="footer-grid">
-
-                <div>
-                    <div style="font-weight:800;color:#fff;font-size:1.2rem">Book Store</div>
-                    <p style="font-size:.83rem;color:#8a9bb0">
-                        Nơi kết nối bạn đọc với hàng ngàn đầu sách chất lượng.
-                    </p>
-                </div>
-
-                <div>
-                    <div class="footer-col-title">Hỗ trợ</div>
-                    <ul class="footer-links">
-                        <li><a href="../html/books.html">Tìm kiếm sách</a></li>
-                        <li><a href="orders.html">Tra cứu đơn hàng</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <div class="footer-col-title">Thông tin</div>
-                    <div style="font-size:.83rem;color:#8a9bb0">
-                        TP. Hồ Chí Minh<br>
-                        1900 1234
-                    </div>
-                </div>
-
-                <div>
-                    <div class="footer-col-title">Liên hệ</div>
-                    <a href="contact.html" style="color:#6ab04c">Gửi tin nhắn</a>
-                </div>
-
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <div class="footer-copy">
-                © 2025 Book Store
-            </div>
-        </div>
-
-    </footer>
-    `;
-}

@@ -44,13 +44,16 @@
         }
 
         // Kiểm tra logic chuyển đổi trạng thái
-        public static bool CanTransitionTo(this OrderStatus current, OrderStatus next)
+        public static bool CanTransitionTo(this OrderStatus current, OrderStatus target)
         {
-            return current switch
+            return (current, target) switch
             {
-                OrderStatus.pending => next == OrderStatus.confirmed || next == OrderStatus.cancelled,
-                OrderStatus.confirmed => next == OrderStatus.shipping || next == OrderStatus.cancelled,
-                OrderStatus.shipping => next == OrderStatus.completed || next == OrderStatus.cancelled,
+                (OrderStatus.pending, OrderStatus.confirmed) => true,
+                (OrderStatus.pending, OrderStatus.cancelled) => true,
+                (OrderStatus.confirmed, OrderStatus.shipping) => true,
+                (OrderStatus.confirmed, OrderStatus.cancelled) => true,
+                (OrderStatus.shipping, OrderStatus.completed) => true,
+                (OrderStatus.shipping, OrderStatus.cancelled) => true,  // ← đảm bảo dòng này có
                 _ => false
             };
         }

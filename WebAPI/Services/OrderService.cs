@@ -139,7 +139,7 @@ namespace WebAPI.Services
             return await _repo.GetAllOrdersAdminAsync(status, keyword, page, pageSize);
         }
 
-        public async Task<object> CancelAsync(int userId, int id)
+        public async Task<object> CancelAsync(int userId, int id, CancelOrderDto? dto = null)
         {
             var order = await _repo.GetOrderByIdAsync(id);
             if (order == null) return new { message = "NotFound" };
@@ -153,7 +153,41 @@ namespace WebAPI.Services
             order.Status = OrderStatus.cancelled.ToValue();
             order.UpdatedAt = DateTime.UtcNow;
 
-            if (await _repo.SaveChangesAsync()) return new { message = "Hủy đơn hàng thành công." };
+            if (order.PaymentMethod?.ToLower() == "vnpay" && order.IsPaid)
+            {
+                // Validate thông tin ngân hàng
+                if (string.IsNullOrWhiteSpace(dto?.BankAccountNumber) ||
+                    string.IsNullOrWhiteSpace(dto?.BankAccountName) ||
+                    string.IsNullOrWhiteSpace(dto?.BankName))
+                    return new { message = "Vui lòng nhập đầy đủ thông tin ngân hàng để hoàn tiền." };
+
+                _repo.AddRefundRequest(new RefundRequest
+                {
+                    OrderId = order.OrderId,
+                    UserId = userId,
+                    Amount = order.TotalCost,
+                    Note = dto.Note?.Trim(),
+                    BankAccountNumber = dto.BankAccountNumber.Trim(),
+                    BankAccountName = dto.BankAccountName.Trim().ToUpper(),
+                    BankName = dto.BankName.Trim(),
+                    Status = "pending",
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                if (await _repo.SaveChangesAsync())
+                    return new
+                    {
+                        message = "Đơn hàng đã hủy. Yêu cầu hoàn tiền đã gửi đến admin.",
+                        requiresRefund = true,
+                        refundAmount = order.TotalCost
+                    };
+            }
+            else
+            {
+                if (await _repo.SaveChangesAsync())
+                    return new { message = "Hủy đơn hàng thành công.", requiresRefund = false };
+            }
+
             return new { message = "Lỗi hệ thống khi hủy đơn." };
         }
 
@@ -163,7 +197,7 @@ namespace WebAPI.Services
             if (order == null) return new { success = false, message = "NotFound" };
 
             var current = order.Status.ToEnum();
-            var target = dto.GetStatus();  // ← đổi từ dto.Status
+            var target = dto.GetStatus();
 
             if (!current.CanTransitionTo(target))
                 return new { success = false, message = $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'" };
@@ -177,7 +211,27 @@ namespace WebAPI.Services
                     message = "Không thể xác nhận đơn hàng vì khách chưa thanh toán qua VNPay."
                 };
 
-            if (target == OrderStatus.cancelled) RestoreStock(order);
+            if (target == OrderStatus.cancelled)
+            {
+                RestoreStock(order);
+
+                // Admin hủy đơn VNPay đã thanh toán → tự động tạo RefundRequest
+                if (order.PaymentMethod?.ToLower() == "vnpay" && order.IsPaid)
+                {
+                    _repo.AddRefundRequest(new RefundRequest
+                    {
+                        OrderId = order.OrderId,
+                        UserId = order.UserId,
+                        Amount = order.TotalCost,
+                        Note = "Admin hủy đơn hàng — cần liên hệ khách để lấy thông tin ngân hàng",
+                        BankAccountNumber = "",
+                        BankAccountName = "",
+                        BankName = "",
+                        Status = "pending",
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+            }
 
             order.Status = target.ToValue();
             order.UpdatedAt = DateTime.UtcNow;
@@ -186,7 +240,11 @@ namespace WebAPI.Services
                 return new
                 {
                     success = true,
-                    message = "Cập nhật trạng thái thành công",
+                    message = target == OrderStatus.cancelled
+                        && order.PaymentMethod?.ToLower() == "vnpay"
+                        && order.IsPaid
+                            ? "Đã hủy đơn hàng. Yêu cầu hoàn tiền đã được tạo, vui lòng liên hệ khách để lấy thông tin ngân hàng."
+                            : "Cập nhật trạng thái thành công",
                     orderId = order.OrderId,
                     newStatus = order.Status,
                     nextStatuses = target.GetNextStatuses().Select(s => s.ToValue()),
@@ -200,5 +258,47 @@ namespace WebAPI.Services
         {
             return await _repo.GetAdminStatsAsync(from, to);
         }
-    }
+
+		public async Task<object> GetRefundRequestsAsync(string? status)
+		{
+			var list = await _repo.GetRefundRequestsAsync(status);
+			return list.Select(r => new
+			{
+				r.RefundRequestId,
+				r.OrderId,
+				r.Amount,
+				r.Note,
+				r.Status,
+				r.AdminNote,
+				r.CreatedAt,
+				r.ResolvedAt,
+                r.BankAccountNumber,
+                r.BankAccountName,
+                r.BankName,
+                hasBankInfo = !string.IsNullOrEmpty(r.BankAccountNumber),
+                customer = new
+				{
+					r.User?.Name,
+					phone = r.Order?.Phone,
+					email = r.User?.Account?.Email
+				}
+			});
+		}
+
+		public async Task<object> ResolveRefundAsync(int refundId, string? adminNote)
+		{
+			var r = await _repo.GetRefundRequestByIdAsync(refundId);
+			if (r == null) return new { success = false, message = "NotFound" };
+			if (r.Status == "completed") return new { success = false, message = "Yêu cầu này đã được xử lý." };
+
+			r.Status = "completed";
+			r.AdminNote = adminNote?.Trim();
+			r.ResolvedAt = DateTime.UtcNow;
+
+			if (await _repo.SaveChangesAsync())
+				return new { success = true, message = "Đã đánh dấu hoàn tiền thành công." };
+
+			return new { success = false, message = "Lỗi hệ thống." };
+		}
+	}
 }

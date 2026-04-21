@@ -9,7 +9,9 @@ namespace WebAPI.Services.Interfaces
         Task<object> GetUserOrdersAsync(int userId, int page, int pageSize, string? status);
         Task<object> AdminGetAllOrdersAsync(string? status, string? keyword, int page, int pageSize);
         Task<object> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null);
-        Task<object> CancelAsync(int userId, int id);
+        Task<object> CancelAsync(int userId, int id, CancelOrderDto? dto);
         Task<object> UpdateStatusAsync(int id, UpdateOrderStatusDto dto);
+        Task<object> GetRefundRequestsAsync(string? status);
+        Task<object> ResolveRefundAsync(int refundId, string? adminNote);
     }
 }
