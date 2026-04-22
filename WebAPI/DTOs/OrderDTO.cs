@@ -21,4 +21,13 @@ namespace WebAPI.DTOs
     {
         public string? AdminNote { get; set; }
     }
+
+    // DTOs/SePayWebhookDto.cs
+    public class SePayWebhookDto
+    {
+        public string? Content { get; set; }        // Nội dung CK
+        public decimal TransferAmount { get; set; } // Số tiền
+        public string? TransferType { get; set; }   // "in" = tiền vào
+        public string? ReferenceCode { get; set; }
+    }
 }

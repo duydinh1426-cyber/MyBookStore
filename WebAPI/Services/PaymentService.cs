@@ -85,7 +85,7 @@ namespace WebAPI.Services
             {
                 OrderId = orderId,
                 TransactionId = response.TransactionId ?? "",
-                PaymentMethod = "VNPay",
+                PaymentMethod = order.PaymentMethod,
                 Amount = order.TotalCost,
                 VnPayResponseCode = vnpResponseCode,
                 Success = isSuccess,
@@ -108,6 +108,24 @@ namespace WebAPI.Services
                 ["code"] = vnpResponseCode,
                 ["transactionId"] = response.TransactionId
             };
+        }
+
+        public async Task<bool> ConfirmQrPaymentAsync(int orderId, decimal amount)
+        {
+            var order = await _repo.GetOrderByIdAsync(orderId);
+            if (order == null || order.IsPaid) return false;
+
+            // Kiểm tra số tiền khớp (cho phép sai lệch ±1000đ)
+            if (Math.Abs(order.TotalCost - amount) > 1000) return false;
+
+            // Chỉ xác nhận đơn chưa hủy
+            if (order.Status == "cancelled") return false;
+
+            order.IsPaid = true;
+            order.PaidAt = DateTime.UtcNow;
+            order.UpdatedAt = DateTime.UtcNow;
+
+            return await _repo.SaveChangesAsync();
         }
     }
 }

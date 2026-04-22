@@ -565,6 +565,22 @@
 
             if (!isLoggedIn()) { window.location.href = "../html/login.html"; return; }
 
+            function showToast(msg, type = "success") {
+                let c = document.getElementById("headerToastContainer");
+                if (!c) {
+                    c = document.createElement("div"); c.id = "headerToastContainer";
+                    c.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;";
+                    document.body.appendChild(c);
+                }
+                const icons = { success: "bi-check-circle", error: "bi-x-circle", info: "bi-info-circle" };
+                const colors = { success: "#4e8a35", error: "#e74c3c", info: "#3498db" };
+                const el = document.createElement("div");
+                el.style.cssText = `background:${colors[type] || colors.info};color:#fff;padding:.75rem 1.2rem;border-radius:12px;font-size:.88rem;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:headerSlideIn .3s ease;max-width:300px;font-family:'DM Sans',sans-serif;`;
+                el.innerHTML = `<i class="bi ${icons[type] || icons.info}"></i>${msg}`;
+                c.appendChild(el);
+                setTimeout(() => el.remove(), 3000);
+            }
+
             let curPage = 1, searchTimer = null;
             const PAGE_SIZE = 15;
 
@@ -598,9 +614,13 @@
 
             function payBadge(paymentMethod, isPaid) {
                 const method = (paymentMethod ?? "").toLowerCase();
-                if (method !== "vnpay") {
+                if (method === "cod")
                     return `<span class="pay-badge pay-cod"><i class="bi bi-cash-stack"></i>COD</span>`;
-                }
+                if (method === "vietqr")
+                    return isPaid
+                        ? `<span class="pay-badge pay-paid"><i class="bi bi-check-circle-fill"></i>Đã TT (QR)</span>`
+                        : `<span class="pay-badge pay-unpaid"><i class="bi bi-qr-code"></i>Chờ TT QR</span>`;
+                // vnpay
                 return isPaid
                     ? `<span class="pay-badge pay-paid"><i class="bi bi-check-circle-fill"></i>Đã TT</span>`
                     : `<span class="pay-badge pay-unpaid"><i class="bi bi-credit-card"></i>Chưa TT</span>`;
@@ -724,7 +744,8 @@
                     const data = await res.json();
 
                     if (!res.ok) {
-                        alert(data.message || "Cập nhật thất bại.");
+                        // Hiện lỗi bằng toast thay vì alert
+                        showToast(data.message || "Cập nhật thất bại.", "error");
                         wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
                         btn.innerHTML = origHTML;
                         return;
@@ -737,9 +758,18 @@
                     const row = document.getElementById(`row_${orderId}`);
                     if (row) { row.style.background = "#f0fff4"; setTimeout(() => row.style.background = "", 1400); }
 
+                    // Thông báo hoàn tiền khi admin hủy đơn đã TT
+                    if (data.refundCreated) {
+                        showToast(`Đã hủy đơn #${orderId}. Yêu cầu hoàn tiền đã được tạo — vui lòng liên hệ khách để lấy thông tin ngân hàng.`, "warn");
+                    } else if (newStatus === "cancelled") {
+                        showToast(`Đã hủy đơn hàng #${orderId}.`, "info");
+                    } else {
+                        showToast(`Cập nhật trạng thái đơn #${orderId} thành công.`, "success");
+                    }
+
                     loadStats();
                 } catch {
-                    alert("Không kết nối được máy chủ.");
+                    showToast("Không kết nối được máy chủ.", "error");
                     wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
                     btn.innerHTML = origHTML;
                 }
@@ -758,7 +788,10 @@
                     if (!res.ok) throw new Error();
                     const o = await res.json();
                     const items = o.items ?? [];
-                    const isVnpay = (o.paymentMethod ?? "").toLowerCase() === "vnpay";
+                    const method = (o.paymentMethod ?? "").toLowerCase();
+                    const isVnpay = method === "vnpay";
+                    const isVietQr = method === "vietqr";
+                    const isCod = method === "cod" || (!isVnpay && !isVietQr);
 
                     const itemsHtml = items.map(it => {
                         const src = imgSrc(it.book?.image ?? "");
@@ -789,25 +822,38 @@
                         }).join("");
 
                     // Thông tin thanh toán VNPay
-                    const vnpayInfo = isVnpay ? `
-                            <div class="od-row">
-                                <span>Phương thức</span>
-                                <span style="font-weight:600;color:#1a6fb0"><i class="bi bi-credit-card me-1"></i>VNPay</span>
-                            </div>
-                            <div class="od-row">
-                                <span>Trạng thái TT</span>
-                                <span>${o.isPaid
-                            ? `<span style="color:#27ae60;font-weight:700"><i class="bi bi-check-circle-fill me-1"></i>Đã thanh toán</span>`
-                            : `<span style="color:#1a6fb0;font-weight:700"><i class="bi bi-clock me-1"></i>Chưa thanh toán</span>`
-                        }</span>
-                            </div>
-                            ${o.paidAt ? `<div class="od-row"><span>Thời gian TT</span><span>${new Date(o.paidAt).toLocaleString("vi-VN")}</span></div>` : ""}
-                        ` : `
-                            <div class="od-row">
-                                <span>Phương thức</span>
-                                <span style="font-weight:600;color:#4a5568"><i class="bi bi-cash-stack me-1"></i>COD</span>
-                            </div>
-                        `;
+                    const paymentInfo = isVnpay ? `
+                        <div class="od-row">
+                            <span>Phương thức</span>
+                            <span style="font-weight:600;color:#1a6fb0"><i class="bi bi-credit-card me-1"></i>VNPay</span>
+                        </div>
+                        <div class="od-row">
+                            <span>Trạng thái TT</span>
+                            <span>${o.isPaid
+                                                ? `<span style="color:#27ae60;font-weight:700"><i class="bi bi-check-circle-fill me-1"></i>Đã thanh toán</span>`
+                                                : `<span style="color:#1a6fb0;font-weight:700"><i class="bi bi-clock me-1"></i>Chưa thanh toán</span>`
+                                            }</span>
+                        </div>
+                        ${o.paidAt ? `<div class="od-row"><span>Thời gian TT</span><span>${new Date(o.paidAt).toLocaleString("vi-VN")}</span></div>` : ""}
+                    ` : isVietQr ? `
+                        <div class="od-row">
+                            <span>Phương thức</span>
+                            <span style="font-weight:600;color:#27ae60"><i class="bi bi-qr-code me-1"></i>VietQR</span>
+                        </div>
+                        <div class="od-row">
+                            <span>Trạng thái TT</span>
+                            <span>${o.isPaid
+                                                ? `<span style="color:#27ae60;font-weight:700"><i class="bi bi-check-circle-fill me-1"></i>Đã thanh toán</span>`
+                                                : `<span style="color:#f39c12;font-weight:700"><i class="bi bi-hourglass-split me-1"></i>Chờ thanh toán</span>`
+                                            }</span>
+                        </div>
+                        ${o.paidAt ? `<div class="od-row"><span>Thời gian TT</span><span>${new Date(o.paidAt).toLocaleString("vi-VN")}</span></div>` : ""}
+                    ` : `
+                        <div class="od-row">
+                            <span>Phương thức</span>
+                            <span style="font-weight:600;color:#4a5568"><i class="bi bi-cash-stack me-1"></i>COD (Thanh toán khi nhận)</span>
+                        </div>
+                    `;
 
                     document.getElementById("orderModalBody").innerHTML = `
                         <div class="row g-3">
@@ -823,7 +869,7 @@
                                 <div class="od-row"><span>Ngày đặt</span><span>${o.createdAt ? new Date(o.createdAt).toLocaleString("vi-VN") : ""}</span></div>
                                 <div class="od-row"><span>Cập nhật</span><span>${o.updatedAt ? new Date(o.updatedAt).toLocaleString("vi-VN") : ""}</span></div>
                                 <div class="od-row"><span>Trạng thái</span><span id="modalBadge_${o.orderId}">${badge(o.status)}</span></div>
-                                ${vnpayInfo}
+                                ${paymentInfo}
                             </div>
                         </div>
                         <hr style="border-color:#f0f0f0;margin:1rem 0">
@@ -858,7 +904,7 @@
                     const data = await res.json();
 
                     if (!res.ok) {
-                        alert(data.message || "Cập nhật thất bại.");
+                        showToast(data.message || "Cập nhật thất bại.", "error");
                         wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
                         btn.innerHTML = orig;
                         return;
@@ -875,8 +921,8 @@
                             : next.map(ns => {
                                 const m = ACTION_BTN[ns]; if (!m) return "";
                                 return `<button class="modal-act-btn ${m.cls}" onclick="doTransitionModal(${orderId},'${ns}',this)">
-                                                <i class="bi ${m.icon}"></i>${m.label}
-                                            </button>`;
+                                <i class="bi ${m.icon}"></i>${m.label}
+                            </button>`;
                             }).join("");
                     }
 
@@ -885,9 +931,18 @@
                     const actWrap = document.getElementById(`actions_${orderId}`);
                     if (actWrap) actWrap.outerHTML = renderActionBtns(orderId, data.newStatus);
 
+                    // Toast thông báo
+                    if (data.refundCreated) {
+                        showToast(`Đã hủy đơn #${orderId}. Yêu cầu hoàn tiền đã tạo — liên hệ khách lấy thông tin ngân hàng.`, "warn");
+                    } else if (newStatus === "cancelled") {
+                        showToast(`Đã hủy đơn hàng #${orderId}.`, "info");
+                    } else {
+                        showToast(`Cập nhật trạng thái thành công.`, "success");
+                    }
+
                     loadStats();
                 } catch {
-                    alert("Không kết nối được máy chủ.");
+                    showToast("Không kết nối được máy chủ.", "error");
                     wrap?.querySelectorAll("button").forEach(b => b.disabled = false);
                     btn.innerHTML = orig;
                 }
