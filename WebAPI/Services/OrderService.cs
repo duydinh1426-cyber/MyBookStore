@@ -3,6 +3,7 @@ using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
 using WebAPI.Enums;
 using WebAPI.Services.Interfaces;
+using WebAPI.Services.Helper;
 
 namespace WebAPI.Services
 {
@@ -27,7 +28,7 @@ namespace WebAPI.Services
             if (!cartItems.Any()) return new { message = "Giỏ hàng của bạn đang trống." };
 
             var method = dto.PaymentMethod.ToLower();
-            if (method != "cod" && method != "vnpay")
+            if (method != "cod" && method != "vnpay" && method != "vietqr")
                 return new { message = "Phương thức thanh toán không hợp lệ." };
 
             decimal totalCost = 0;
@@ -79,7 +80,7 @@ namespace WebAPI.Services
                     itemCount = orderItems.Count,
                     paymentMethod = method,
                     // Nếu vnpay thì frontend cần gọi tiếp /api/payment/vnpay/create
-                    requiresPayment = method == "vnpay"
+                    requiresPayment = method == "vnpay" || method == "vietqr"
                 };
 
             return new { message = "Lỗi hệ thống khi xử lý đơn hàng." };
@@ -153,7 +154,8 @@ namespace WebAPI.Services
             order.Status = OrderStatus.cancelled.ToValue();
             order.UpdatedAt = DateTime.UtcNow;
 
-            if (order.PaymentMethod?.ToLower() == "vnpay" && order.IsPaid)
+            if ((order.PaymentMethod?.ToLower() == "vnpay" || order.PaymentMethod?.ToLower() == "vietqr")
+            && order.IsPaid)
             {
                 // Validate thông tin ngân hàng
                 if (string.IsNullOrWhiteSpace(dto?.BankAccountNumber) ||
@@ -171,8 +173,8 @@ namespace WebAPI.Services
                     BankAccountName = dto.BankAccountName.Trim().ToUpper(),
                     BankName = dto.BankName.Trim(),
                     Status = "pending",
-                    CreatedAt = DateTime.UtcNow
-                });
+                    CreatedAt = TimeHelper.NowVietnam()
+                }); 
 
                 if (await _repo.SaveChangesAsync())
                     return new
@@ -203,12 +205,12 @@ namespace WebAPI.Services
                 return new { success = false, message = $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'" };
 
             if (target == OrderStatus.confirmed
-                && order.PaymentMethod?.ToLower() == "vnpay"
+                && (order.PaymentMethod?.ToLower() == "vnpay" || order.PaymentMethod?.ToLower() == "vietqr")
                 && !order.IsPaid)
                 return new
                 {
                     success = false,
-                    message = "Không thể xác nhận đơn hàng vì khách chưa thanh toán qua VNPay."
+                    message = "Không thể xác nhận đơn hàng vì khách chưa thanh toán."
                 };
 
             if (target == OrderStatus.cancelled)
@@ -237,19 +239,24 @@ namespace WebAPI.Services
             order.UpdatedAt = DateTime.UtcNow;
 
             if (await _repo.SaveChangesAsync())
+            {
+                var refundCreated = target == OrderStatus.cancelled
+                    && order.PaymentMethod?.ToLower() is "vnpay" or "vietqr"
+                    && order.IsPaid;  // IsPaid vẫn đúng tại thời điểm này
+
                 return new
                 {
                     success = true,
-                    message = target == OrderStatus.cancelled
-                        && order.PaymentMethod?.ToLower() == "vnpay"
-                        && order.IsPaid
-                            ? "Đã hủy đơn hàng. Yêu cầu hoàn tiền đã được tạo, vui lòng liên hệ khách để lấy thông tin ngân hàng."
-                            : "Cập nhật trạng thái thành công",
+                    message = refundCreated
+                        ? "Đã hủy đơn. Yêu cầu hoàn tiền đã được tạo."
+                        : "Cập nhật trạng thái thành công",
                     orderId = order.OrderId,
                     newStatus = order.Status,
                     nextStatuses = target.GetNextStatuses().Select(s => s.ToValue()),
-                    isFinal = target.IsFinal()
+                    isFinal = target.IsFinal(),
+                    refundCreated   // ← thêm field này
                 };
+            }
 
             return new { success = false, message = "Lỗi hệ thống khi cập nhật" };
         }
@@ -293,12 +300,15 @@ namespace WebAPI.Services
 
 			r.Status = "completed";
 			r.AdminNote = adminNote?.Trim();
-			r.ResolvedAt = DateTime.UtcNow;
+            r.ResolvedAt = TimeHelper.NowVietnam();
 
 			if (await _repo.SaveChangesAsync())
 				return new { success = true, message = "Đã đánh dấu hoàn tiền thành công." };
 
 			return new { success = false, message = "Lỗi hệ thống." };
 		}
-	}
+
+        public async Task<Order?> GetOrderByIdAsync(int orderId)
+            => await _repo.GetOrderByIdAsync(orderId);
+    }
 }

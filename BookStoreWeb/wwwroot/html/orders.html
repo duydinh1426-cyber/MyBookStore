@@ -80,12 +80,15 @@
                 box-shadow: 0 4px 20px rgba(0,0,0,.07)
             }
 
-            /* Left border màu theo trạng thái thanh toán */
             .oh-card.unpaid-vnpay {
                 border-left: 3px solid #1a6fb0
             }
 
             .oh-card.paid-vnpay {
+                border-left: 3px solid #27ae60
+            }
+
+            .oh-card.unpaid-qr {
                 border-left: 3px solid #27ae60
             }
 
@@ -152,33 +155,47 @@
             border: 1px solid #f5c6c6
         }
 
-        /* Payment banner — hiện khi chưa thanh toán VNPay */
+        /* Pay banner */
         .oh-pay-banner {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
             padding: .6rem 1.2rem;
-            background: #eaf4ff;
-            border-bottom: 1px solid #c5dff5;
+            border-bottom: 1px solid;
             flex-wrap: wrap
         }
 
+            .oh-pay-banner.banner-vnpay {
+                background: #eaf4ff;
+                border-color: #c5dff5
+            }
+
+            .oh-pay-banner.banner-qr {
+                background: #f0fff4;
+                border-color: #b7e4c7
+            }
+
         .oh-pay-banner-text {
             font-size: .81rem;
-            color: #1a6fb0;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 6px
         }
 
+            .oh-pay-banner-text.text-vnpay {
+                color: #1a6fb0
+            }
+
+            .oh-pay-banner-text.text-qr {
+                color: #27ae60
+            }
+
         .oh-btn-pay-now {
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            background: #1a6fb0;
-            color: #fff;
             border: none;
             border-radius: 8px;
             padding: .32rem .9rem;
@@ -190,13 +207,65 @@
             white-space: nowrap
         }
 
-            .oh-btn-pay-now:hover {
-                background: #155a8f
+            .oh-btn-pay-now.btn-vnpay {
+                background: #1a6fb0;
+                color: #fff
             }
 
+                .oh-btn-pay-now.btn-vnpay:hover {
+                    background: #155a8f
+                }
+
+            .oh-btn-pay-now.btn-qr {
+                background: #27ae60;
+                color: #fff
+            }
+
+                .oh-btn-pay-now.btn-qr:hover {
+                    background: #1e8449
+                }
+
             .oh-btn-pay-now:disabled {
-                background: #8ab8d8;
+                opacity: .55;
                 cursor: not-allowed
+            }
+
+        /* Pay method picker under banner */
+        .oh-pay-method-picker {
+            padding: .5rem 1.2rem;
+            background: #fafafa;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap
+        }
+
+        .oh-pm-opt {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .26rem .75rem;
+            border-radius: 20px;
+            border: 1.5px solid #e8edf2;
+            background: #fff;
+            font-size: .76rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            color: #4a5568;
+            transition: all .15s
+        }
+
+            .oh-pm-opt.active-qr {
+                border-color: #27ae60;
+                background: #f0fff4;
+                color: #27ae60
+            }
+
+            .oh-pm-opt.active-vnpay {
+                border-color: #1a6fb0;
+                background: #eaf4ff;
+                color: #1a6fb0
             }
 
         .oh-body {
@@ -410,7 +479,6 @@
                 margin-bottom: .35rem
             }
 
-        /* Badge thanh toán */
         .pay-badge {
             display: inline-flex;
             align-items: center;
@@ -427,10 +495,16 @@
             border: 1px solid #b7e4c7
         }
 
-        .pay-badge-unpaid {
+        .pay-badge-unpaid-vnpay {
             background: #eaf4ff;
             color: #1a6fb0;
             border: 1px solid #a8d0f0
+        }
+
+        .pay-badge-unpaid-qr {
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1px solid #b7e4c7
         }
 
         .pay-badge-cod {
@@ -438,14 +512,158 @@
             color: #8a9bb0;
             border: 1px solid #e8edf2
         }
+
+        /* QR popup overlay */
+        .qr-pop-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.55);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem
+        }
+
+        .qr-pop {
+            background: #fff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 380px;
+            overflow: hidden;
+            animation: slideUp .25s cubic-bezier(.34,1.3,.64,1)
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        .qr-pop-head {
+            background: linear-gradient(135deg,#27ae60,#2ecc71);
+            padding: 1.1rem 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .qr-pop-title {
+            color: #fff;
+            font-weight: 700;
+            font-size: .95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .qr-pop-close {
+            background: rgba(255,255,255,.25);
+            border: none;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: .95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+            .qr-pop-close:hover {
+                background: rgba(255,255,255,.4)
+            }
+
+        .qr-pop-body {
+            padding: 1.25rem 1.5rem
+        }
+
+        .qr-pop-img {
+            text-align: center;
+            margin-bottom: .9rem
+        }
+
+            .qr-pop-img img {
+                width: 210px;
+                height: 210px;
+                border-radius: 10px;
+                border: 1.5px solid #e8edf2
+            }
+
+        .qr-pop-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: .65rem .85rem;
+            font-size: .78rem;
+            margin-bottom: .8rem
+        }
+
+        .qr-pop-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .22rem 0;
+            border-bottom: 1px solid #f0f0f0
+        }
+
+            .qr-pop-info-row:last-child {
+                border-bottom: none
+            }
+
+        .qr-poll-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #27ae60;
+            display: inline-block;
+            animation: pulse 1.2s infinite;
+            margin-right: 5px;
+            vertical-align: middle
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.7)
+            }
+        }
+
+        .qr-pop-cancel {
+            width: 100%;
+            background: none;
+            border: 1.5px solid #e8edf2;
+            border-radius: 8px;
+            padding: .55rem;
+            font-size: .82rem;
+            font-weight: 600;
+            color: #8a9bb0;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: .75rem;
+            transition: all .15s
+        }
+
+            .qr-pop-cancel:hover {
+                border-color: #e74c3c;
+                color: #e74c3c
+            }
     </style>
 </head>
 <body>
     <div id="header-placeholder"></div>
-
     <div class="oh-page">
         <h2 class="oh-title"><i class="bi bi-bag-check"></i> Đơn hàng của tôi</h2>
-
         <div class="oh-tabs">
             <button class="oh-tab active" data-s="" onclick="filterTab(this,'')">Tất cả</button>
             <button class="oh-tab" data-s="pending" onclick="filterTab(this,'pending')">Chờ xác nhận</button>
@@ -454,127 +672,79 @@
             <button class="oh-tab" data-s="completed" onclick="filterTab(this,'completed')">Hoàn thành</button>
             <button class="oh-tab" data-s="cancelled" onclick="filterTab(this,'cancelled')">Đã huỷ</button>
         </div>
-
         <div id="ohList"></div>
         <div class="oh-pager" id="ohPager"></div>
     </div>
 
-    <!-- Modal xác nhận hủy đơn -->
+    <!-- Cancel modal -->
     <div class="modal fade" id="cancelModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered" style="max-width:440px">
             <div class="modal-content" style="border-radius:16px;border:none">
                 <div class="modal-body" style="padding:2rem 1.5rem">
-
-                    <!-- Header -->
                     <div style="text-align:center;margin-bottom:1.1rem">
-                        <div style="width:64px;height:64px;border-radius:50%;background:#fff0f0;
-                        border:2.5px solid #f5c6c6;display:flex;align-items:center;
-                        justify-content:center;font-size:1.8rem;color:#e74c3c;margin:0 auto .9rem">
-                            <i class="bi bi-bag-x"></i>
-                        </div>
-                        <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:#1a1a1a;margin-bottom:.3rem">
-                            Hủy đơn hàng?
-                        </div>
-                        <div style="font-size:.85rem;color:#8a9bb0">
-                            Bạn chắc chắn muốn hủy <strong id="cancelOrderLabel" style="color:#1a1a1a"></strong>?
-                        </div>
+                        <div style="width:64px;height:64px;border-radius:50%;background:#fff0f0;border:2.5px solid #f5c6c6;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#e74c3c;margin:0 auto .9rem"><i class="bi bi-bag-x"></i></div>
+                        <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:#1a1a1a;margin-bottom:.3rem">Hủy đơn hàng?</div>
+                        <div style="font-size:.85rem;color:#8a9bb0">Bạn chắc chắn muốn hủy <strong id="cancelOrderLabel" style="color:#1a1a1a"></strong>?</div>
                     </div>
-
-                    <!-- Banner hoàn tiền VNPay — ẩn mặc định -->
-                    <div id="cancelRefundBanner" style="display:none;
-                    background:#eaf4ff;border:1.5px solid #a8d0f0;border-radius:10px;
-                    padding:.65rem .9rem;font-size:.82rem;color:#1a6fb0;
-                    margin-bottom:1rem">
-                        <div style="display:flex;align-items:flex-start;gap:7px">
-                            <i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:2px"></i>
-                            <span>Đơn đã thanh toán qua <b>VNPay</b>. Vui lòng cung cấp thông tin ngân hàng để admin hoàn tiền <b id="cancelRefundAmtText"></b> thủ công.</span>
-                        </div>
+                    <div id="cancelRefundBanner" style="display:none;background:#eaf4ff;border:1.5px solid #a8d0f0;border-radius:10px;padding:.65rem .9rem;font-size:.82rem;color:#1a6fb0;margin-bottom:1rem">
+                        <div style="display:flex;align-items:flex-start;gap:7px"><i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:2px"></i><span>Đơn đã thanh toán qua <b>VNPay</b>. Vui lòng cung cấp thông tin ngân hàng để admin hoàn tiền <b id="cancelRefundAmtText"></b> thủ công.</span></div>
                     </div>
-
-                    <!-- Lý do hủy — luôn hiện -->
                     <div style="margin-bottom:.85rem">
-                        <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:5px">
-                            Lý do hủy <span style="font-weight:400;color:#aaa">(không bắt buộc)</span>
-                        </label>
-                        <textarea id="cancelNoteInput" rows="2"
-                                  style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
-                               padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
-                               outline:none;resize:none;color:#1a1a1a;transition:border-color .15s"
-                                  onfocus="this.style.borderColor='#6ab04c'"
-                                  onblur="this.style.borderColor='#e8edf2'"
-                                  placeholder="Nhập lý do hủy..."></textarea>
+                        <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:5px">Lý do hủy <span style="font-weight:400;color:#aaa">(không bắt buộc)</span></label>
+                        <textarea id="cancelNoteInput" rows="2" style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;padding:.6rem .85rem;font-family:inherit;font-size:.84rem;outline:none;resize:none;color:#1a1a1a;transition:border-color .15s" onfocus="this.style.borderColor='#6ab04c'" onblur="this.style.borderColor='#e8edf2'" placeholder="Nhập lý do hủy..."></textarea>
                     </div>
-
-                    <!-- Form ngân hàng — chỉ hiện với VNPay đã TT -->
                     <div id="cancelBankForm" style="display:none">
-                        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8a9bb0;margin-bottom:.6rem">
-                            <i class="bi bi-bank me-1"></i>Thông tin nhận hoàn tiền
-                        </div>
-
+                        <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8a9bb0;margin-bottom:.6rem"><i class="bi bi-bank me-1"></i>Thông tin nhận hoàn tiền</div>
                         <div style="margin-bottom:.65rem">
-                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">
-                                Ngân hàng <span style="color:#e74c3c">*</span>
-                            </label>
-                            <input id="cancelBankName" type="text"
-                                   style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
-                                   padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
-                                   outline:none;color:#1a1a1a;transition:border-color .15s"
-                                   onfocus="this.style.borderColor='#6ab04c'"
-                                   onblur="this.style.borderColor='#e8edf2'"
-                                   placeholder="VD: Vietcombank, BIDV, Techcombank...">
+                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Ngân hàng <span style="color:#e74c3c">*</span></label>
+                            <input id="cancelBankName" type="text" style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;padding:.6rem .85rem;font-family:inherit;font-size:.84rem;outline:none;color:#1a1a1a;transition:border-color .15s" onfocus="this.style.borderColor='#6ab04c'" onblur="this.style.borderColor='#e8edf2'" placeholder="VD: Vietcombank, BIDV, Techcombank...">
                             <div id="cancelBankNameErr" style="display:none;font-size:.76rem;color:#e74c3c;margin-top:3px">Vui lòng nhập tên ngân hàng</div>
                         </div>
-
                         <div style="margin-bottom:.65rem">
-                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">
-                                Số tài khoản <span style="color:#e74c3c">*</span>
-                            </label>
-                            <input id="cancelBankNumber" type="text" inputmode="numeric"
-                                   style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
-                                   padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
-                                   outline:none;color:#1a1a1a;transition:border-color .15s"
-                                   onfocus="this.style.borderColor='#6ab04c'"
-                                   onblur="this.style.borderColor='#e8edf2'"
-                                   placeholder="Nhập số tài khoản">
+                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Số tài khoản <span style="color:#e74c3c">*</span></label>
+                            <input id="cancelBankNumber" type="text" inputmode="numeric" style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;padding:.6rem .85rem;font-family:inherit;font-size:.84rem;outline:none;color:#1a1a1a;transition:border-color .15s" onfocus="this.style.borderColor='#6ab04c'" onblur="this.style.borderColor='#e8edf2'" placeholder="Nhập số tài khoản">
                             <div id="cancelBankNumberErr" style="display:none;font-size:.76rem;color:#e74c3c;margin-top:3px">Vui lòng nhập số tài khoản</div>
                         </div>
-
                         <div style="margin-bottom:.85rem">
-                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">
-                                Tên chủ tài khoản <span style="color:#e74c3c">*</span>
-                            </label>
-                            <input id="cancelBankAccountName" type="text"
-                                   style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;
-                                   padding:.6rem .85rem;font-family:inherit;font-size:.84rem;
-                                   outline:none;color:#1a1a1a;transition:border-color .15s;text-transform:uppercase"
-                                   onfocus="this.style.borderColor='#6ab04c'"
-                                   onblur="this.style.borderColor='#e8edf2'"
-                                   placeholder="VD: NGUYEN VAN A">
+                            <label style="font-size:.82rem;font-weight:600;color:#4a5568;display:block;margin-bottom:4px">Tên chủ tài khoản <span style="color:#e74c3c">*</span></label>
+                            <input id="cancelBankAccountName" type="text" style="width:100%;border:1.5px solid #e8edf2;border-radius:10px;padding:.6rem .85rem;font-family:inherit;font-size:.84rem;outline:none;color:#1a1a1a;transition:border-color .15s;text-transform:uppercase" onfocus="this.style.borderColor='#6ab04c'" onblur="this.style.borderColor='#e8edf2'" placeholder="VD: NGUYEN VAN A">
                             <div id="cancelBankAccountNameErr" style="display:none;font-size:.76rem;color:#e74c3c;margin-top:3px">Vui lòng nhập tên chủ tài khoản</div>
                         </div>
                     </div>
-
-                    <!-- Nút -->
                     <div style="display:flex;gap:10px">
-                        <button data-bs-dismiss="modal"
-                                style="flex:1;border:1.5px solid #e8edf2;background:#fff;border-radius:10px;
-                               padding:.65rem;font-size:.88rem;font-weight:600;cursor:pointer;
-                               font-family:inherit;color:#4a5568;transition:all .15s"
-                                onmouseover="this.style.borderColor='#6ab04c';this.style.color='#6ab04c'"
-                                onmouseout="this.style.borderColor='#e8edf2';this.style.color='#4a5568'">
-                            Không, giữ lại
-                        </button>
-                        <button id="cancelConfirmBtn"
-                                style="flex:1;background:#e74c3c;color:#fff;border:none;border-radius:10px;
-                               padding:.65rem;font-size:.88rem;font-weight:700;cursor:pointer;
-                               font-family:inherit;transition:background .15s"
-                                onmouseover="this.style.background='#c0392b'"
-                                onmouseout="this.style.background='#e74c3c'">
+                        <button data-bs-dismiss="modal" style="flex:1;border:1.5px solid #e8edf2;background:#fff;border-radius:10px;padding:.65rem;font-size:.88rem;font-weight:600;cursor:pointer;font-family:inherit;color:#4a5568;transition:all .15s" onmouseover="this.style.borderColor='#6ab04c';this.style.color='#6ab04c'" onmouseout="this.style.borderColor='#e8edf2';this.style.color='#4a5568'">Không, giữ lại</button>
+                        <button id="cancelConfirmBtn" style="flex:1;background:#e74c3c;color:#fff;border:none;border-radius:10px;padding:.65rem;font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#c0392b'" onmouseout="this.style.background='#e74c3c'">
                             <i class="bi bi-x-circle me-1"></i>Xác nhận hủy
                         </button>
                     </div>
-
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR popup -->
+    <div id="qrPopOverlay" class="qr-pop-overlay" style="display:none">
+        <div class="qr-pop">
+            <div class="qr-pop-head">
+                <div class="qr-pop-title"><i class="bi bi-qr-code-scan"></i> Thanh toán VietQR</div>
+                <button class="qr-pop-close" onclick="closeQrPop()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="qr-pop-body">
+                <div class="qr-pop-img"><img id="qrPopImg" src="" alt="QR"></div>
+                <div class="qr-pop-info">
+                    <div class="qr-pop-info-row">
+                        <span style="color:#8a9bb0;font-weight:600">Số tiền</span>
+                        <span style="font-weight:700;color:#27ae60" id="qrPopAmount"></span>
+                    </div>
+                    <div class="qr-pop-info-row">
+                        <span style="color:#8a9bb0;font-weight:600">Nội dung CK</span>
+                        <span style="font-weight:700;color:#27ae60" id="qrPopNote"></span>
+                    </div>
+                </div>
+                <div style="text-align:center;font-size:.8rem;color:#8a9bb0" id="qrPopStatus">
+                    <span class="qr-poll-dot"></span>Đang chờ xác nhận...
+                </div>
+                <button class="qr-pop-cancel" onclick="closeQrPop()"><i class="bi bi-x-circle me-1"></i>Đóng và thanh toán sau</button>
             </div>
         </div>
     </div>
@@ -586,17 +756,17 @@
             const API = "https://localhost:7204/api";
             const IMG_URL = "https://localhost:7204";
 
+            const BANK_ID = "970422";
+            const ACCOUNT_NO = "0767213920";
+            const ACCOUNT_NAME = "DINH KHANH DUY";
+
             const getToken = () => sessionStorage.getItem("token");
             const isLoggedIn = () => !!getToken();
-            const authHeaders = () => ({
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`
-            });
+            const authHeaders = () => ({ "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` });
             const fmt = n => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
 
             if (!isLoggedIn()) { window.location.href = "../html/login.html"; return; }
 
-            /* ── Toast ── */
             function showToast(msg, type = "success") {
                 let wrap = document.getElementById("_ohToastWrap");
                 if (!wrap) {
@@ -612,23 +782,10 @@
                 };
                 const c = colors[type] || colors.success;
                 const t = document.createElement("div");
-                t.style.cssText = `background:${c.bg};border:1.5px solid ${c.border};border-radius:10px;
-                        padding:.65rem 1rem;font-size:.84rem;font-family:'DM Sans',sans-serif;
-                        box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:flex-start;
-                        gap:8px;min-width:260px;max-width:340px;pointer-events:all;animation:_ohSlide .2s ease`;
-                t.innerHTML = `
-                        <i class="bi ${c.icon}" style="color:${c.iconColor};font-size:1rem;flex-shrink:0;margin-top:1px"></i>
-                        <span style="flex:1;line-height:1.4">${msg}</span>
-                        <i class="bi bi-x" style="cursor:pointer;color:#aaa;font-size:1rem;flex-shrink:0"
-                           onclick="this.closest('div').remove()"></i>`;
+                t.style.cssText = `background:${c.bg};border:1.5px solid ${c.border};border-radius:10px;padding:.65rem 1rem;font-size:.84rem;font-family:'DM Sans',sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.1);display:flex;align-items:flex-start;gap:8px;min-width:260px;max-width:340px;pointer-events:all`;
+                t.innerHTML = `<i class="bi ${c.icon}" style="color:${c.iconColor};font-size:1rem;flex-shrink:0;margin-top:1px"></i><span style="flex:1;line-height:1.4">${msg}</span><i class="bi bi-x" style="cursor:pointer;color:#aaa;font-size:1rem;flex-shrink:0" onclick="this.closest('div').remove()"></i>`;
                 wrap.appendChild(t);
                 setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, 4000);
-            }
-            if (!document.getElementById("_ohToastStyle")) {
-                const s = document.createElement("style");
-                s.id = "_ohToastStyle";
-                s.textContent = "@keyframes _ohSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}";
-                document.head.appendChild(s);
             }
 
             const imgSrc = raw => {
@@ -654,18 +811,116 @@
                 return `<span class="oh-badge ${m.cls}"><i class="bi ${m.icon}"></i>${m.label}</span>`;
             }
 
-            /* ── Badge thanh toán — dùng data từ detail ── */
             function payBadge(paymentMethod, isPaid) {
                 const method = (paymentMethod ?? "").toLowerCase();
-                if (method !== "vnpay") {
+                if (method === "cod")
                     return `<span class="pay-badge pay-badge-cod"><i class="bi bi-cash-stack"></i>COD</span>`;
-                }
+                if (method === "vietqr")
+                    return isPaid
+                        ? `<span class="pay-badge pay-badge-paid"><i class="bi bi-check-circle-fill"></i>Đã TT (QR)</span>`
+                        : `<span class="pay-badge pay-badge-unpaid-qr"><i class="bi bi-qr-code"></i>Chờ thanh toán QR</span>`;
+                // vnpay
                 return isPaid
                     ? `<span class="pay-badge pay-badge-paid"><i class="bi bi-check-circle-fill"></i>Đã thanh toán</span>`
-                    : `<span class="pay-badge pay-badge-unpaid"><i class="bi bi-credit-card"></i>Chưa thanh toán</span>`;
+                    : `<span class="pay-badge pay-badge-unpaid-vnpay"><i class="bi bi-credit-card"></i>Chờ thanh toán</span>`;
             }
 
-            /* ── Load ── */
+            function buildQrUrl(orderId, amount) {
+                return `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png`
+                    + `?amount=${amount}&addInfo=${encodeURIComponent(`BS${orderId}`)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+            }
+
+            /* ── QR popup ── */
+            let _qrPollingTimer = null;
+
+            window.showQrPop = function (orderId, amount) {
+                document.getElementById("qrPopImg").src = buildQrUrl(orderId, amount);
+                document.getElementById("qrPopAmount").textContent = fmt(amount);
+                document.getElementById("qrPopNote").textContent = `BS${orderId}`;
+                document.getElementById("qrPopStatus").innerHTML = `<span class="qr-poll-dot"></span>Đang chờ xác nhận...`;
+                document.getElementById("qrPopOverlay").style.display = "flex";
+                startQrPolling(orderId);
+            };
+
+            window.closeQrPop = function () {
+                stopQrPolling();
+                document.getElementById("qrPopOverlay").style.display = "none";
+                window.load(curPage, curStatus);
+            };
+
+            function startQrPolling(orderId) {
+                stopQrPolling();
+                let count = 0; const MAX = 60;
+                _qrPollingTimer = setInterval(async () => {
+                    count++;
+                    if (count >= MAX) {
+                        stopQrPolling();
+                        document.getElementById("qrPopStatus").innerHTML = `<span style="color:#e74c3c"><i class="bi bi-clock-history me-1"></i>Hết thời gian chờ.</span>`;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`${API}/orders/qr/status/${orderId}`, { headers: authHeaders() });
+                        const data = await res.json();
+                        if (data.isPaid) {
+                            stopQrPolling();
+                            window.location.href = `../html/payment-result.html?success=true&orderId=${orderId}&code=00&method=vietqr`;
+                        }
+                    } catch { /* ignore */ }
+                }, 5000);
+            }
+
+            function stopQrPolling() {
+                if (_qrPollingTimer) { clearInterval(_qrPollingTimer); _qrPollingTimer = null; }
+            }
+
+            /* ── Trạng thái phương thức thanh toán đang chọn cho từng đơn ── */
+            const _orderPayMethod = {}; // orderId → 'vietqr' | 'vnpay'
+
+            window.switchPayMethod = function (orderId, method) {
+                _orderPayMethod[orderId] = method;
+                const btnQr = document.getElementById(`pmQr_${orderId}`);
+                const btnVnp = document.getElementById(`pmVnp_${orderId}`);
+                if (btnQr) btnQr.className = "oh-pm-opt" + (method === "vietqr" ? " active-qr" : "");
+                if (btnVnp) btnVnp.className = "oh-pm-opt" + (method === "vnpay" ? " active-vnpay" : "");
+
+                const payBtn = document.getElementById(`paybtn_${orderId}`);
+                if (!payBtn) return;
+                if (method === "vietqr") {
+                    payBtn.className = "oh-btn-pay-now btn-qr";
+                    payBtn.innerHTML = `<i class="bi bi-qr-code-scan"></i> Xem mã QR`;
+                } else {
+                    payBtn.className = "oh-btn-pay-now btn-vnpay";
+                    payBtn.innerHTML = `<i class="bi bi-credit-card-fill"></i> Thanh toán VNPay`;
+                }
+            };
+
+            window.doPayNow = async function (orderId, amount) {
+                const method = _orderPayMethod[orderId] || "vietqr";
+                if (method === "vietqr") {
+                    showQrPop(orderId, amount);
+                    return;
+                }
+                // VNPay
+                const btn = document.getElementById(`paybtn_${orderId}`);
+                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...'; }
+                try {
+                    const res = await fetch(`${API}/payment/vnpay/create`, {
+                        method: "POST", headers: authHeaders(),
+                        body: JSON.stringify({ orderId })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.paymentUrl) {
+                        showToast(data.message || "Không tạo được link thanh toán.", "error");
+                        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card-fill"></i> Thanh toán VNPay'; }
+                        return;
+                    }
+                    window.location.href = data.paymentUrl;
+                } catch {
+                    showToast("Không kết nối được máy chủ.", "error");
+                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card-fill"></i> Thanh toán VNPay'; }
+                }
+            };
+
             window.load = async function (page = 1, status = "") {
                 curPage = page; curStatus = status;
                 const list = document.getElementById("ohList");
@@ -684,30 +939,19 @@
                     const totalPages = data.totalPages ?? 1;
 
                     if (!orders.length) {
-                        list.innerHTML = `
-                                <div class="oh-empty">
-                                    <i class="bi bi-bag-x"></i>
-                                    <p>Chưa có đơn hàng nào</p>
-                                    <small>Hãy mua sắm và quay lại đây nhé!</small>
-                                </div>`;
+                        list.innerHTML = `<div class="oh-empty"><i class="bi bi-bag-x"></i><p>Chưa có đơn hàng nào</p><small>Hãy mua sắm và quay lại đây nhé!</small></div>`;
                         return;
                     }
 
-                    // Lấy detail để có paymentMethod + isPaid chính xác
                     const details = await Promise.all(orders.map(o => fetchDetail(o.orderId)));
-
                     const reviewMaps = await Promise.all(
-                        orders.map((o, i) =>
-                            o.status === "completed"
-                                ? fetchReviewMap(details[i])
-                                : Promise.resolve({})
-                        )
+                        orders.map((o, i) => o.status === "completed" ? fetchReviewMap(details[i]) : Promise.resolve({}))
                     );
 
                     list.innerHTML = orders.map((o, i) => renderCard(o, details[i], reviewMaps[i])).join("");
 
                     if (totalPages > 1) {
-                        const s = curStatus; // snapshot tại thời điểm render
+                        const s = curStatus;
                         let html = `<button class="oh-pg" ${page === 1 ? "disabled" : ""} onclick="window.load(${page - 1},'${s}')"><i class="bi bi-chevron-left"></i></button>`;
                         for (let pg = 1; pg <= totalPages; pg++)
                             html += `<button class="oh-pg ${pg === page ? "active" : ""}" onclick="window.load(${pg},'${s}')">${pg}</button>`;
@@ -715,13 +959,9 @@
                         pager.innerHTML = html;
                     }
                 } catch {
-                    list.innerHTML = `
-                            <div class="oh-empty">
-                                <i class="bi bi-wifi-off"></i>
-                                <p>Không tải được đơn hàng</p><small>Vui lòng thử lại sau.</small>
-                            </div>`;
+                    list.innerHTML = `<div class="oh-empty"><i class="bi bi-wifi-off"></i><p>Không tải được đơn hàng</p><small>Vui lòng thử lại sau.</small></div>`;
                 }
-            }
+            };
 
             async function fetchDetail(id) {
                 try {
@@ -733,19 +973,16 @@
             async function fetchReviewMap(detail) {
                 if (!detail?.items?.length) return {};
                 const bookIds = [...new Set(detail.items.map(it => it.book?.bookId ?? 0).filter(Boolean))];
-                const results = await Promise.all(
-                    bookIds.map(async bid => {
-                        try {
-                            const res = await fetch(`${API}/reviews/status/${bid}`, { headers: authHeaders() });
-                            const data = await res.json();
-                            return { bid, canReview: data.canReview === true };
-                        } catch { return { bid, canReview: true }; }
-                    })
-                );
+                const results = await Promise.all(bookIds.map(async bid => {
+                    try {
+                        const res = await fetch(`${API}/reviews/status/${bid}`, { headers: authHeaders() });
+                        const data = await res.json();
+                        return { bid, canReview: data.canReview === true };
+                    } catch { return { bid, canReview: true }; }
+                }));
                 return Object.fromEntries(results.map(r => [r.bid, r.canReview]));
             }
 
-            /* ── Render card ── */
             function renderCard(o, detail, reviewMap = {}) {
                 const id = o.orderId;
                 const status = o.status ?? "";
@@ -757,18 +994,19 @@
                 const items = detail?.items ?? [];
                 const SHOW = 2;
 
-                // ── Ưu tiên data từ detail vì đầy đủ và chính xác hơn ──
                 const paymentMethod = (detail?.paymentMethod ?? o.paymentMethod ?? "").toLowerCase();
-                const isVnpay = paymentMethod === "vnpay";
                 const isPaid = detail?.isPaid ?? o.isPaid ?? false;
                 const isCancelled = status === "cancelled";
+                const isVnpay = paymentMethod === "vnpay";
+                const isVietQr = paymentMethod === "vietqr";
+                // Đơn COD được backend lưu là "cod" — VietQR trên frontend cũng map sang "cod" khi tạo đơn
+                // Phân biệt qua logic: vnpay unpaid mới cần banner
+                const needsPayment = (isVnpay || isVietQr) && !isPaid && !isCancelled;
 
-                // Card border class
-                const cardBorderCls = isVnpay
-                    ? (isPaid ? "paid-vnpay" : (isCancelled ? "" : "unpaid-vnpay"))
-                    : "";
+                const cardBorderCls = needsPayment
+                    ? (isVietQr ? "unpaid-qr" : "unpaid-vnpay")
+                    : (isPaid ? "paid-vnpay" : "");
 
-                /* items HTML */
                 const itemHtml = (list) => list.map(it => {
                     const src = imgSrc(it.book?.image ?? "");
                     const name = it.book?.title ?? "Sách";
@@ -780,142 +1018,114 @@
                     let reviewBtn = "";
                     if (status === "completed" && bookId) {
                         if (canReview === false) {
-                            reviewBtn = `
-                                    <span style="display:inline-flex;align-items:center;gap:4px;
-                                                 background:#f0fff4;color:#27ae60;border:1.5px solid #b7e4c7;
-                                                 border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
-                                                 font-weight:700;white-space:nowrap;flex-shrink:0">
-                                        <i class="bi bi-check-circle-fill"></i> Đã đánh giá
-                                    </span>`;
+                            reviewBtn = `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fff4;color:#27ae60;border:1.5px solid #b7e4c7;border-radius:8px;padding:.28rem .7rem;font-size:.75rem;font-weight:700;white-space:nowrap;flex-shrink:0"><i class="bi bi-check-circle-fill"></i> Đã đánh giá</span>`;
                         } else {
-                            reviewBtn = `
-                                    <a href="review.html?bookId=${bookId}&orderId=${id}"
-                                       style="display:inline-flex;align-items:center;gap:4px;
-                                              background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;
-                                              border-radius:8px;padding:.28rem .7rem;font-size:.75rem;
-                                              font-weight:700;text-decoration:none;white-space:nowrap;
-                                              flex-shrink:0;transition:all .15s"
-                                       onmouseover="this.style.background='#f39c12';this.style.color='#fff';this.style.borderColor='#f39c12'"
-                                       onmouseout="this.style.background='#fff8ec';this.style.color='#d68910';this.style.borderColor='#ffe0a0'">
-                                        <i class="bi bi-star-fill"></i> Đánh giá
-                                    </a>`;
+                            reviewBtn = `<a href="review.html?bookId=${bookId}&orderId=${id}" style="display:inline-flex;align-items:center;gap:4px;background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;border-radius:8px;padding:.28rem .7rem;font-size:.75rem;font-weight:700;text-decoration:none;white-space:nowrap;flex-shrink:0"><i class="bi bi-star-fill"></i> Đánh giá</a>`;
                         }
                     }
-
                     return `
-                            <div class="oh-item">
-                                ${src ? `<img class="oh-item-img" src="${src}" alt="${name}"
-                                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
-                                <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                                <div style="flex:1;min-width:0">
-                                    <div class="oh-item-name">${name}</div>
-                                    <div class="oh-item-meta">SL: ${qty}</div>
-                                    <div class="oh-item-price">${fmt(sub)}</div>
-                                </div>
-                                ${reviewBtn}
-                            </div>`;
+                        <div class="oh-item">
+                            ${src ? `<img class="oh-item-img" src="${src}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                            <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                            <div style="flex:1;min-width:0">
+                                <div class="oh-item-name">${name}</div>
+                                <div class="oh-item-meta">SL: ${qty}</div>
+                                <div class="oh-item-price">${fmt(sub)}</div>
+                            </div>
+                            ${reviewBtn}
+                        </div>`;
                 }).join("");
 
                 const visibleItems = items.slice(0, SHOW);
                 const hiddenItems = items.slice(SHOW);
                 const hasMore = hiddenItems.length > 0;
 
-                // Banner nhắc thanh toán VNPay — chỉ khi chưa thanh toán và chưa hủy
-                // Banner nhắc thanh toán VNPay — chỉ khi chưa thanh toán và chưa hủy
-                const payBanner = (isVnpay && !isPaid && !isCancelled) ? `
-                    <div class="oh-pay-banner">
+                // Banner nhắc thanh toán VNPay với lựa chọn phương thức
+                const payBanner = needsPayment ? (isVietQr ? `
+                    <div class="oh-pay-banner banner-qr">
                         <div style="flex:1">
-                            <div class="oh-pay-banner-text">
-                                <i class="bi bi-exclamation-circle-fill"></i>
-                                Đơn hàng chưa được thanh toán
+                            <div class="oh-pay-banner-text text-qr">
+                                <i class="bi bi-qr-code-scan"></i>Đơn hàng chờ thanh toán QR
                             </div>
-                            <div style="font-size:.76rem;color:#4a88b8;margin-top:3px;padding-left:22px">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Đơn hàng sẽ không được xác nhận cho đến khi bạn hoàn tất thanh toán.
+                            <div style="font-size:.76rem;color:#27ae60;margin-top:3px;padding-left:22px">
+                                Quét mã QR để hoàn tất thanh toán
                             </div>
                         </div>
-                        <button class="oh-btn-pay-now" id="paybtn_${id}" onclick="retryVnpay(${id})">
-                            <i class="bi bi-credit-card-fill"></i> Thanh toán ngay
+                        <button class="oh-btn-pay-now btn-qr" onclick="showQrPop(${id}, ${total})">
+                            <i class="bi bi-qr-code-scan"></i> Xem mã QR
                         </button>
-                    </div>` : "";
-
+                    </div>` : `
+                    <div class="oh-pay-banner banner-vnpay">
+                        <div style="flex:1">
+                            <div class="oh-pay-banner-text text-vnpay">
+                                <i class="bi bi-exclamation-circle-fill"></i>Đơn hàng chưa được thanh toán
+                            </div>
+                            <div style="font-size:.76rem;color:#4a88b8;margin-top:3px;padding-left:22px">
+                                Chọn phương thức và thanh toán ngay
+                            </div>
+                        </div>
+                        <button class="oh-btn-pay-now btn-qr" id="paybtn_${id}" onclick="doPayNow(${id}, ${total})">
+                            <i class="bi bi-qr-code-scan"></i> Xem mã QR
+                        </button>
+                    </div>
+                    <div class="oh-pay-method-picker">
+                        <span style="font-size:.75rem;color:#8a9bb0;font-weight:600;align-self:center">Thanh toán qua:</span>
+                        <button class="oh-pm-opt active-qr" id="pmQr_${id}" onclick="switchPayMethod(${id},'vietqr')">
+                            <i class="bi bi-qr-code" style="font-size:.85rem"></i> VietQR
+                        </button>
+                        <button class="oh-pm-opt" id="pmVnp_${id}" onclick="switchPayMethod(${id},'vnpay')">
+                            <i class="bi bi-credit-card" style="font-size:.85rem"></i> VNPay
+                        </button>
+                    </div>`) : "";
                 return `
-                        <div class="oh-card ${cardBorderCls}" id="card_${id}">
-                            <div class="oh-head">
-                                <div>
-                                    <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
-                                    ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
-                                </div>
-                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                                    ${payBadge(paymentMethod, isPaid)}
-                                    ${badge(status)}
-                                </div>
+                    <div class="oh-card ${cardBorderCls}" id="card_${id}">
+                        <div class="oh-head">
+                            <div>
+                                <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
+                                ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
                             </div>
-
-                            ${payBanner}
-
-                            <div class="oh-body">
-                                ${itemHtml(visibleItems)}
-                                ${hasMore ? `
-                                <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
-                                <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
-                                    <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
-                                </button>` : ""}
+                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                                ${payBadge(paymentMethod, isPaid)}
+                                ${badge(status)}
+                            </div>
+                        </div>
+                        ${payBanner}
+                        <div class="oh-body">
+                            ${itemHtml(visibleItems)}
+                            ${hasMore ? `
+                            <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
+                            <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
+                                <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
+                            </button>` : ""}
+                            ${(phone || address) ? `
+                            <div class="oh-ship" id="ship_${id}">
+                                ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
+                                ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
+                                ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
+                            </div>` : ""}
+                        </div>
+                        <div class="oh-foot">
+                            <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap">
                                 ${(phone || address) ? `
-                                <div class="oh-ship" id="ship_${id}">
-                                    ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
-                                    ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
-                                    ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
-                                </div>` : ""}
+                                <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
+                                    <i class="bi bi-geo-alt me-1"></i>Địa chỉ
+                                </button>` : ""}
+                                ${(status === "pending" || status === "confirmed" || status === "shipping") ? `
+                                <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id},${isVnpay || isVietQr},${isPaid},${total})">
+                                    <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                                </button>` : ""}
                             </div>
-
-                            <div class="oh-foot">
-                                <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
-                                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                                    ${(phone || address) ? `
-                                    <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
-                                        <i class="bi bi-geo-alt me-1"></i>Địa chỉ
-                                    </button>` : ""}
-                                   ${(status === "pending" || status === "confirmed" || status === "shipping") ? `
-                                    <button class="oh-btn oh-btn-danger"
-                                        onclick="cancelOrder(${id}, ${isVnpay}, ${isPaid}, ${total})">
-                                        <i class="bi bi-x-circle me-1"></i>Hủy đơn
-                                    </button>` : ""}
-                                </div>
-                            </div>
-                        </div>`;
+                        </div>
+                    </div>`;
             }
-
-            /* ── Thanh toán lại VNPay ── */
-            window.retryVnpay = async function (orderId) {
-                const btn = document.getElementById(`paybtn_${orderId}`);
-                if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...'; }
-                try {
-                    const res = await fetch(`${API}/payment/vnpay/create`, {
-                        method: "POST", headers: authHeaders(),
-                        body: JSON.stringify({ orderId })
-                    });
-                    const data = await res.json();
-                    if (!res.ok || !data.paymentUrl) {
-                        showToast(data.message || "Không tạo được link thanh toán.", "error");
-                        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card-fill"></i> Thanh toán ngay'; }
-                        return;
-                    }
-                    window.location.href = data.paymentUrl;
-                } catch {
-                    showToast("Không kết nối được máy chủ.", "error");
-                    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-credit-card-fill"></i> Thanh toán ngay'; }
-                }
-            };
 
             window.toggleExtra = function (id) {
                 const el = document.getElementById(`extra_${id}`);
                 const btn = document.getElementById(`morebtn_${id}`);
                 if (!el) return;
                 const open = el.classList.toggle("show");
-                btn.innerHTML = open
-                    ? `<i class="bi bi-chevron-up me-1"></i>Thu gọn`
-                    : `<i class="bi bi-chevron-down me-1"></i>Xem thêm`;
+                btn.innerHTML = open ? `<i class="bi bi-chevron-up me-1"></i>Thu gọn` : `<i class="bi bi-chevron-down me-1"></i>Xem thêm`;
             };
 
             window.toggleShip = function (id) {
@@ -923,79 +1133,41 @@
                 const btn = document.getElementById(`shipbtn_${id}`);
                 if (!el) return;
                 const open = el.classList.toggle("show");
-                btn.innerHTML = open
-                    ? `<i class="bi bi-chevron-up me-1"></i>Ẩn địa chỉ`
-                    : `<i class="bi bi-geo-alt me-1"></i>Địa chỉ`;
+                btn.innerHTML = open ? `<i class="bi bi-chevron-up me-1"></i>Ẩn địa chỉ` : `<i class="bi bi-geo-alt me-1"></i>Địa chỉ`;
             };
 
-            let _cancelRequiresRefund = false;
-            let _cancelRefundAmount = 0;
-            let _cancelId = null;
-            window.cancelOrder = function (id, isVnpay, isPaid, amount) {
-                _cancelId = id;
-                _cancelRequiresRefund = isVnpay && isPaid;
-                _cancelRefundAmount = amount;
-
+            let _cancelRequiresRefund = false, _cancelRefundAmount = 0, _cancelId = null;
+            window.cancelOrder = function (id, isPaidOnline, isPaid, amount) {
+                _cancelId = id; _cancelRequiresRefund = isPaidOnline && isPaid; _cancelRefundAmount = amount;
                 document.getElementById("cancelOrderLabel").textContent = `đơn hàng #${id}`;
                 document.getElementById("cancelNoteInput").value = "";
-
                 const banner = document.getElementById("cancelRefundBanner");
                 const bankForm = document.getElementById("cancelBankForm");
-
                 if (_cancelRequiresRefund) {
                     document.getElementById("cancelRefundAmtText").textContent = fmt(amount);
-                    banner.style.display = "block";
-                    bankForm.style.display = "block";
-                    // Reset form ngân hàng
-                    ["cancelBankName", "cancelBankNumber", "cancelBankAccountName"].forEach(id => {
-                        document.getElementById(id).value = "";
-                        document.getElementById(id).style.borderColor = "#e8edf2";
-                    });
-                    ["cancelBankNameErr", "cancelBankNumberErr", "cancelBankAccountNameErr"].forEach(id => {
-                        document.getElementById(id).style.display = "none";
-                    });
-                } else {
-                    banner.style.display = "none";
-                    bankForm.style.display = "none";
-                }
-
+                    banner.style.display = "block"; bankForm.style.display = "block";
+                    ["cancelBankName", "cancelBankNumber", "cancelBankAccountName"].forEach(id => { document.getElementById(id).value = ""; document.getElementById(id).style.borderColor = "#e8edf2"; });
+                    ["cancelBankNameErr", "cancelBankNumberErr", "cancelBankAccountNameErr"].forEach(id => { document.getElementById(id).style.display = "none"; });
+                } else { banner.style.display = "none"; bankForm.style.display = "none"; }
                 const btn = document.getElementById("cancelConfirmBtn");
-                btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Xác nhận hủy';
-
+                btn.disabled = false; btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Xác nhận hủy';
                 new bootstrap.Modal(document.getElementById("cancelModal")).show();
             };
 
             document.getElementById("cancelConfirmBtn").addEventListener("click", async function () {
                 if (!_cancelId) return;
-
-                // Validate form ngân hàng nếu cần
                 if (_cancelRequiresRefund) {
                     let valid = true;
-                    const fields = [
-                        { id: "cancelBankName", errId: "cancelBankNameErr" },
-                        { id: "cancelBankNumber", errId: "cancelBankNumberErr" },
-                        { id: "cancelBankAccountName", errId: "cancelBankAccountNameErr" },
-                    ];
-                    fields.forEach(f => {
-                        const val = document.getElementById(f.id).value.trim();
-                        const err = document.getElementById(f.errId);
-                        if (!val) {
-                            document.getElementById(f.id).style.borderColor = "#e74c3c";
-                            err.style.display = "block";
-                            valid = false;
-                        } else {
-                            document.getElementById(f.id).style.borderColor = "#e8edf2";
-                            err.style.display = "none";
-                        }
+                    [["cancelBankName", "cancelBankNameErr"], ["cancelBankNumber", "cancelBankNumberErr"], ["cancelBankAccountName", "cancelBankAccountNameErr"]].forEach(([fid, eid]) => {
+                        const val = document.getElementById(fid).value.trim();
+                        const err = document.getElementById(eid);
+                        if (!val) { document.getElementById(fid).style.borderColor = "#e74c3c"; err.style.display = "block"; valid = false; }
+                        else { document.getElementById(fid).style.borderColor = "#e8edf2"; err.style.display = "none"; }
                     });
                     if (!valid) return;
                 }
-
                 const btn = this;
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang hủy...';
-
+                btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang hủy...';
                 const body = {
                     note: document.getElementById("cancelNoteInput").value.trim() || null,
                     ..._cancelRequiresRefund && {
@@ -1004,34 +1176,21 @@
                         bankAccountName: document.getElementById("cancelBankAccountName").value.trim().toUpperCase(),
                     }
                 };
-
                 try {
-                    const res = await fetch(`${API}/orders/${_cancelId}/cancel`, {
-                        method: "PUT",
-                        headers: authHeaders(),
-                        body: JSON.stringify(body)
-                    });
+                    const res = await fetch(`${API}/orders/${_cancelId}/cancel`, { method: "PUT", headers: authHeaders(), body: JSON.stringify(body) });
                     const data = await res.json();
                     bootstrap.Modal.getInstance(document.getElementById("cancelModal"))?.hide();
-
                     setTimeout(() => {
                         if (res.ok) {
-                            const msg = data.requiresRefund
-                                ? `Đã hủy đơn. Yêu cầu hoàn tiền ${fmt(_cancelRefundAmount)} đã gửi đến admin.`
-                                : (data.message || "Đã hủy đơn hàng thành công.");
+                            const msg = data.requiresRefund ? `Đã hủy đơn. Yêu cầu hoàn tiền ${fmt(_cancelRefundAmount)} đã gửi đến admin.` : (data.message || "Đã hủy đơn hàng thành công.");
                             showToast(msg, data.requiresRefund ? "warn" : "success");
                             window.load(curPage, curStatus);
-                        } else {
-                            showToast(data.message || "Hủy đơn thất bại.", "error");
-                        }
+                        } else { showToast(data.message || "Hủy đơn thất bại.", "error"); }
                     }, 300);
                 } catch {
                     bootstrap.Modal.getInstance(document.getElementById("cancelModal"))?.hide();
                     setTimeout(() => showToast("Không kết nối được máy chủ.", "error"), 300);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Xác nhận hủy';
-                }
+                } finally { btn.disabled = false; btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Xác nhận hủy'; }
             });
 
             window.filterTab = function (btn, status) {
@@ -1043,10 +1202,7 @@
             const _initStatus = new URLSearchParams(window.location.search).get("status") || "";
             if (_initStatus) {
                 const matchTab = document.querySelector(`.oh-tab[data-s="${_initStatus}"]`);
-                if (matchTab) {
-                    document.querySelectorAll(".oh-tab").forEach(t => t.classList.remove("active"));
-                    matchTab.classList.add("active");
-                }
+                if (matchTab) { document.querySelectorAll(".oh-tab").forEach(t => t.classList.remove("active")); matchTab.classList.add("active"); }
             }
             load(1, _initStatus);
         })();

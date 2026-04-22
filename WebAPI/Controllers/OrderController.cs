@@ -120,5 +120,21 @@ namespace WebAPI.Controllers
             if (res.success == false) return BadRequest(result);
             return Ok(result);
         }
+
+        // Kiểm tra đơn đã được thanh toán chưa
+        [HttpGet("qr/status/{orderId:int}")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> QrStatus(int orderId)
+        {
+            var order = await _service.GetOrderByIdAsync(orderId);
+            if (order == null) return NotFound();
+            if (order.UserId != GetUserId()) return Forbid();
+
+            return Ok(new
+            {
+                isPaid = order.IsPaid,
+                status = order.Status
+            });
+        }
     }
 }

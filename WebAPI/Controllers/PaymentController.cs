@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
@@ -54,6 +55,32 @@ namespace WebAPI.Controllers
 
             var frontendUrl = _configuration["Frontend:PaymentResultUrl"];
             return Redirect($"{frontendUrl}?success={success.ToString().ToLower()}&orderId={orderId}&code={code}");
+        }
+
+        // Controllers/PaymentController.cs
+        [HttpPost("qr/webhook")]
+        [AllowAnonymous]
+        public async Task<IActionResult> QrWebhook(
+            [FromBody] SePayWebhookDto dto,
+            [FromHeader(Name = "Authorization")] string? authHeader)
+        {
+            // Verify token từ SePay
+            var token = _configuration["Payment:QR:SePayToken"];
+            if (authHeader != $"Apikey {token}")
+                return Unauthorized();
+
+            // Chỉ xử lý tiền vào
+            if (dto.TransferType != "in" || string.IsNullOrEmpty(dto.Content))
+                return Ok(new { success = true });
+
+            // Tìm mã đơn trong nội dung: "BS1042"
+            var match = Regex.Match(dto.Content, @"BS(\d+)", RegexOptions.IgnoreCase);
+            if (!match.Success) return Ok(new { success = true });
+
+            var orderId = int.Parse(match.Groups[1].Value);
+            var result = await _paymentService.ConfirmQrPaymentAsync(orderId, dto.TransferAmount);
+
+            return Ok(new { success = true });
         }
     }
 }

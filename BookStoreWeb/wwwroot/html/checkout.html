@@ -112,20 +112,26 @@
             border: 2px solid #e8edf2;
             background: #fff;
             transition: all .2s;
+            user-select: none
         }
 
             .co-pay-opt:last-child {
                 margin-bottom: 0
             }
 
-            .co-pay-opt.active-cod {
-                border-color: #6ab04c;
+            .co-pay-opt.active-vietqr {
+                border-color: #27ae60;
                 background: #f0fff4
             }
 
             .co-pay-opt.active-vnpay {
                 border-color: #1a6fb0;
                 background: #eaf4ff
+            }
+
+            .co-pay-opt.active-cod {
+                border-color: #6ab04c;
+                background: #f0fff4
             }
 
             .co-pay-opt i {
@@ -142,6 +148,20 @@
         .co-pay-sub {
             font-size: .78rem;
             margin-top: 2px
+        }
+
+        .co-pay-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            background: #27ae60;
+            color: #fff;
+            border-radius: 20px;
+            padding: .12rem .55rem;
+            font-size: .65rem;
+            font-weight: 700;
+            margin-left: 6px;
+            vertical-align: middle
         }
 
         .co-item {
@@ -326,23 +346,227 @@
             margin: 4px;
             transition: all .2s
         }
+
+        /* QR Modal */
+        .qr-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.55);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn .2s
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .qr-modal {
+            background: #fff;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            animation: slideUp .25s cubic-bezier(.34,1.3,.64,1)
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1
+            }
+        }
+
+        .qr-modal-head {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .qr-modal-title {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .qr-modal-close {
+            background: rgba(255,255,255,.25);
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+            .qr-modal-close:hover {
+                background: rgba(255,255,255,.4)
+            }
+
+        .qr-modal-body {
+            padding: 1.5rem
+        }
+
+        .qr-amount-box {
+            background: #f0fff4;
+            border: 1.5px solid #b7e4c7;
+            border-radius: 12px;
+            padding: .85rem 1.1rem;
+            text-align: center;
+            margin-bottom: 1.1rem
+        }
+
+        .qr-amount-label {
+            font-size: .78rem;
+            color: #27ae60;
+            font-weight: 600;
+            margin-bottom: 3px
+        }
+
+        .qr-amount-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1a1a1a
+        }
+
+        .qr-img-wrap {
+            text-align: center;
+            margin-bottom: 1rem
+        }
+
+            .qr-img-wrap img {
+                width: 220px;
+                height: 220px;
+                border-radius: 12px;
+                border: 2px solid #e8edf2
+            }
+
+        .qr-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: .8rem 1rem;
+            font-size: .8rem;
+            margin-bottom: 1rem
+        }
+
+        .qr-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .25rem 0;
+            border-bottom: 1px solid #f0f0f0
+        }
+
+            .qr-info-row:last-child {
+                border-bottom: none
+            }
+
+        .qr-info-label {
+            color: #8a9bb0;
+            font-weight: 600
+        }
+
+        .qr-info-val {
+            color: #1a1a1a;
+            font-weight: 700
+        }
+
+        .qr-note-box {
+            background: #fff8ec;
+            border: 1.5px solid #ffe0a0;
+            border-radius: 10px;
+            padding: .7rem .9rem;
+            font-size: .8rem;
+            color: #8a6800;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1rem
+        }
+
+        .qr-poll-status {
+            text-align: center;
+            font-size: .82rem;
+            color: #8a9bb0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px
+        }
+
+        .qr-poll-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27ae60;
+            animation: pulse 1.2s infinite
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .5;
+                transform: scale(.7)
+            }
+        }
+
+        .qr-cancel-btn {
+            width: 100%;
+            background: none;
+            border: 1.5px solid #e8edf2;
+            border-radius: 10px;
+            padding: .6rem;
+            font-size: .84rem;
+            font-weight: 600;
+            color: #8a9bb0;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: .85rem;
+            transition: all .15s
+        }
+
+            .qr-cancel-btn:hover {
+                border-color: #e74c3c;
+                color: #e74c3c
+            }
     </style>
 </head>
 <body>
     <div id="header-placeholder"></div>
-
     <div class="co-page">
         <button class="co-back" onclick="history.back()">
             <i class="bi bi-arrow-left"></i> Quay lại
         </button>
-
         <div id="coMain">
             <div style="text-align:center;padding:3rem">
                 <div class="spinner-border text-success"></div>
             </div>
         </div>
-
-        <!-- Success COD -->
         <div id="coSuccess" class="co-card">
             <div class="co-ok-icon"><i class="bi bi-check-lg"></i></div>
             <div class="co-ok-title">Đặt hàng thành công!</div>
@@ -364,6 +588,56 @@
         </div>
     </div>
 
+    <!-- QR Modal -->
+    <div id="qrModalOverlay" class="qr-modal-overlay" style="display:none">
+        <div class="qr-modal">
+            <div class="qr-modal-head">
+                <div class="qr-modal-title">
+                    <i class="bi bi-qr-code-scan"></i> Thanh toán VietQR
+                </div>
+                <button class="qr-modal-close" onclick="closeQrModal()"><i class="bi bi-x-lg"></i></button>
+            </div>
+            <div class="qr-modal-body">
+                <div class="qr-amount-box">
+                    <div class="qr-amount-label"><i class="bi bi-cash-coin me-1"></i>Số tiền cần chuyển</div>
+                    <div class="qr-amount-val" id="qrAmountText">0 ₫</div>
+                </div>
+                <div class="qr-img-wrap">
+                    <img id="qrImg" src="" alt="VietQR">
+                </div>
+                <div class="qr-info" id="qrInfo">
+                    <div class="qr-info-row">
+                        <span class="qr-info-label">Ngân hàng</span>
+                        <span class="qr-info-val">MB BANK</span>
+                    </div>
+                    <div class="qr-info-row">
+                        <span class="qr-info-label">Số tài khoản</span>
+                        <span class="qr-info-val">0767213920</span>
+                    </div>
+                    <div class="qr-info-row">
+                        <span class="qr-info-label">Chủ tài khoản</span>
+                        <span class="qr-info-val">DINH KHANH DUY</span>
+                    </div>
+                    <div class="qr-info-row">
+                        <span class="qr-info-label">Nội dung CK</span>
+                        <span class="qr-info-val" id="qrNoteText" style="color:#27ae60"></span>
+                    </div>
+                </div>
+                <div class="qr-note-box">
+                    <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
+                    <span>Vui lòng nhập <b>đúng nội dung chuyển khoản</b> để hệ thống tự động xác nhận thanh toán.</span>
+                </div>
+                <div class="qr-poll-status" id="qrPollStatus">
+                    <span class="qr-poll-dot"></span>
+                    Đang chờ xác nhận thanh toán...
+                </div>
+                <button class="qr-cancel-btn" onclick="closeQrModal()">
+                    <i class="bi bi-x-circle me-1"></i>Đóng và thanh toán sau
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/header.js"></script>
     <script>
@@ -371,12 +645,14 @@
             const API = "https://localhost:7204/api";
             const IMG_URL = "https://localhost:7204";
 
+            // ── VietQR config ── chỉnh thông tin ngân hàng tại đây
+            const BANK_ID = "970422";
+            const ACCOUNT_NO = "0767213920";
+            const ACCOUNT_NAME = "DINH KHANH DUY";
+
             const getToken = () => sessionStorage.getItem("token");
             const isLoggedIn = () => !!getToken();
-            const authHeaders = () => ({
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`
-            });
+            const authHeaders = () => ({ "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` });
             const fmt = n => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(n);
             const imgSrc = raw => {
                 if (!raw) return "";
@@ -387,20 +663,20 @@
             if (!isLoggedIn()) { window.location.href = "../html/login.html"; return; }
 
             let cartData = null;
-            let selectedPayment = "cod";
+            let selectedPayment = "vietqr";
+            let _qrPollingTimer = null;
+            let _qrOrderId = null;
 
-            /* ── Chọn phương thức thanh toán ── */
             window.selectPayment = function (method) {
                 selectedPayment = method;
-                const codOpt = document.getElementById("optCod");
-                const vnpayOpt = document.getElementById("optVnpay");
-                if (!codOpt || !vnpayOpt) return;
-
-                codOpt.className = "co-pay-opt" + (method === "cod" ? " active-cod" : "");
-                vnpayOpt.className = "co-pay-opt" + (method === "vnpay" ? " active-vnpay" : "");
+                document.querySelectorAll(".co-pay-opt").forEach(el => {
+                    el.className = "co-pay-opt";
+                });
+                const map = { vietqr: "active-vietqr", vnpay: "active-vnpay", cod: "active-cod" };
+                const target = document.getElementById("opt" + method.charAt(0).toUpperCase() + method.slice(1));
+                if (target) target.classList.add(map[method] || "");
             };
 
-            /* ── Load cart ── */
             async function init() {
                 try {
                     const res = await fetch(`${API}/cart`, { headers: authHeaders() });
@@ -451,29 +727,18 @@
                 document.getElementById("coMain").innerHTML = `
                     <h2 class="co-title"><i class="bi bi-bag-check"></i> Thanh toán</h2>
                     <div class="row g-4">
-
-                        <!-- ── Cột trái ── -->
                         <div class="col-12 col-lg-6">
-
-                            <!-- Thông tin giao hàng -->
                             <div class="co-card">
-                                <div class="co-card-title">
-                                    <i class="bi bi-geo-alt-fill"></i> Thông tin giao hàng
-                                </div>
+                                <div class="co-card-title"><i class="bi bi-geo-alt-fill"></i> Thông tin giao hàng</div>
                                 <div class="row g-3">
                                     <div class="col-12">
-                                        <label class="co-label" for="coPhone">
-                                            Số điện thoại <span style="color:#e74c3c">*</span>
-                                        </label>
-                                        <input class="co-input" id="coPhone" type="tel"
-                                               placeholder="0912 345 678"
+                                        <label class="co-label" for="coPhone">Số điện thoại <span style="color:#e74c3c">*</span></label>
+                                        <input class="co-input" id="coPhone" type="tel" placeholder="0912 345 678"
                                                oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                                         <div class="co-err" id="coPhoneErr">Số điện thoại không hợp lệ (10 số)</div>
                                     </div>
                                     <div class="col-12">
-                                        <label class="co-label" for="coAddress">
-                                            Địa chỉ giao hàng <span style="color:#e74c3c">*</span>
-                                        </label>
+                                        <label class="co-label" for="coAddress">Địa chỉ giao hàng <span style="color:#e74c3c">*</span></label>
                                         <input class="co-input" id="coAddress" type="text"
                                                placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/TP">
                                         <div class="co-err" id="coAddressErr">Vui lòng nhập địa chỉ giao hàng</div>
@@ -487,20 +752,19 @@
                                 </div>
                             </div>
 
-                            <!-- Phương thức thanh toán -->
                             <div class="co-card">
-                                <div class="co-card-title">
-                                    <i class="bi bi-credit-card-2-front-fill"></i> Phương thức thanh toán
-                                </div>
+                                <div class="co-card-title"><i class="bi bi-credit-card-2-front-fill"></i> Phương thức thanh toán</div>
 
-                                <!-- COD -->
-                                <div class="co-pay-opt active-cod" id="optCod" onclick="selectPayment('cod')">
-                                    <i class="bi bi-cash-stack" style="color:#6ab04c"></i>
+                                <!-- VietQR — mặc định chọn -->
+                                <div class="co-pay-opt active-vietqr" id="optVietqr" onclick="selectPayment('vietqr')">
+                                    <i class="bi bi-qr-code" style="color:#27ae60"></i>
                                     <div>
-                                        <div class="co-pay-title">Thanh toán khi nhận hàng (COD)</div>
+                                        <div class="co-pay-title">
+                                            Chuyển khoản VietQR
+                                            <span class="co-pay-badge"><i class="bi bi-lightning-fill" style="font-size:.6rem"></i> Tức thì</span>
+                                        </div>
                                         <div class="co-pay-sub" style="color:#27ae60">
-                                            <i class="bi bi-check-circle-fill me-1"></i>
-                                            Bạn chỉ thanh toán khi nhận được hàng
+                                            <i class="bi bi-check-circle-fill me-1"></i>Quét mã QR, tự động xác nhận ngay
                                         </div>
                                     </div>
                                 </div>
@@ -511,52 +775,47 @@
                                     <div>
                                         <div class="co-pay-title">Thanh toán qua VNPay</div>
                                         <div class="co-pay-sub" style="color:#1a6fb0">
-                                            <i class="bi bi-shield-check me-1"></i>
-                                            Thanh toán online an toàn, nhanh chóng
+                                            <i class="bi bi-shield-check me-1"></i>Thanh toán online an toàn, nhanh chóng
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- COD -->
+                                <div class="co-pay-opt" id="optCod" onclick="selectPayment('cod')">
+                                    <i class="bi bi-cash-stack" style="color:#6ab04c"></i>
+                                    <div>
+                                        <div class="co-pay-title">Thanh toán khi nhận hàng (COD)</div>
+                                        <div class="co-pay-sub" style="color:#6ab04c">
+                                            <i class="bi bi-check-circle-fill me-1"></i>Bạn chỉ thanh toán khi nhận được hàng
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ── Cột phải: tóm tắt ── -->
                         <div class="col-12 col-lg-6">
                             <div class="co-card" style="position:sticky;top:20px">
                                 <div class="co-card-title">
                                     <i class="bi bi-receipt"></i> Đơn hàng của bạn
-                                    <span style="font-weight:400;color:#8a9bb0;font-size:.8rem;margin-left:auto">
-                                        ${items.length} sản phẩm
-                                    </span>
+                                    <span style="font-weight:400;color:#8a9bb0;font-size:.8rem;margin-left:auto">${items.length} sản phẩm</span>
                                 </div>
-
                                 ${itemsHtml}
-
                                 <div style="margin-top:.9rem">
-                                    <div class="co-row">
-                                        <span>Tạm tính</span><span>${fmt(total)}</span>
-                                    </div>
-                                    <div class="co-row">
-                                        <span>Phí vận chuyển</span>
-                                        <span style="color:#6ab04c;font-weight:600">Miễn phí</span>
-                                    </div>
-                                    <div class="co-row total">
-                                        <span>Tổng cộng</span><span>${fmt(total)}</span>
-                                    </div>
+                                    <div class="co-row"><span>Tạm tính</span><span>${fmt(total)}</span></div>
+                                    <div class="co-row"><span>Phí vận chuyển</span><span style="color:#6ab04c;font-weight:600">Miễn phí</span></div>
+                                    <div class="co-row total"><span>Tổng cộng</span><span>${fmt(total)}</span></div>
                                 </div>
-
                                 <button class="co-submit" id="coBtn" onclick="submitOrder()">
                                     <i class="bi bi-bag-check-fill"></i> Đặt hàng ngay
                                 </button>
                                 <div style="text-align:center;font-size:.76rem;color:#8a9bb0;margin-top:.6rem">
-                                    <i class="bi bi-shield-check text-success me-1"></i>
-                                    Giao dịch được bảo mật và mã hóa
+                                    <i class="bi bi-shield-check text-success me-1"></i>Giao dịch được bảo mật và mã hóa
                                 </div>
                             </div>
                         </div>
                     </div>`;
             }
 
-            /* ── Validate ── */
             function validate() {
                 let ok = true;
                 function chk(id, errId, cond) {
@@ -573,22 +832,78 @@
                 return ok;
             }
 
-            /* ── Submit ── */
+            function buildQrUrl(orderId, amount) {
+                const note = `BS${orderId}`;
+                return `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-compact2.png`
+                    + `?amount=${amount}`
+                    + `&addInfo=${encodeURIComponent(note)}`
+                    + `&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
+            }
+
+            function showQrModal(orderId, amount) {
+                _qrOrderId = orderId;
+                const note = `BS${orderId}`;
+                document.getElementById("qrAmountText").textContent = fmt(amount);
+                document.getElementById("qrNoteText").textContent = note;
+                document.getElementById("qrImg").src = buildQrUrl(orderId, amount);
+                document.getElementById("qrPollStatus").innerHTML = `
+                    <span class="qr-poll-dot"></span> Đang chờ xác nhận thanh toán...`;
+                document.getElementById("qrModalOverlay").style.display = "flex";
+                startPolling(orderId);
+            }
+
+            window.closeQrModal = function () {
+                stopPolling();
+                document.getElementById("qrModalOverlay").style.display = "none";
+                window.location.href = "../html/orders.html";
+            };
+
+            function stopPolling() {
+                if (_qrPollingTimer) { clearInterval(_qrPollingTimer); _qrPollingTimer = null; }
+            }
+
+            function startPolling(orderId) {
+                stopPolling();
+                const MAX = 60; let count = 0;
+                _qrPollingTimer = setInterval(async () => {
+                    count++;
+                    if (count >= MAX) {
+                        stopPolling();
+                        document.getElementById("qrPollStatus").innerHTML =
+                            `<i class="bi bi-clock-history" style="color:#e74c3c"></i>
+                             <span style="color:#e74c3c">Hết thời gian chờ. Vui lòng thanh toán lại trong mục đơn hàng.</span>`;
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`${API}/orders/qr/status/${orderId}`, { headers: authHeaders() });
+                        const data = await res.json();
+                        if (data.isPaid) {
+                            stopPolling();
+                            // Redirect sang payment-result dạng success
+                            window.location.href = `../html/payment-result.html?success=true&orderId=${orderId}&code=00&method=vietqr`;
+                        }
+                    } catch { /* bỏ qua lỗi mạng tạm thời */ }
+                }, 5000);
+            }
+
             window.submitOrder = async function () {
                 if (!validate()) return;
                 const btn = document.getElementById("coBtn");
                 btn.disabled = true;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
 
+                // VietQR gửi paymentMethod = "vietqr" nhưng backend chưa biết,
+                // nên ta gửi "cod" để tạo đơn trước rồi xử lý QR ở frontend
+                const backendMethod = selectedPayment;
+
                 const payload = {
                     phone: document.getElementById("coPhone").value.trim(),
                     address: document.getElementById("coAddress").value.trim(),
                     note: document.getElementById("coNote").value.trim(),
-                    paymentMethod: selectedPayment,
+                    paymentMethod: backendMethod,
                 };
 
                 try {
-                    // Bước 1: tạo đơn hàng
                     const res = await fetch(`${API}/orders/checkout`, {
                         method: "POST", headers: authHeaders(),
                         body: JSON.stringify(payload)
@@ -604,7 +919,13 @@
 
                     window._headerCart?.refreshBadge?.();
 
-                    // Bước 2: nếu VNPay thì gọi tiếp để lấy URL thanh toán
+                    if (selectedPayment === "vietqr") {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Đặt hàng ngay';
+                        showQrModal(data.orderId, data.totalCost);
+                        return;
+                    }
+
                     if (selectedPayment === "vnpay" && data.requiresPayment) {
                         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang tạo link thanh toán...';
                         try {
@@ -613,14 +934,11 @@
                                 body: JSON.stringify({ orderId: data.orderId })
                             });
                             const payData = await payRes.json();
-
                             if (!payRes.ok || !payData.paymentUrl) {
                                 alert("Đặt hàng thành công nhưng không tạo được link thanh toán.\nVui lòng thanh toán lại trong mục đơn hàng.");
                                 window.location.href = "../html/orders.html";
                                 return;
                             }
-
-                            // Redirect sang trang VNPay
                             window.location.href = payData.paymentUrl;
                         } catch {
                             alert("Đặt hàng thành công nhưng không kết nối được cổng thanh toán.\nVui lòng thanh toán lại trong mục đơn hàng.");
@@ -629,7 +947,7 @@
                         return;
                     }
 
-                    // COD: hiện màn hình thành công
+                    // COD
                     document.getElementById("coMain").style.display = "none";
                     document.getElementById("coSuccess").style.display = "block";
                     window.scrollTo({ top: 0, behavior: "smooth" });

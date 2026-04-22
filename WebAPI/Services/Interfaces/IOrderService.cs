@@ -1,4 +1,5 @@
-﻿using WebAPI.DTOs;
+﻿using MyBookStore.Data.Models;
+using WebAPI.DTOs;
 
 namespace WebAPI.Services.Interfaces
 {
@@ -13,5 +14,6 @@ namespace WebAPI.Services.Interfaces
         Task<object> UpdateStatusAsync(int id, UpdateOrderStatusDto dto);
         Task<object> GetRefundRequestsAsync(string? status);
         Task<object> ResolveRefundAsync(int refundId, string? adminNote);
+        Task<Order?> GetOrderByIdAsync(int orderId);
     }
 }
