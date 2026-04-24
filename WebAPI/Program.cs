@@ -8,7 +8,7 @@ using WebAPI.Services;
 using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
 using WebAPI.Services.VnPay;
-using Data;
+using Data.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 

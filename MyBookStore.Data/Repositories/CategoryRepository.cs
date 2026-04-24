@@ -1,4 +1,5 @@
-﻿using Data.Repositories.Interfaces;
+﻿using Data.Models;
+using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MyBookStore.Data.Models;
 
