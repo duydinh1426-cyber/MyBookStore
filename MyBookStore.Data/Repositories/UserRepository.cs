@@ -1,6 +1,7 @@
 ﻿using MyBookStore.Data.Models;
 using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Data.Models;
 
 namespace Data.Repositories
 {

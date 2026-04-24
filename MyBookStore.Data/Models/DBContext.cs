@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using MyBookStore.Data.Models;
 
-namespace Data;
+namespace Data.Models;
 
 public partial class DBContext : DbContext
 {
