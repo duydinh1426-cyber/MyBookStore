@@ -19,6 +19,7 @@ namespace Data.Repositories
         public async Task<Account?> GetByEmailAsync(string email)
         {
             return await _db.Accounts
+                .AsNoTracking()
                 .Include(c => c.Customers)
                 .Include(a => a.Admins)
                 .FirstOrDefaultAsync(e => e.Email == email);

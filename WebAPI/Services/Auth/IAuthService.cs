@@ -1,19 +1,20 @@
-﻿using WebAPI.DTOs;
+﻿using WebAPI.Common;
+using WebAPI.DTOs;
 
 namespace WebAPI.Services.Auth
 {
     public interface IAuthService
     {
-        Task<string?> RegisterSendOtpAsync(SendOtpDto dto);
-        Task<string?> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto);
-        Task<AuthResponseDto?> LoginAsync(LoginDto dto);
-        Task<string?> ForgotSendOtpAsync(SendOtpDto dto);
-        Task<string?> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto);
-        Task<UserProfileDto?> GetMeAsync(int accountId);
-        Task<object?> UpdateMeAsync(int accountId, int userId, UpdateProfileDto dto);
-        Task<string?> ChangeSendOtpAsync(int accountId, SendChangePasswordOtpDto dto);
-        Task<string?> ChangeVerifyOtpAsync(int accountId, VerifyChangePasswordOtpDto dto);
-        Task<string?> ChangeEmailSendOtpAsync(int accountId, string newEmail);
-        Task<object?> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp);
+        Task<ApiResponse<object?>> RegisterSendOtpAsync(string email);
+        Task<ApiResponse<object?>> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto);
+        Task<ApiResponse<AuthResponseDto?>> LoginAsync(string email, string password);
+        Task<ApiResponse<object?>> ForgotSendOtpAsync(string email);
+        Task<ApiResponse<object?>> ForgotVerifyOtpAsync(string email, string otp, string newPass, string confirmPass);
+        Task<ApiResponse<UserProfileDto?>> GetMeAsync(int accountId);
+        Task<ApiResponse<UpdateProfileResponseDto?>> UpdateMeAsync(int accountId, int userId, UpdateProfileDto dto);
+        Task<ApiResponse<object?>> ChangeSendOtpAsync(int accountId, string currentPass);
+        Task<ApiResponse<object?>> ChangeVerifyOtpAsync(int accountId, string otp, string newPass, string confirmPass);
+        Task<ApiResponse<object?>> ChangeEmailSendOtpAsync(int accountId, string newEmail);
+        Task<ApiResponse<ChangeEmailResponseDto?>> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp);
     }
 }
