@@ -2,9 +2,8 @@
 using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.DTOs;
-using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Reviews
 {
     public class ReviewService : IReviewService
     {

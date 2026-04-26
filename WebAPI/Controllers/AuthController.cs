@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WebAPI.DTOs;
-using WebAPI.Services.Interfaces;
+using WebAPI.Services.Auth;
 
 namespace WebAPI.Controllers
 {

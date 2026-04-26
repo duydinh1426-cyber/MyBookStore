@@ -1,17 +1,18 @@
 ﻿using MyBookStore.Data.Models;
 using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
-using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Categories
 {
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _repo;
+        private readonly IBookRepository _bookRepository;
 
-        public CategoryService(ICategoryRepository repo)
+        public CategoryService(ICategoryRepository repo, IBookRepository bookRepository)
         {
             _repo = repo;
+            _bookRepository = bookRepository;
         }
 
         public async Task<object> GetAllAsync(bool includeBookCount)
@@ -40,19 +41,29 @@ namespace WebAPI.Services
 
         public async Task<object?> GetBooksAsync(int id, int page, int pageSize)
         {
-            if (!await _repo.ExistsByIdAsync(id)) return null;
+            if (!await _repo.ExistsByIdAsync(id))
+                return null;
 
-            var (total, books) = await _repo.GetBooksByCategoryAsync(id, page, pageSize);
-
+            var result = await _bookRepository.GetBookAsync(
+                page: page,
+                pageSize: pageSize,
+                categoryId: id
+            );
             return new
             {
-                total,
-                page,
-                pageSize,
-                totalPages = (int)Math.Ceiling((double)total / pageSize),
-                data = books.Select(b => new BookSummaryDto(
-                    b.BookId, b.Title, b.Author, b.Price, b.Image,
-                    null, b.NumberStock, b.NumberSold))
+                total = result.total,
+                page = result.page,
+                pageSize = result.pageSize,
+                totalPages = result.totalPages,
+                data = result.data.Select(b => new BookSummaryDto(
+                    b.BookId,
+                    b.Title,
+                    b.Author,
+                    b.Price,
+                    b.Image,
+                    b.Category?.CategoryName, 
+                    b.NumberStock,
+                    b.NumberSold))
             };
         }
 

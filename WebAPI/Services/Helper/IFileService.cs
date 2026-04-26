@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace WebAPI.Services.Interfaces
+namespace WebAPI.Services.Helper
 {
     public interface IFileService
     {

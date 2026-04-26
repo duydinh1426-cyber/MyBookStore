@@ -10,30 +10,49 @@ namespace Data.Repositories
         private readonly DBContext _db;
         public ReviewRepository(DBContext db) => _db = db;
 
-        public IQueryable<Review> GetQuery() =>
-            _db.Reviews.Include(r => r.User).Include(r => r.Book).AsQueryable();
+        public async Task<(int total, int page, int pageSize, int totalPages, List<Review> data)> GetReviewAsync
+            (int bookId, int page, int pageSize, int? rating)
+        {
+            var total = await _db.Reviews
+                .Where(r => r.BookId == bookId &&
+                    (!rating.HasValue || r.Rating == rating.Value))
+                .CountAsync();
 
-        public async Task<Review?> GetByIdAsync(int id) =>
-            await _db.Reviews.FindAsync(id);
+            var data = await _db.Reviews
+                .Where(r => r.BookId == bookId && 
+                    (!rating.HasValue || r.Rating == rating.Value))
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Include(r => r.User)
+                .Include(r => r.Book)
+                .ToListAsync();
 
-        public async Task<Review?> GetUserReviewAsync(int userId, int bookId) =>
-            await _db.Reviews.FirstOrDefaultAsync(r => r.UserId == userId && r.BookId == bookId);
+            var totalPages = (int)Math.Ceiling((double)total / pageSize);
 
-        public async Task<bool> HasPurchasedAsync(int userId, int bookId) =>
-            await _db.OrderItems.AnyAsync(oi =>
-                oi.Order.UserId == userId &&
-                oi.BookId == bookId &&
-                oi.Order.Status == "completed");
+            return (totalPages, page, pageSize, totalPages, data);
+        }
 
-        public async Task<bool> BookExistsAsync(int bookId) =>
-            await _db.Books.AnyAsync(b => b.BookId == bookId);
+        public async Task<Review?> GetByIdAsync(int id)
+        {
+            return await _db.Reviews.FindAsync(id);
+        }
+
+        public async Task<Review?> GetUserReviewAsync(int userId, int bookId)
+        {
+            return await _db.Reviews.FirstOrDefaultAsync(r => r.UserId == userId && r.BookId == bookId);
+        }
 
         public async Task<Dictionary<int, int>> GetRatingStatsAsync(int bookId)
         {
             return await _db.Reviews
                 .Where(r => r.BookId == bookId)
                 .GroupBy(r => r.Rating)
-                .Select(g => new { Rating = g.Key, Count = g.Count() })
+                .Select(g => new 
+                    { 
+                        Rating = g.Key, 
+                        Count = g.Count() 
+                    })
                 .ToDictionaryAsync(x => x.Rating, x => x.Count);
         }
 

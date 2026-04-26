@@ -1,18 +1,15 @@
 ﻿using MyBookStore.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Data.Repositories.Interfaces
 {
     public interface ICartRepository
     {
-        Task<List<CartItem>> GetCartByUserIdAsync(int userId);
-        Task<CartItem?> GetCartItemAsync(int userId, int bookId);
+        Task<List<CartItem>> GetCartByUserIdAsync(int userId); // lấy toàn bộ giỏ hàng của một user
+        Task<CartItem?> GetCartItemAsync(int userId, int bookId); // lấy một item cụ thể trong giỏ
+        Task<bool> ClearCartByUserIdAsync(int userId); // xóa toàn bộ giỏ hàng
         void Add(CartItem item);
         void Update(CartItem item);
         void Delete(CartItem item);
-        Task<bool> ClearCartByUserIdAsync(int userId);
         Task<bool> SaveChangesAsync();
     }
 }

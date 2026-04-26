@@ -2,17 +2,18 @@
 using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.DTOs;
-using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Books
 {
     public class BookService : IBookService
     {
         private readonly IBookRepository _repo;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public BookService(IBookRepository repo)
+        public BookService(IBookRepository repo, ICategoryRepository categoryRepository)
         {
             _repo = repo;
+            _categoryRepository = categoryRepository;
         }
 
         private BookSummaryDto MapToSummary(Book book)
@@ -31,83 +32,37 @@ namespace WebAPI.Services
 
         public async Task<BookPagedResultDto> GetBooksAsync(BookQueryDto queryDto)
         {
-            var query = _repo.GetQuery().AsNoTracking();
-
-            if (!string.IsNullOrWhiteSpace(queryDto.Keyword))
-            {
-                var keyword = queryDto.Keyword.Trim().ToLower();
-                query = query.Where(b => b.Title.ToLower().Contains(keyword) ||
-                                   (b.Author != null && b.Author.ToLower().Contains(keyword)));
-            }
-
-            if (queryDto.CategoryId.HasValue)
-                query = query.Where(b => b.CategoryId == queryDto.CategoryId);
-
-            if (queryDto.MinPrice.HasValue)
-                query = query.Where(b => b.Price >= queryDto.MinPrice);
-
-            if (queryDto.MaxPrice.HasValue)
-                query = query.Where(b => b.Price <= queryDto.MaxPrice);
-
-            query = (queryDto.SortBy?.ToLower(), queryDto.SortOrder?.ToLower()) switch
-            {
-                ("price", "asc") => query.OrderBy(b => b.Price),
-                ("price", _) => query.OrderByDescending(b => b.Price),
-                ("title", "asc") => query.OrderBy(b => b.Title),
-                ("title", _) => query.OrderByDescending(b => b.Title),
-                ("numbersold", "asc") => query.OrderBy(b => b.NumberSold),
-                ("numbersold", _) => query.OrderByDescending(b => b.NumberSold),
-                ("avgrating", "asc") => query.OrderBy(b => b.AvgRating),
-                ("avgrating", _) => query.OrderByDescending(b => b.AvgRating),
-                (_, "asc") => query.OrderBy(b => b.CreatedAt),
-                _ => query.OrderByDescending(b => b.CreatedAt)
-            };
-
-            var total = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling((double)total / queryDto.PageSize);
-
-            var books = await query
-                .Skip((queryDto.Page - 1) * queryDto.PageSize)
-                .Take(queryDto.PageSize)
-                .ToListAsync();
+            var (total, page, pageSize, totalPages, books) = await _repo.GetBookAsync(
+                queryDto.Page,
+                queryDto.PageSize,
+                queryDto.Keyword,
+                queryDto.CategoryId,
+                queryDto.MinPrice,
+                queryDto.MaxPrice,
+                queryDto.SortBy ?? "createdAt",
+                queryDto.SortOrder ?? "desc"
+            );
 
             var data = books.Select(b => MapToSummary(b)).ToList();
 
-            return new BookPagedResultDto(total, queryDto.Page, queryDto.PageSize, totalPages, data);
+            return new BookPagedResultDto(total, page, pageSize, totalPages, data);
         }
 
         public async Task<List<BookSummaryDto>> GetTopNewAsync(int count)
         {
-            var books = await _repo.GetQuery()
-                .AsNoTracking()
-                .OrderByDescending(b => b.CreatedAt)
-                .Take(count)
-                .ToListAsync();
-
+            var books = await _repo.GetTopNewAsync(count);
             return books.Select(b => MapToSummary(b)).ToList();
         }
 
         public async Task<List<BookSummaryDto>> GetTopSellingAsync(int count)
         {
-            var books = await _repo.GetQuery()
-                .AsNoTracking()
-                .OrderByDescending(b => b.NumberSold)
-                .Take(count)
-                .ToListAsync();
-
+            var books = await _repo.GetTopSellingAsync(count);
             return books.Select(b => MapToSummary(b)).ToList();
         }
 
         public async Task<List<BookSummaryDto>> GetTopRatedAsync(int count)
         {
-            var books = await _repo.GetQuery()
-                .AsNoTracking()
-                .Where(b => b.ReviewCount > 0)
-                .OrderByDescending(b => b.AvgRating)
-                .ThenByDescending(b => b.ReviewCount)
-                .Take(count)
-                .ToListAsync();
-
+            var books = await _repo.GetTopRatedAsync(count);
             return books.Select(b => MapToSummary(b)).ToList();
         }
 
@@ -136,7 +91,7 @@ namespace WebAPI.Services
 
         public async Task<(string? Error, int? BookId)> CreateAsync(BookUpsertDto dto)
         {
-            if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
+            if (dto.CategoryId.HasValue && !await _categoryRepository.ExistsByIdAsync(dto.CategoryId.Value))
             {
                 return ("Thể loại không tồn tại.", null);
             }
@@ -171,7 +126,7 @@ namespace WebAPI.Services
             var book = await _repo.GetByIdAsync(id);
             if (book == null) return "Không tìm thấy sách.";
 
-            if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
+            if (dto.CategoryId.HasValue && !await _categoryRepository.ExistsByIdAsync(dto.CategoryId.Value))
             {
                 return "Thể loại không tồn tại.";
             }

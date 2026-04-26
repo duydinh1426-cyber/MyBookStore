@@ -1,4 +1,4 @@
-﻿namespace WebAPI.Services.Interfaces
+﻿namespace WebAPI.Services.Payments
 {
     public interface IPaymentService
     {

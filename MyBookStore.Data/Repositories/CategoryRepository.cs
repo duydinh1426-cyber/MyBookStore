@@ -27,35 +27,32 @@ namespace Data.Repositories
 
         public async Task<List<Category>> SearchAsync(string keyword)
         {
-            return await _db.Categories
-                .Where(c => EF.Functions.Like(c.CategoryName, $"%{keyword}%"))
-                .OrderBy(c => c.CategoryName)
-                .ToListAsync();
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+                return await _db.Categories
+                    .AsNoTracking()
+                    .Where(c => c.CategoryName.Contains(keyword))
+                    .OrderBy(c => c.CategoryName)
+                    .ToListAsync();
+            }
+            return new List<Category>();
         }
 
-        public async Task<bool> ExistsByIdAsync(int id) =>
-            await _db.Categories.AnyAsync(c => c.CategoryId == id);
+        public async Task<bool> ExistsByIdAsync(int id)
+        {
+            return await _db.Categories.AnyAsync(c => c.CategoryId == id);
+        }
 
         public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null)
         {
-            var cleanName = name.Trim().ToLower();
+            if (string.IsNullOrWhiteSpace(name)) return false;
+
+            var cleanName = name.Trim();
+
             return await _db.Categories.AnyAsync(c =>
-                c.CategoryName.ToLower() == cleanName && (!excludeId.HasValue || c.CategoryId != excludeId));
-        }
-
-        public async Task<(int total, List<Book> books)> GetBooksByCategoryAsync(int categoryId, int page, int pageSize)
-        {
-            var query = _db.Books
-                .Where(b => b.CategoryId == categoryId)
-                .OrderByDescending(b => b.CreatedAt);
-
-            var total = await query.CountAsync();
-            var books = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
-
-            return (total, books);
+                c.CategoryName == cleanName && 
+                (!excludeId.HasValue || c.CategoryId != excludeId)); // kiểm tra có phải là chính nó kh
         }
 
         public void Add(Category category) => _db.Categories.Add(category);

@@ -1,6 +1,6 @@
 ﻿using WebAPI.DTOs;
 
-namespace WebAPI.Services.Interfaces
+namespace WebAPI.Services.Books
 {
     public interface IBookService
     {

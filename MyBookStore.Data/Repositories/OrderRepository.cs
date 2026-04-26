@@ -13,119 +13,85 @@ namespace Data.Repositories
         public async Task<Order?> GetOrderByIdAsync(int id)
         {
             return await _db.Orders
-                .Include(o => o.OrderItems!)
-                    .ThenInclude(oi => oi.Book)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Book)
                 .Include(o => o.User)
-                    .ThenInclude(u => u.Account)
+                .ThenInclude(u => u.Account)
                 .FirstOrDefaultAsync(o => o.OrderId == id);
         }
 
-        public async Task<object> GetUserOrdersAsync(int userId, int page, int pageSize, string? status)
+        public async Task<(int total, int page, int pageSize, int totalPages, List<Order> data)> GetUserOrdersAsync
+            (int userId, int page, int pageSize, string? status)
         {
             var query = _db.Orders
                 .Where(o => o.UserId == userId)
-                .AsQueryable();
-
+                .AsNoTracking();
             if (!string.IsNullOrWhiteSpace(status))
                 query = query.Where(o => o.Status == status);
 
             var total = await query.CountAsync();
 
-            var items = await query
-                .OrderByDescending(o => o.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(o => new {
-                    orderId = o.OrderId,
-                    totalCost = o.TotalCost,
-                    status = o.Status,
-                    statusLabel = o.Status == "pending" ? "Chờ xác nhận" :
-                                  o.Status == "confirmed" ? "Đã xác nhận" :
-                                  o.Status == "shipping" ? "Đang giao" :
-                                  o.Status == "completed" ? "Hoàn thành" :
-                                  o.Status == "cancelled" ? "Đã hủy" : "Không xác định",
-                    phone = o.Phone,
-                    address = o.Address,
-                    note = o.Note,
-                    createdAt = o.CreatedAt,
-                    itemCount = o.OrderItems != null ? o.OrderItems.Count : 0,
-                    paymentMethod = o.PaymentMethod,
-                    isPaid = o.IsPaid,
-                })
-                .ToListAsync();
-
-            return new
-            {
-                total,
-                page,
-                pageSize,
-                totalPages = (int)Math.Ceiling(total / (double)pageSize),
-                data = items
-            };
-        }
-
-        public async Task<object> GetAllOrdersAdminAsync(string? status, string? keyword, int page, int pageSize)
-        {
-            var query = _db.Orders.Include(o => o.User).AsQueryable();
-
-            if (!string.IsNullOrEmpty(status))
-                query = query.Where(o => o.Status == status);
-
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                query = query.Where(o =>
-                    o.OrderId.ToString() == keyword ||
-                    (o.Phone ?? "").Contains(keyword) ||
-                    (o.User.Name ?? "").Contains(keyword));
-            }
-
-            var total = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)total / pageSize);
 
             var data = await query
                 .OrderByDescending(o => o.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(o => new
-                {
-                    o.OrderId,
-                    customerName = o.User != null ? o.User.Name : "",
-                    o.TotalCost,
-                    o.Status,
-                    o.CreatedAt,
-                    o.Phone,
-                    o.PaymentMethod,
-                    o.IsPaid,
-                    o.Address
-                })
+                .Include(o => o.OrderItems)
                 .ToListAsync();
 
-            return new
-            {
-                total,
-                page,
-                pageSize,
-                totalPages = (int)Math.Ceiling(total / (double)pageSize),
-                data
-            };
+            return (total, page, pageSize, totalPages, data);
         }
 
-        public async Task<List<CartItem>> GetCartItemsAsync(int userId)
+        public async Task<(int total, int page, int pageSize, int totalPages, List<Order> data)> GetAllOrdersAdminAsync
+            (string? status, string? keyword, int page, int pageSize)
         {
-            return await _db.CartItems
-                .Include(c => c.Book)
-                .Where(c => c.UserId == userId)
+            var query = _db.Orders
+                .Include(o => o.User)
+                .AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(o => o.Status == status);
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+                query = query.Where(o =>
+                    o.OrderId.ToString() == keyword ||
+                    (o.Phone ?? "").Contains(keyword) ||
+                    (o.User.Name ?? "").Contains(keyword));
+
+            var total = await query.CountAsync();
+
+            var totalPages = (int)Math.Ceiling((double)total / pageSize);
+
+            var data = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            return (total, page, pageSize, totalPages, data);
+        }
+
+        public async Task<bool> HasPurchasedAsync(int userId, int bookId)
+        {
+            return await _db.OrderItems.AnyAsync(oi =>
+                oi.Order.UserId == userId &&
+                oi.BookId == bookId &&
+                oi.Order.Status == "completed");
         }
 
         public async Task<object> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null)
         {
-            var now = DateTime.UtcNow;
-            var startOfMonth = new DateTime(now.Year, now.Month, 1);
+            TimeZoneInfo vn = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vn); // set giờ Việt Nam
+            var startOfMonth = new DateTime(now.Year, now.Month, 1); // ngày đầu trong tháng
 
-            // Base query với filter ngày
-            var baseQuery = _db.Orders.AsQueryable();
-            if (from.HasValue) baseQuery = baseQuery.Where(o => o.CreatedAt >= from.Value);
-            if (to.HasValue) baseQuery = baseQuery.Where(o => o.CreatedAt <= to.Value);
+            // lọc ngày
+            var baseQuery = _db.Orders.AsNoTracking();
+            if (from.HasValue) 
+                baseQuery = baseQuery.Where(o => o.CreatedAt >= from.Value);
+            if (to.HasValue) 
+                baseQuery = baseQuery.Where(o => o.CreatedAt <= to.Value);
 
             // Tổng doanh thu - chỉ tính đơn HOÀN THÀNH trong khoảng ngày được chọn
             var totalRevenue = await baseQuery
@@ -140,7 +106,12 @@ namespace Data.Repositories
             // Thống kê theo trạng thái - dùng baseQuery để filter ngày
             var statusCounts = await baseQuery
                 .GroupBy(o => o.Status)
-                .Select(g => new { Status = g.Key, Count = g.Count(), Revenue = g.Sum(o => o.TotalCost) })
+                .Select(g => new // nhóm theo trạng thái rồi thống kê mỗi nhóm
+                { 
+                    Status = g.Key, 
+                    Count = g.Count(), 
+                    Revenue = g.Sum(o => o.TotalCost)
+                })
                 .ToListAsync();
 
             // Tổng số sách đã bán - dùng baseQuery để filter ngày
@@ -162,31 +133,6 @@ namespace Data.Repositories
 
         public void AddOrder(Order order) => _db.Orders.Add(order);
 
-        public void RemoveCartItems(IEnumerable<CartItem> items) => _db.CartItems.RemoveRange(items);
-
         public async Task<bool> SaveChangesAsync() => await _db.SaveChangesAsync() > 0;
-
-		public void AddRefundRequest(RefundRequest r) => _db.RefundRequests.Add(r);
-
-		public async Task<List<RefundRequest>> GetRefundRequestsAsync(string? status)
-		{
-			var q = _db.RefundRequests
-				.Include(r => r.Order)
-				.Include(r => r.User)
-				.AsQueryable();
-
-			if (!string.IsNullOrEmpty(status))
-				q = q.Where(r => r.Status == status);
-
-			return await q.OrderByDescending(r => r.CreatedAt).ToListAsync();
-		}
-
-		public async Task<RefundRequest?> GetRefundRequestByIdAsync(int id)
-		{
-			return await _db.RefundRequests
-				.Include(r => r.Order).ThenInclude(o => o.User)
-				.Include(r => r.User)
-				.FirstOrDefaultAsync(r => r.RefundRequestId == id);
-		}
-	}
+    }
 }

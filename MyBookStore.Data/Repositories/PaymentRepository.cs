@@ -10,9 +10,6 @@ namespace Data.Repositories
         private readonly DBContext _db;
         public PaymentRepository(DBContext db) => _db = db;
 
-        public async Task<Order?> GetOrderByIdAsync(int orderId) =>
-            await _db.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
-
         public void AddPayment(Payment payment) => _db.Payments.Add(payment);
 
         public async Task<bool> SaveChangesAsync() => await _db.SaveChangesAsync() > 0;

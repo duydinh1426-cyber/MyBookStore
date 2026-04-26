@@ -1,9 +1,8 @@
 ﻿using MyBookStore.Data.Models;
 using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
-using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Cart
 {
     public class CartService : ICartService
     {

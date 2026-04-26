@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using WebAPI.DTOs;
-using WebAPI.Services.Interfaces;
+using WebAPI.Services.Payments;
 
 namespace WebAPI.Controllers
 {

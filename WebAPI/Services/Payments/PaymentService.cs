@@ -1,10 +1,8 @@
-﻿using MyBookStore.Data.Models;
-using Data.Repositories.Interfaces;
+﻿using Data.Repositories.Interfaces;
 using Data.Vnpay;
-using WebAPI.Services.Interfaces;
-using WebAPI.Services.VnPay;
+using WebAPI.Services.Payment.VnPay;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Payments
 {
     public class PaymentService : IPaymentService
     {
@@ -81,7 +79,7 @@ namespace WebAPI.Services
 
             var isSuccess = vnpResponseCode == "00";
 
-            _repo.AddPayment(new Payment
+            _repo.AddPayment(new MyBookStore.Data.Models.Payment
             {
                 OrderId = orderId,
                 TransactionId = response.TransactionId ?? "",

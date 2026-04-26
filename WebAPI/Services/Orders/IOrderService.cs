@@ -1,7 +1,7 @@
 ﻿using MyBookStore.Data.Models;
 using WebAPI.DTOs;
 
-namespace WebAPI.Services.Interfaces
+namespace WebAPI.Services.Orders
 {
     public interface IOrderService
     {

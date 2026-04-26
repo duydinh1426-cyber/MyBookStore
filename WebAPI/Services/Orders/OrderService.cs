@@ -2,10 +2,9 @@
 using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
 using WebAPI.Enums;
-using WebAPI.Services.Interfaces;
 using WebAPI.Services.Helper;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Orders
 {
     public class OrderService : IOrderService
     {

@@ -4,11 +4,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using WebAPI.Services;
 using WebAPI.Services.Helper;
-using WebAPI.Services.Interfaces;
-using WebAPI.Services.VnPay;
 using Data.Models;
+using WebAPI.Services.Payment.VnPay;
+using WebAPI.Services.Auth;
+using WebAPI.Services.Books;
+using WebAPI.Services.Cart;
+using WebAPI.Services.Orders;
+using WebAPI.Services.User;
+using WebAPI.Services.Categories;
+using WebAPI.Services.Reviews;
+using WebAPI.Services.Payments;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +45,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IRefundRequestRepository, RefundRequestRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBookService, BookService>();
