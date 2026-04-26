@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Books
 {
     public class BookService : IBookService
     {

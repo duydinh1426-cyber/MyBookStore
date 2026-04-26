@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Services.Interfaces;
+using WebAPI.Services.User;
 
 namespace WebAPI.Controllers
 {

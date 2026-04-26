@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Helper
 {
     public class FileService : IFileService
     {

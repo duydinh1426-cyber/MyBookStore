@@ -2,9 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
-using WebAPI.Services.Interfaces;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.User
 {
     public class UserService : IUserService
     {

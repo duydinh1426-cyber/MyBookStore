@@ -1,6 +1,6 @@
 ﻿using Data.Vnpay;
 
-namespace WebAPI.Services.VnPay
+namespace WebAPI.Services.Payments.VnPay
 {
     public interface IVnPayService
     {

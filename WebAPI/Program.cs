@@ -4,11 +4,18 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using WebAPI.Services;
 using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
-using WebAPI.Services.VnPay;
 using Data.Models;
+using WebAPI.Services.Auth;
+using WebAPI.Services.Categories;
+using WebAPI.Services.Orders;
+using WebAPI.Services.Payments;
+using WebAPI.Services.User;
+using WebAPI.Services.Books;
+using WebAPI.Services.Cart;
+using WebAPI.Services.Payments.VnPay;
+using WebAPI.Services.Reviews;
 
 var builder = WebApplication.CreateBuilder(args);
 

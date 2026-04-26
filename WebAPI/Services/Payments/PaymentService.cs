@@ -1,10 +1,9 @@
 ﻿using MyBookStore.Data.Models;
 using Data.Repositories.Interfaces;
 using Data.Vnpay;
-using WebAPI.Services.Interfaces;
-using WebAPI.Services.VnPay;
+using WebAPI.Services.Payments.VnPay;
 
-namespace WebAPI.Services
+namespace WebAPI.Services.Payments
 {
     public class PaymentService : IPaymentService
     {
