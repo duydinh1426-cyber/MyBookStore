@@ -423,7 +423,9 @@
     }
 
     /* ── PUBLIC CART API ── */
+    const _pendingAdd = new Set();
     window._headerCart = {
+        
         open() {
             if (!isLoggedIn()) { showToast("Vui lòng đăng nhập để xem giỏ hàng", "error"); return; }
             document.getElementById("headerCartOverlay")?.classList.add("open");
@@ -436,8 +438,12 @@
             document.getElementById("headerCartDrawer")?.classList.remove("open");
             document.body.style.overflow = "";
         },
+
+
         async addToCart(bookId, bookTitle) {
             if (!isLoggedIn()) { showToast("Vui lòng đăng nhập để thêm vào giỏ hàng", "error"); return; }
+            if (_pendingAdd.has(bookId)) return;
+            _pendingAdd.add(bookId);
             try {
                 const res = await fetch(`${API}/cart`, { method: "POST", headers: authHeaders(), body: JSON.stringify({ bookId, quantity: 1 }) });
                 const d = await res.json();
@@ -445,6 +451,7 @@
                 showToast(`Đã thêm "${bookTitle}" vào giỏ hàng!`);
                 _cartLoadCount();
             } catch { showToast("Lỗi kết nối", "error"); }
+
         },
         async updateQty(bookId, newQty) {
             try {

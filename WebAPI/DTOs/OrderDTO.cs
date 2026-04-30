@@ -30,4 +30,13 @@ namespace WebAPI.DTOs
         public string? TransferType { get; set; }   // "in" = tiền vào
         public string? ReferenceCode { get; set; }
     }
+
+    public class OrderResponseDto
+    {
+        public int orderId { get; set; }
+        public decimal totalCost { get; set; }
+        public int itemCount { get; set; }
+        public string? paymentMethod { get; set; }
+        public bool requiresPayment { get; set; }
+    }
 }

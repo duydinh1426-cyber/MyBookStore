@@ -29,7 +29,7 @@ namespace WebAPI.Services.Books
             );
         }
 
-        public async Task<BookPagedResultDto> GetBooksAsync(BookQueryDto queryDto)
+        public async Task<ServiceResult<BookPagedResultDto>> GetBooksAsync(BookQueryDto queryDto)
         {
             var query = _repo.GetQuery().AsNoTracking();
 
@@ -73,10 +73,11 @@ namespace WebAPI.Services.Books
 
             var data = books.Select(b => MapToSummary(b)).ToList();
 
-            return new BookPagedResultDto(total, queryDto.Page, queryDto.PageSize, totalPages, data);
+            var result = new BookPagedResultDto(total, queryDto.Page, queryDto.PageSize, totalPages, data);
+            return ServiceResult<BookPagedResultDto>.Success(result);
         }
 
-        public async Task<List<BookSummaryDto>> GetTopNewAsync(int count)
+        public async Task<ServiceResult<List<BookSummaryDto>>> GetTopNewAsync(int count)
         {
             var books = await _repo.GetQuery()
                 .AsNoTracking()
@@ -84,10 +85,10 @@ namespace WebAPI.Services.Books
                 .Take(count)
                 .ToListAsync();
 
-            return books.Select(b => MapToSummary(b)).ToList();
+            return ServiceResult<List<BookSummaryDto>>.Success(books.Select(b => MapToSummary(b)).ToList());
         }
 
-        public async Task<List<BookSummaryDto>> GetTopSellingAsync(int count)
+        public async Task<ServiceResult<List<BookSummaryDto>>> GetTopSellingAsync(int count)
         {
             var books = await _repo.GetQuery()
                 .AsNoTracking()
@@ -95,10 +96,10 @@ namespace WebAPI.Services.Books
                 .Take(count)
                 .ToListAsync();
 
-            return books.Select(b => MapToSummary(b)).ToList();
+            return ServiceResult<List<BookSummaryDto>>.Success(books.Select(b => MapToSummary(b)).ToList());
         }
 
-        public async Task<List<BookSummaryDto>> GetTopRatedAsync(int count)
+        public async Task<ServiceResult<List<BookSummaryDto>>> GetTopRatedAsync(int count)
         {
             var books = await _repo.GetQuery()
                 .AsNoTracking()
@@ -108,15 +109,16 @@ namespace WebAPI.Services.Books
                 .Take(count)
                 .ToListAsync();
 
-            return books.Select(b => MapToSummary(b)).ToList();
+            return ServiceResult<List<BookSummaryDto>>.Success(books.Select(b => MapToSummary(b)).ToList());
         }
 
-        public async Task<BookDetailDto?> GetByIdAsync(int id)
+        public async Task<ServiceResult<BookDetailDto>> GetByIdAsync(int id)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null) return null;
+            if (book == null)
+                return ServiceResult<BookDetailDto>.Failure("Không tìm thấy sách.");
 
-            return new BookDetailDto(
+            var data = new BookDetailDto(
                 book.BookId,
                 book.Title ?? "",
                 book.Author ?? "",
@@ -132,14 +134,20 @@ namespace WebAPI.Services.Books
                 Math.Round((double)book.AvgRating, 1),
                 book.ReviewCount
             );
+
+            return ServiceResult<BookDetailDto>.Success(data);
         }
 
-        public async Task<(string? Error, int? BookId)> CreateAsync(BookUpsertDto dto)
+        public async Task<ServiceResult<int>> CreateAsync(BookUpsertDto dto)
         {
             if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
-            {
-                return ("Thể loại không tồn tại.", null);
-            }
+                return ServiceResult<int>.Failure("Thể loại không tồn tại.");
+
+            if (string.IsNullOrWhiteSpace(dto.Title))
+                return ServiceResult<int>.Failure("Tên sách không được để trống.");
+
+            if (dto.Price <= 0)
+                return ServiceResult<int>.Failure("Giá sách phải lớn hơn 0.");
 
             var book = new Book
             {
@@ -162,19 +170,21 @@ namespace WebAPI.Services.Books
             _repo.Add(book);
             var success = await _repo.SaveChangesAsync();
 
-            if (success) return (null, book.BookId);
-            return ("Lỗi hệ thống khi lưu sách.", null);
+            if (!success)
+                return ServiceResult<int>.Failure("Lỗi hệ thống.", 500);
+
+            return ServiceResult<int>.Success(book.BookId, "Thêm sách thành công.");
         }
 
-        public async Task<string?> UpdateAsync(int id, BookUpsertDto dto)
+        public async Task<ServiceResult> UpdateAsync(int id, BookUpsertDto dto)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null) return "Không tìm thấy sách.";
+            if (book == null) 
+                return ServiceResult.Failure("Không tìm thấy sách.");
 
             if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
-            {
-                return "Thể loại không tồn tại.";
-            }
+                return ServiceResult.Failure("Thể loại không tồn tại.");
+            
 
             book.CategoryId = dto.CategoryId;
             book.Author = dto.Author?.Trim();
@@ -189,22 +199,30 @@ namespace WebAPI.Services.Books
 
             _repo.Update(book);
             var success = await _repo.SaveChangesAsync();
-            return success ? null : "Lỗi hệ thống khi cập nhật sách.";
+
+            if (!success)
+                return ServiceResult.Failure("Lỗi hệ thống.", 500);
+
+            return ServiceResult.Success("Cập nhật sách thành công.");
         }
 
-        public async Task<string?> DeleteAsync(int id)
+        public async Task<ServiceResult> DeleteAsync(int id)
         {
             var book = await _repo.GetByIdAsync(id);
-            if (book == null) return "Không tìm thấy sách.";
+            if (book == null) 
+                return ServiceResult.Failure("Không tìm thấy sách.");
 
             if (await _repo.HasOrderItemsAsync(id))
-            {
-                return "Không thể xóa sách đã có trong đơn hàng.";
-            }
+                return ServiceResult.Failure("Không thể xóa sách đã có trong đơn hàng.");
+            
 
             _repo.Delete(book);
             var success = await _repo.SaveChangesAsync();
-            return success ? null : "Lỗi hệ thống khi xóa sách.";
+
+            if (!success)
+                return ServiceResult.Failure("Lỗi hệ thống.", 500);
+
+            return ServiceResult.Success("Xóa sách thành công.");
         }
     }
 }

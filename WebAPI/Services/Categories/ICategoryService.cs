@@ -4,12 +4,12 @@ namespace WebAPI.Services.Categories
 {
     public interface ICategoryService
     {
-        Task<object> GetAllAsync(bool includeBookCount);
-        Task<CategoryDto?> GetByIdAsync(int id);
-        Task<object?> GetBooksAsync(int id, int page, int pageSize);
-        Task<object> CreateAsync(CategoryUpsertDto dto);
-        Task<object> UpdateAsync(int id, CategoryUpsertDto dto);
-        Task<object> DeleteAsync(int id, bool force);
-        Task<List<CategoryDto>> SearchAsync(string keyword);
+        Task<ServiceResult<List<CategoryDto>>> GetAllAsync();
+        Task<ServiceResult<CategoryDto>> GetByIdAsync(int id);
+        Task<ServiceResult<object>> GetBooksAsync(int id, int page, int pageSize);
+        Task<ServiceResult<CategoryDto>> CreateAsync(CategoryUpsertDto dto);
+        Task<ServiceResult<CategoryDto>> UpdateAsync(int id, CategoryUpsertDto dto);
+        Task<ServiceResult> DeleteAsync(int id);
+        Task<ServiceResult<List<CategoryDto>>> SearchAsync(string keyword);
     }
 }

@@ -21,14 +21,15 @@ namespace WebAPI.Services.Orders
             }
         }
 
-        public async Task<object> CheckoutAsync(int userId, CheckoutDto dto)
+        public async Task<ServiceResult<OrderResponseDto>> CheckoutAsync(int userId, CheckoutDto dto)
         {
             var cartItems = await _repo.GetCartItemsAsync(userId);
-            if (!cartItems.Any()) return new { message = "Giỏ hàng của bạn đang trống." };
+            if (!cartItems.Any()) 
+                return ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.");
 
             var method = dto.PaymentMethod.ToLower();
             if (method != "cod" && method != "vnpay" && method != "vietqr")
-                return new { message = "Phương thức thanh toán không hợp lệ." };
+                return ServiceResult<OrderResponseDto>.Failure("Phương thức thanh toán không hợp lệ.");
 
             decimal totalCost = 0;
             var orderItems = new List<OrderItem>();
@@ -36,7 +37,7 @@ namespace WebAPI.Services.Orders
             foreach (var item in cartItems)
             {
                 if (item.Book.NumberStock < item.Quantity)
-                    return new { message = $"Sách '{item.Book.Title}' chỉ còn {item.Book.NumberStock} cuốn." };
+                    return ServiceResult<OrderResponseDto>.Failure($"Sách '{item.Book.Title}' chỉ còn {item.Book.NumberStock} cuốn.");
 
                 totalCost += item.Book.Price * item.Quantity;
                 orderItems.Add(new OrderItem
@@ -71,29 +72,33 @@ namespace WebAPI.Services.Orders
             _repo.RemoveCartItems(cartItems);
 
             if (await _repo.SaveChangesAsync())
-                return new
+            {
+                var data = new OrderResponseDto
                 {
-                    message = "Đặt hàng thành công.",
                     orderId = order.OrderId,
-                    totalCost = totalCost, 
+                    totalCost = totalCost,
                     itemCount = orderItems.Count,
                     paymentMethod = method,
                     // Nếu vnpay thì frontend cần gọi tiếp /api/payment/vnpay/create
                     requiresPayment = method == "vnpay" || method == "vietqr"
                 };
+                return ServiceResult<OrderResponseDto>.Success(data, "Đặt hàng thành công.");
+            }
 
-            return new { message = "Lỗi hệ thống khi xử lý đơn hàng." };
+            return ServiceResult<OrderResponseDto>.Failure("Lỗi hệ thống khi xử lý đơn hàng.");
         }
 
-        public async Task<object?> GetByIdAsync(int userId, bool isAdmin, int id)
+        public async Task<ServiceResult<object>> GetByIdAsync(int userId, bool isAdmin, int id)
         {
             var order = await _repo.GetOrderByIdAsync(id);
-            if (order == null) return null;
+            if (order == null)
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng");
 
-            if (!isAdmin && order.UserId != userId) return new { message = "Forbidden" };
+            if (!isAdmin && order.UserId != userId)
+                return ServiceResult<object>.Failure("Bạn không có quyền truy cập.", 403);
 
             var currentStatus = order.Status.ToEnum();
-            return new
+            var data = new
             {
                 message = "",
                 orderId = order.OrderId,
@@ -126,28 +131,32 @@ namespace WebAPI.Services.Orders
                     }
                 })
             };
+            return ServiceResult<object>.Success(data); 
         }
 
-        public async Task<object> GetUserOrdersAsync(int userId, int page, int pageSize, string? status)
+        public async Task<ServiceResult<object>> GetUserOrdersAsync(int userId, int page, int pageSize, string? status)
         {
             var orders = await _repo.GetUserOrdersAsync(userId, page, pageSize, status);
-            return orders;
+            return ServiceResult<object>.Success(orders);
         }
 
-        public async Task<object> AdminGetAllOrdersAsync(string? status, string? keyword, int page, int pageSize)
+        public async Task<ServiceResult<object>> AdminGetAllOrdersAsync(string? status, string? keyword, int page, int pageSize)
         {
-            return await _repo.GetAllOrdersAdminAsync(status, keyword, page, pageSize);
+            var data = await _repo.GetAllOrdersAdminAsync(status, keyword, page, pageSize);
+            return ServiceResult<object>.Success(data);
         }
 
-        public async Task<object> CancelAsync(int userId, int id, CancelOrderDto? dto = null)
+        public async Task<ServiceResult<object>> CancelAsync(int userId, int id, CancelOrderDto? dto = null)
         {
             var order = await _repo.GetOrderByIdAsync(id);
-            if (order == null) return new { message = "NotFound" };
-            if (order.UserId != userId) return new { message = "Forbidden" };
+            if (order == null)
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+            if (order.UserId != userId)
+                return ServiceResult<object>.Failure("Bạn không có quyền truy cập");
 
             var current = order.Status.ToEnum();
             if (!current.CanTransitionTo(OrderStatus.cancelled))
-                return new { message = $"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'." };
+                return ServiceResult<object>.Failure($"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'.");
 
             RestoreStock(order);
             order.Status = OrderStatus.cancelled.ToValue();
@@ -160,7 +169,7 @@ namespace WebAPI.Services.Orders
                 if (string.IsNullOrWhiteSpace(dto?.BankAccountNumber) ||
                     string.IsNullOrWhiteSpace(dto?.BankAccountName) ||
                     string.IsNullOrWhiteSpace(dto?.BankName))
-                    return new { message = "Vui lòng nhập đầy đủ thông tin ngân hàng để hoàn tiền." };
+                    return ServiceResult<object>.Failure("Vui lòng nhập đầy đủ thông tin ngân hàng để hoàn tiền.");
 
                 _repo.AddRefundRequest(new RefundRequest
                 {
@@ -176,48 +185,45 @@ namespace WebAPI.Services.Orders
                 }); 
 
                 if (await _repo.SaveChangesAsync())
-                    return new
+                {
+                    var data = new
                     {
-                        message = "Đơn hàng đã hủy. Yêu cầu hoàn tiền đã gửi đến admin.",
                         requiresRefund = true,
                         refundAmount = order.TotalCost
                     };
+                    return ServiceResult<object>.Success(data, "Đơn hàng đã hủy. Yêu cầu hoàn tiền đã gửi đến admin.");
+                }    
             }
             else
             {
                 if (await _repo.SaveChangesAsync())
-                    return new { message = "Hủy đơn hàng thành công.", requiresRefund = false };
+                    return ServiceResult<object>.Success(new { requiresRefund = false }, "Hủy đơn hàng thành công.");
             }
 
-            return new { message = "Lỗi hệ thống khi hủy đơn." };
+            return ServiceResult<object>.Failure("Lỗi hệ thống khi hủy đơn.", 500);
         }
 
-        public async Task<object> UpdateStatusAsync(int id, UpdateOrderStatusDto dto)
+        public async Task<ServiceResult<object>> UpdateStatusAsync(int id, UpdateOrderStatusDto dto)
         {
             var order = await _repo.GetOrderByIdAsync(id);
-            if (order == null) return new { success = false, message = "NotFound" };
+            if (order == null)
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
 
             var current = order.Status.ToEnum();
             var target = dto.GetStatus();
 
             if (!current.CanTransitionTo(target))
-                return new { success = false, message = $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'" };
+                return ServiceResult<object>.Failure($"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'");
 
             if (target == OrderStatus.confirmed
                 && (order.PaymentMethod?.ToLower() == "vnpay" || order.PaymentMethod?.ToLower() == "vietqr")
                 && !order.IsPaid)
-                return new
-                {
-                    success = false,
-                    message = "Không thể xác nhận đơn hàng vì khách chưa thanh toán."
-                };
+                return ServiceResult<object>.Failure("Không thể xác nhận đơn hàng vì khách chưa thanh toán.");
 
             if (target == OrderStatus.cancelled)
             {
                 RestoreStock(order);
-
-                // Admin hủy đơn VNPay đã thanh toán → tự động tạo RefundRequest
-                if (order.PaymentMethod?.ToLower() == "vnpay" && order.IsPaid)
+                if (order.PaymentMethod?.ToLower() is "vnpay" or "vietqr" && order.IsPaid)
                 {
                     _repo.AddRefundRequest(new RefundRequest
                     {
@@ -229,13 +235,13 @@ namespace WebAPI.Services.Orders
                         BankAccountName = "",
                         BankName = "",
                         Status = "pending",
-                        CreatedAt = DateTime.UtcNow
+                        CreatedAt = TimeHelper.NowVietnam()
                     });
                 }
             }
 
             order.Status = target.ToValue();
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = TimeHelper.NowVietnam();
 
             if (await _repo.SaveChangesAsync())
             {
@@ -243,32 +249,33 @@ namespace WebAPI.Services.Orders
                     && order.PaymentMethod?.ToLower() is "vnpay" or "vietqr"
                     && order.IsPaid;  // IsPaid vẫn đúng tại thời điểm này
 
-                return new
+                var data = new
                 {
-                    success = true,
-                    message = refundCreated
-                        ? "Đã hủy đơn. Yêu cầu hoàn tiền đã được tạo."
-                        : "Cập nhật trạng thái thành công",
                     orderId = order.OrderId,
                     newStatus = order.Status,
                     nextStatuses = target.GetNextStatuses().Select(s => s.ToValue()),
                     isFinal = target.IsFinal(),
-                    refundCreated   // ← thêm field này
+                    refundCreated 
                 };
+
+                string mess = refundCreated ? "Đã hủy đơn. Yêu cầu hoàn tiền đã được tạo."
+                                               : "Cập nhật trạng thái thành công";
+                return ServiceResult<object>.Success(data, mess);
             }
 
-            return new { success = false, message = "Lỗi hệ thống khi cập nhật" };
+            return ServiceResult<object>.Failure("Lỗi hệ thống khi cập nhật.", 500);
         }
 
-        public async Task<object> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null)
+        public async Task<ServiceResult<object>> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null)
         {
-            return await _repo.GetAdminStatsAsync(from, to);
+            var data = await _repo.GetAdminStatsAsync(from, to);
+            return ServiceResult<object>.Success(data);
         }
 
-		public async Task<object> GetRefundRequestsAsync(string? status)
+		public async Task<ServiceResult<object>> GetRefundRequestsAsync(string? status)
 		{
 			var list = await _repo.GetRefundRequestsAsync(status);
-			return list.Select(r => new
+			var data = list.Select(r => new
 			{
 				r.RefundRequestId,
 				r.OrderId,
@@ -289,25 +296,44 @@ namespace WebAPI.Services.Orders
 					email = r.User?.Account?.Email
 				}
 			});
+            return ServiceResult<object>.Success(data);
 		}
 
-		public async Task<object> ResolveRefundAsync(int refundId, string? adminNote)
+		public async Task<ServiceResult> ResolveRefundAsync(int refundId, string? adminNote)
 		{
 			var r = await _repo.GetRefundRequestByIdAsync(refundId);
-			if (r == null) return new { success = false, message = "NotFound" };
-			if (r.Status == "completed") return new { success = false, message = "Yêu cầu này đã được xử lý." };
+            if (r == null)
+                return ServiceResult.Failure("NotFound", 404);
+			if (r.Status == "completed")
+                return ServiceResult.Failure("Yêu cầu này đã được xử lý.");
 
 			r.Status = "completed";
 			r.AdminNote = adminNote?.Trim();
             r.ResolvedAt = TimeHelper.NowVietnam();
 
 			if (await _repo.SaveChangesAsync())
-				return new { success = true, message = "Đã đánh dấu hoàn tiền thành công." };
+				return ServiceResult.Success("Đã đánh dấu hoàn tiền thành công.");
 
-			return new { success = false, message = "Lỗi hệ thống." };
+			return ServiceResult.Failure("Lỗi hệ thống.");
 		}
 
-        public async Task<Order?> GetOrderByIdAsync(int orderId)
-            => await _repo.GetOrderByIdAsync(orderId);
+        public async Task<ServiceResult<object>> GetOrderByIdAsync(int orderId, int userId)
+        {
+            var order = await _repo.GetOrderByIdAsync(orderId);
+
+            if (order == null)
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.", 404);
+
+            if (order.UserId != userId)
+                return ServiceResult<object>.Failure("Bạn không có quyền truy cập đơn hàng này.", 403);
+
+            var data = new
+            {
+                isPaid = order.IsPaid,
+                status = order.Status
+            };
+
+            return ServiceResult<object>.Success(data);
+        }
     }
 }

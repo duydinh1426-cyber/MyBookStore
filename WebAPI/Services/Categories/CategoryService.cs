@@ -13,37 +13,32 @@ namespace WebAPI.Services.Categories
             _repo = repo;
         }
 
-        public async Task<object> GetAllAsync(bool includeBookCount)
+        public async Task<ServiceResult<List<CategoryDto>>> GetAllAsync()
         {
             var cats = await _repo.GetAllAsync();
 
-            if (includeBookCount)
-            {
-                return cats.Select(c => new {
-                    categoryId = c.CategoryId,
-                    categoryName = c.CategoryName,
-                    bookCount = c.Books?.Count ?? 0
-                }).ToList();
-            }
-
-            return cats.Select(c => new CategoryDto(c.CategoryId, c.CategoryName)).ToList();
+            var data = cats.Select(c => new CategoryDto(c.CategoryId, c.CategoryName)).ToList();
+            return ServiceResult<List<CategoryDto>>.Success(data);
         }
 
-        public async Task<CategoryDto?> GetByIdAsync(int id)
+        public async Task<ServiceResult<CategoryDto>> GetByIdAsync(int id)
         {
             var cat = await _repo.GetByIdAsync(id);
-            if (cat == null) return null;
+            if (cat == null)
+                return ServiceResult<CategoryDto>.Failure("Không tìm thấy thể loại.");
 
-            return new CategoryDto(cat.CategoryId, cat.CategoryName);
+            var data = new CategoryDto(cat.CategoryId, cat.CategoryName);
+            return ServiceResult<CategoryDto>.Success(data);
         }
 
-        public async Task<object?> GetBooksAsync(int id, int page, int pageSize)
+        public async Task<ServiceResult<object>> GetBooksAsync(int id, int page, int pageSize)
         {
-            if (!await _repo.ExistsByIdAsync(id)) return null;
+            if (!await _repo.ExistsByIdAsync(id))
+                return ServiceResult<object>.Failure("Thể loại không tồn tại");
 
             var (total, books) = await _repo.GetBooksByCategoryAsync(id, page, pageSize);
 
-            return new
+            var data = new
             {
                 total,
                 page,
@@ -53,70 +48,73 @@ namespace WebAPI.Services.Categories
                     b.BookId, b.Title, b.Author, b.Price, b.Image,
                     null, b.NumberStock, b.NumberSold))
             };
+            return ServiceResult<object>.Success(data);
         }
 
-        public async Task<object> CreateAsync(CategoryUpsertDto dto)
+        public async Task<ServiceResult<CategoryDto>> CreateAsync(CategoryUpsertDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.CategoryName))
-                return new { message = "Tên thể loại không được để trống." };
+                return ServiceResult<CategoryDto>.Failure("Tên thể loại không được để trống.");
 
             if (await _repo.ExistsByNameAsync(dto.CategoryName))
-                return new { message = "Thể loại đã tồn tại." };
+                return ServiceResult<CategoryDto>.Failure("Thể loại đã tồn tại.");
 
             var cat = new Category { CategoryName = dto.CategoryName.Trim() };
             _repo.Add(cat);
 
-            if (await _repo.SaveChangesAsync())
-                return new CategoryDto(cat.CategoryId, cat.CategoryName);
+            var success = await _repo.SaveChangesAsync();
+            if (!success)
+                return ServiceResult<CategoryDto>.Failure("Lỗi hệ thống.", 500);
 
-            return new CategoryDto(cat.CategoryId, cat.CategoryName);
+            var data = new CategoryDto(cat.CategoryId, cat.CategoryName);
+            return ServiceResult<CategoryDto>.Success(data, "Thêm thể loại thành công.");
         }
 
-        public async Task<object> UpdateAsync(int id, CategoryUpsertDto dto)
+        public async Task<ServiceResult<CategoryDto>> UpdateAsync(int id, CategoryUpsertDto dto)
         {
             var cat = await _repo.GetByIdAsync(id);
-            if (cat == null) return new { message = "NotFound" };
+            if (cat == null)
+                return ServiceResult<CategoryDto>.Failure("Không tìm thấy thể loại.");
 
             if (string.IsNullOrWhiteSpace(dto.CategoryName))
-                return new { message = "Tên thể loại không được để trống." };
+                return ServiceResult<CategoryDto>.Failure("Tên thể loại không được để trống.");
 
             if (await _repo.ExistsByNameAsync(dto.CategoryName, id))
-                return new { message = "Tên thể loại này đã tồn tại." };
+                return ServiceResult<CategoryDto>.Failure("Tên thể loại này đã tồn tại.");
 
             cat.CategoryName = dto.CategoryName.Trim();
             _repo.Update(cat);
 
-            if (await _repo.SaveChangesAsync())
-                return new CategoryDto(cat.CategoryId, cat.CategoryName);
+            var success = await _repo.SaveChangesAsync();
 
-            return new { message = "Lỗi hệ thống khi cập nhật." };
+            if (!success)
+                return ServiceResult<CategoryDto>.Failure("Lỗi hệ thống.", 500);
+
+            var data = new CategoryDto(cat.CategoryId, cat.CategoryName);
+            return ServiceResult<CategoryDto>.Success(data, "Cập nhật thể loại thành công.");
         }
 
-        public async Task<object> DeleteAsync(int id, bool force)
+        public async Task<ServiceResult> DeleteAsync(int id)
         {
             var cat = await _repo.GetByIdAsync(id);
-            if (cat == null) return new { message = "NotFound" };
+            if (cat == null)
+                return ServiceResult.Failure("Không tìm thấy thể loại.");
 
-            if (cat.Books != null && cat.Books.Any() && !force)
-            {
-                return new
-                {
-                    message = $"Thể loại còn {cat.Books.Count} cuốn sách. Dùng ?force=true để xóa bắt buộc",
-                    bookCount = cat.Books.Count
-                };
-            }
-
+            if (cat.Books != null && cat.Books.Any())
+                return ServiceResult.Failure($"Thể loại còn {cat.Books.Count} cuốn sách. Không thể xóa!.");
+            
             _repo.Delete(cat);
-            if (await _repo.SaveChangesAsync())
-                return new { message = "Xóa thể loại thành công." };
+            if (!(await _repo.SaveChangesAsync()))
+                return ServiceResult.Failure("Lỗi hệ thống.", 500);
 
-            return new { message = "Đã xóa thể loại thành công" };
+            return ServiceResult.Success("Xóa thể loại thành công.");
         }
 
-        public async Task<List<CategoryDto>> SearchAsync(string keyword)
+        public async Task<ServiceResult<List<CategoryDto>>> SearchAsync(string keyword)
         {
             var cats = await _repo.SearchAsync(keyword);
-            return cats.Select(c => new CategoryDto(c.CategoryId, c.CategoryName)).ToList();
+            var data = cats.Select(c => new CategoryDto(c.CategoryId, c.CategoryName)).ToList();
+            return ServiceResult<List<CategoryDto>>.Success(data);
         }
     }
 }

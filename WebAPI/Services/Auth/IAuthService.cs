@@ -4,16 +4,16 @@ namespace WebAPI.Services.Auth
 {
     public interface IAuthService
     {
-        Task<string?> RegisterSendOtpAsync(SendOtpDto dto);
-        Task<string?> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto);
-        Task<AuthResponseDto?> LoginAsync(LoginDto dto);
-        Task<string?> ForgotSendOtpAsync(SendOtpDto dto);
-        Task<string?> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto);
-        Task<UserProfileDto?> GetMeAsync(int accountId);
-        Task<object?> UpdateMeAsync(int accountId, int userId, UpdateProfileDto dto);
-        Task<string?> ChangeSendOtpAsync(int accountId, SendChangePasswordOtpDto dto);
-        Task<string?> ChangeVerifyOtpAsync(int accountId, VerifyChangePasswordOtpDto dto);
-        Task<string?> ChangeEmailSendOtpAsync(int accountId, string newEmail);
-        Task<object?> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp);
+        Task<ServiceResult> RegisterSendOtpAsync(SendOtpDto dto);
+        Task<ServiceResult> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto);
+        Task<ServiceResult<AuthResponseDto>> LoginAsync(LoginDto dto);
+        Task<ServiceResult> ForgotSendOtpAsync(SendOtpDto dto);
+        Task<ServiceResult> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto);
+        Task<ServiceResult<UserProfileDto>> GetMeAsync(int accountId);
+        Task<ServiceResult<UpdateProfileResponseDto>> UpdateMeAsync(int accountId, int userId, UpdateProfileDto dto);
+        Task<ServiceResult> ChangeSendOtpAsync(int accountId, SendChangePasswordOtpDto dto);
+        Task<ServiceResult> ChangeVerifyOtpAsync(int accountId, VerifyChangePasswordOtpDto dto);
+        Task<ServiceResult> ChangeEmailSendOtpAsync(int accountId, string newEmail);
+        Task<ServiceResult<ChangeEmailResponseDto>> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp);
     }
 }

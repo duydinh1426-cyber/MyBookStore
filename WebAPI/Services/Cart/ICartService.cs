@@ -4,10 +4,10 @@ namespace WebAPI.Services.Interfaces
 {
     public interface ICartService
     {
-        Task<CartResponseDto> GetCartAsync(int userId);
-        Task<string?> AddToCartAsync(int userId, AddCartDto dto);
-        Task<string?> UpdateCartAsync(int userId, int bookId, UpdateCartDto dto);
-        Task<string?> RemoveFromCartAsync(int userId, int bookId);
-        Task<string?> ClearCartAsync(int userId);
+        Task<ServiceResult<CartResponseDto>> GetCartAsync(int userId);
+        Task<ServiceResult> AddToCartAsync(int userId, AddCartDto dto);
+        Task<ServiceResult> UpdateCartAsync(int userId, int bookId, UpdateCartDto dto);
+        Task<ServiceResult> RemoveFromCartAsync(int userId, int bookId);
+        Task<ServiceResult> ClearCartAsync(int userId);
     }
 }
