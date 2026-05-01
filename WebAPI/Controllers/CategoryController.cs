@@ -5,7 +5,6 @@ using WebAPI.Services.Categories;
 
 namespace WebAPI.Controllers
 {
-    [ApiController]
     [Route("api/categories")]
     public class CategoryController : BaseController
     {

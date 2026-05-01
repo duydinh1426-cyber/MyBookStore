@@ -6,18 +6,11 @@ using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Controllers
 {
-    [ApiController]
     [Route("api/reviews")]
     public class ReviewController : BaseController
     {
         private readonly IReviewService _service;
         public ReviewController(IReviewService service) => _service = service;
-
-        private int GetUserId()
-        {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            return int.TryParse(claim, out var id) ? id : 0;
-        }
 
         [HttpGet("book/{bookId:int}")]
         public async Task<IActionResult> GetByBook(int bookId, int page = 1, int pageSize = 10, int? rating = null)
@@ -30,7 +23,7 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> GetStatus(int bookId)
         {
-            var result = await _service.GetReviewStatusAsync(GetUserId(), bookId);
+            var result = await _service.GetReviewStatusAsync(UserId, bookId);
             return HandleResult(result);
         }
 
@@ -38,7 +31,7 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Create(CreateReviewDto dto)
         {
-            var result = await _service.CreateAsync(GetUserId(), dto);
+            var result = await _service.CreateAsync(UserId, dto);
             return HandleResult(result);
         }
 

@@ -8,7 +8,7 @@ namespace WebAPI.Controllers
 {
     [Route("api")]
     [ApiController]
-    public class HelperController : ControllerBase
+    public class HelperController : BaseController
     {
         private readonly IFileService _fileService;
         private readonly IEmailService _emailService;
@@ -19,38 +19,26 @@ namespace WebAPI.Controllers
             _emailService = emailService;
         }
 
-        // ================== UPLOAD ==================
         [HttpPost("upload/image")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UploadImage(IFormFile file)
         {
             var result = await _fileService.SaveImageAsync(file);
-            dynamic res = result;
 
-            if (res.error != null && res.error == true)
-            {
-                return BadRequest(new { message = res.message });
-            }
+            if (!result.IsSuccess)
+                return StatusCode(result.StatusCode, new { message = result.Message });
 
             return Ok(new
             {
-                message = "Upload thành công.",
-                fileName = res.fileName,
-                url = $"/images/{res.fileName}"
+                fileName = result.Data,
+                url = $"/images/{result.Data}"
             });
         }
 
         [HttpDelete("upload/image/{fileName}")]
-        [Authorize(Roles = "Admin")]
         public IActionResult DeleteImage(string fileName)
         {
             var result = _fileService.DeleteImage(fileName);
-            dynamic res = result;
-
-            if (res.message == "NotFound")
-                return NotFound(new { message = "Tập tin không tồn tại." });
-
-            return Ok(new { message = "Đã xóa ảnh thành công." });
+            return HandleResult(result);
         }
 
         // ================== CONTACT ==================

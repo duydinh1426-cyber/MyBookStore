@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebAPI.Services;
 
 namespace WebAPI.Controllers
 {
+    [ApiController]
     public class BaseController : ControllerBase
     {
         [NonAction]
@@ -27,5 +29,13 @@ namespace WebAPI.Controllers
 
             return StatusCode(result.StatusCode, new { message = result.Message });
         }
+
+        protected int AccountId =>
+        int.TryParse(User.FindFirstValue("accountId"), out var id) ? id : 0;
+
+        protected int UserId =>
+            int.TryParse(
+                User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub"),
+                out var id) ? id : 0;
     }
 }
