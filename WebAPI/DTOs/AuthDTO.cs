@@ -24,7 +24,13 @@
         string Name,
         string? Email,
         string? Address
-    ); 
+    );
+    public record UpdateProfileResponseDto( // cập nhật thông tin cá nhân
+        string Token,
+        string Name,
+        string Email,
+        string? Address
+    );
     public record VerifyForgotOtpDto( // xác thực OTP quên mk
         string Email,
         string Otp,
@@ -55,4 +61,8 @@
         public string NewEmail { get; set; } = "";
         public string Otp { get; set; } = "";
     }
+    public record ChangeEmailResponseDto(
+        string Token,
+        string Email
+    );
 }

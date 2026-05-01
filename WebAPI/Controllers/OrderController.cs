@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WebAPI.DTOs;
@@ -9,7 +10,7 @@ namespace WebAPI.Controllers
     [ApiController]
     [Route("api/orders")]
     [Authorize]
-    public class OrderController : ControllerBase
+    public class OrderController : BaseController
     {
         private readonly IOrderService _service;
         public OrderController(IOrderService service) => _service = service;
@@ -25,17 +26,7 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> Checkout(CheckoutDto dto)
         {
             var result = await _service.CheckoutAsync(GetUserId(), dto);
-            dynamic res = result;
-
-            if (res.message == "Giỏ hàng của bạn đang trống." ||
-                res.message == "Lỗi hệ thống khi xử lý đơn hàng.")
-                return BadRequest(result);
-
-            string msg = res.message;
-            if (msg != null && msg.Contains("chỉ còn"))
-                return BadRequest(result);
-
-            return StatusCode(201, result);
+            return HandleResult(result);
         }
 
         [HttpGet("my")]
@@ -45,19 +36,15 @@ namespace WebAPI.Controllers
             [FromQuery] int pageSize = 10,
             [FromQuery] string? status = null)
         {
-            return Ok(await _service.GetUserOrdersAsync(GetUserId(), page, pageSize, status));
+            var result = await _service.GetUserOrdersAsync(GetUserId(), page, pageSize, status);
+            return HandleResult(result);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(GetUserId(), User.IsInRole("Admin"), id);
-            if (result == null) return NotFound(new { message = "Không tìm thấy đơn hàng." });
-
-            dynamic res = result;
-            if (res.message == "Forbidden") return Forbid();
-
-            return Ok(result);
+            return HandleResult(result);
         }
 
 
@@ -66,13 +53,7 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> Cancel(int id, [FromBody] CancelOrderDto? dto = null)
         {
             var result = await _service.CancelAsync(GetUserId(), id, dto);
-            dynamic res = result;
-            if (res.message == "NotFound") return NotFound(new { message = "Không tìm thấy đơn hàng." });
-            if (res.message == "Forbidden") return Forbid();
-            string msg = res.message;
-            if (msg != null && (msg.StartsWith("Không thể") || msg.StartsWith("Lỗi hệ thống")))
-                return BadRequest(result);
-            return Ok(result);
+            return HandleResult(result);
         }
 
         [HttpGet("admin/all")]
@@ -83,7 +64,8 @@ namespace WebAPI.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 15)
         {
-            return Ok(await _service.AdminGetAllOrdersAsync(status, keyword, page, pageSize));
+            var result = await _service.AdminGetAllOrdersAsync(status, keyword, page, pageSize);
+            return HandleResult(result);
         }
 
         [HttpPut("admin/{id:int}/status")]
@@ -91,34 +73,32 @@ namespace WebAPI.Controllers
         public async Task<IActionResult> UpdateStatus(int id, UpdateOrderStatusDto dto)
         {
             var result = await _service.UpdateStatusAsync(id, dto);
-            dynamic res = result;
-
-            if (res.message == "NotFound") return NotFound(new { message = "Không tìm thấy đơn hàng." });
-            if (res.success == false) return BadRequest(result);
-
-            return Ok(result);
+            return HandleResult(result);
         }
 
         [HttpGet("admin/stats")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAdminStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
         {
-            return Ok(await _service.GetAdminStatsAsync(from, to));
+            var result = await _service.GetAdminStatsAsync(from, to);
+            return HandleResult(result);
         }
 
         [HttpGet("admin/refunds")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetRefunds([FromQuery] string? status)
-            => Ok(await _service.GetRefundRequestsAsync(status));
+        {
+            var result = await _service.GetRefundRequestsAsync(status);
+            return HandleResult(result);
+        }
+            
 
         [HttpPut("admin/refunds/{refundId:int}/resolve")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ResolveRefund(int refundId, ResolveRefundDto dto)
         {
             var result = await _service.ResolveRefundAsync(refundId, dto.AdminNote);
-            dynamic res = result;
-            if (res.success == false) return BadRequest(result);
-            return Ok(result);
+            return HandleResult(result);
         }
 
         // Kiểm tra đơn đã được thanh toán chưa
@@ -126,15 +106,8 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> QrStatus(int orderId)
         {
-            var order = await _service.GetOrderByIdAsync(orderId);
-            if (order == null) return NotFound();
-            if (order.UserId != GetUserId()) return Forbid();
-
-            return Ok(new
-            {
-                isPaid = order.IsPaid,
-                status = order.Status
-            });
+            var result = await _service.GetOrderByIdAsync(orderId, GetUserId());
+            return HandleResult(result);
         }
     }
 }

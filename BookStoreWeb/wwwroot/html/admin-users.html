@@ -533,19 +533,6 @@
         </div>
     </div>
 
-    <!-- Custom confirm dialog -->
-    <div class="adm-confirm-backdrop" id="confirmBackdrop">
-        <div class="adm-confirm-box">
-            <div class="adm-confirm-icon"><i class="bi bi-key-fill"></i></div>
-            <div class="adm-confirm-title" id="confirmTitle">Xác nhận reset mật khẩu</div>
-            <div class="adm-confirm-msg" id="confirmMsg"></div>
-            <div class="adm-confirm-actions">
-                <button class="adm-confirm-cancel" onclick="closeConfirm()">Hủy</button>
-                <button class="adm-confirm-ok" id="confirmOkBtn">Reset</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast -->
     <div class="adm-toast" id="admToast"></div>
 
@@ -651,9 +638,6 @@
                                         <button class="adm-btn adm-btn-view" onclick="openDetail(${id})">
                                             <i class="bi bi-eye me-1"></i>Chi tiết
                                         </button>
-                                        <button class="adm-btn adm-btn-reset" onclick="resetPassword(${id},'${(u.name || '').replace(/'/g, "\\'")}')">
-                                            <i class="bi bi-key me-1"></i>Reset MK
-                                        </button>
                                     </div>
                                 </td>
                             </tr>`;
@@ -722,37 +706,11 @@
                         <div class="det-row"><span>Địa chỉ</span><span style="max-width:200px">${u.address || "—"}</span></div>
                         <div class="det-row"><span>Ngày tạo</span><span>${u.createdAt ? new Date(u.createdAt).toLocaleString("vi-VN") : "—"}</span></div>
 
-                        <div style="margin-top:1.2rem;padding-top:1rem;border-top:1.5px solid #f0f0f0;display:flex;justify-content:flex-end">
-                            <button class="adm-btn adm-btn-reset"
-                                    onclick="resetPassword(${u.accountId ?? u.userId},'${(u.name || '').replace(/'/g, "\\'")}')">
-                                <i class="bi bi-key me-1"></i>Reset mật khẩu
-                            </button>
-                        </div>`;
+                        `;
                 } catch {
                     document.getElementById("userModalBody").innerHTML =
                         `<p class="text-muted text-center py-3">Không tải được thông tin người dùng.</p>`;
                 }
-            };
-
-            // ── Reset password ────────────────────────────────────────
-            window.resetPassword = async function (id, name) {
-                showConfirm(
-                    "Reset mật khẩu",
-                    `Đặt lại mật khẩu của "${name}" về mặc định 123456?\nNgười dùng nên đổi mật khẩu sau khi đăng nhập lại.`,
-                    async () => {
-                        try {
-                            const res = await fetch(`${API}/users/admin/${id}/reset-password`, {
-                                method: "POST",
-                                headers: authHeaders()
-                            });
-                            const data = await res.json();
-                            if (!res.ok) throw new Error(data.message || "Có lỗi xảy ra.");
-                            showToast(data.message || "Đã reset mật khẩu thành công.", "success");
-                        } catch (e) {
-                            showToast(e.message, "error");
-                        }
-                    }
-                );
             };
 
             // ── Debounce search ───────────────────────────────────────

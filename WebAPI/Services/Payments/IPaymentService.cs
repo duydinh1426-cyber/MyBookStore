@@ -2,8 +2,8 @@
 {
     public interface IPaymentService
     {
-        Task<Dictionary<string, object?>> CreateVnPayUrlAsync(int userId, int orderId, HttpContext context);
-        Task<Dictionary<string, object?>> HandleCallbackAsync(IQueryCollection query);
-        Task<bool> ConfirmQrPaymentAsync(int orderId, decimal amount);
+        Task<ServiceResult<object>> CreateVnPayUrlAsync(int userId, int orderId, HttpContext context);
+        Task<ServiceResult<object>> HandleCallbackAsync(IQueryCollection query);
+        Task<ServiceResult> ConfirmQrPaymentAsync(int orderId, decimal amount);
     }
 }

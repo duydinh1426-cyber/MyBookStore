@@ -2,6 +2,7 @@
 using Data.Repositories.Interfaces;
 using Data.Vnpay;
 using WebAPI.Services.Payments.VnPay;
+using WebAPI.Services.Helper;
 
 namespace WebAPI.Services.Payments
 {
@@ -16,14 +17,18 @@ namespace WebAPI.Services.Payments
             _vnPay = vnPay;
         }
 
-        public async Task<Dictionary<string, object?>> CreateVnPayUrlAsync(int userId, int orderId, HttpContext context)
+        public async Task<ServiceResult<object>> CreateVnPayUrlAsync(int userId, int orderId, HttpContext context)
         {
             var order = await _repo.GetOrderByIdAsync(orderId);
 
-            if (order == null) return new Dictionary<string, object?> { ["message"] = "NotFound" };
-            if (order.UserId != userId) return new Dictionary<string, object?> { ["message"] = "Forbidden" };
-            if (order.IsPaid) return new Dictionary<string, object?> { ["message"] = "Đơn hàng này đã được thanh toán." };
-            if (order.Status == "cancelled") return new Dictionary<string, object?> { ["message"] = "Đơn hàng đã bị hủy." };
+            if (order == null)
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+            if (order.UserId != userId)
+                return ServiceResult<object>.Failure("Không có quyền truy cập.");
+            if (order.IsPaid) 
+                return ServiceResult<object>.Failure("Đơn hàng này đã được thanh toán.");
+            if (order.Status == "cancelled")
+                return ServiceResult<object>.Failure("Đơn hàng đã bị hủy.");
 
             var model = new PaymentInformationModel
             {
@@ -34,15 +39,14 @@ namespace WebAPI.Services.Payments
             };
 
             var url = _vnPay.CreatePaymentUrl(model, context);
-
-            return new Dictionary<string, object?> { ["message"] = "", ["paymentUrl"] = url };
+            return ServiceResult<object>.Success(new { paymentUrl = url });
         }
 
-        public async Task<Dictionary<string, object?>> HandleCallbackAsync(IQueryCollection query)
+        public async Task<ServiceResult<object>> HandleCallbackAsync(IQueryCollection query)
         {
             // Đọc orderId từ query trước, không phụ thuộc vào response
-            var rawOrderInfo = query.FirstOrDefault(k => k.Key == "vnp_OrderInfo").Value.ToString() ?? "";
-            var vnpResponseCode = query.FirstOrDefault(k => k.Key == "vnp_ResponseCode").Value.ToString() ?? "";
+            var rawOrderInfo = query["vnp_OrderInfo"].ToString() ?? "";
+            var vnpResponseCode = query["vnp_ResponseCode"].ToString() ?? "";
 
             var match = System.Text.RegularExpressions.Regex.Match(rawOrderInfo, @"orderId:(\d+)");
             int.TryParse(match.Success ? match.Groups[1].Value : "", out var orderId);
@@ -51,32 +55,14 @@ namespace WebAPI.Services.Payments
             var response = _vnPay.PaymentExecute(query);
 
             if (!response.Success)
-                return new Dictionary<string, object?>
-                {
-                    ["success"] = false,
-                    ["message"] = "Chữ ký không hợp lệ.",
-                    ["orderId"] = orderId > 0 ? orderId : null,
-                    ["code"] = vnpResponseCode
-                };
+                return ServiceResult<object>.Failure("Chữ ký không hợp lệ.");
 
             if (orderId == 0)
-                return new Dictionary<string, object?>
-                {
-                    ["success"] = false,
-                    ["message"] = "Không xác định được đơn hàng.",
-                    ["orderId"] = null,
-                    ["code"] = "99"
-                };
+                return ServiceResult<object>.Failure("Không xác định được đơn hàng.");
 
             var order = await _repo.GetOrderByIdAsync(orderId);
             if (order == null)
-                return new Dictionary<string, object?>
-                {
-                    ["success"] = false,
-                    ["message"] = "NotFound",
-                    ["orderId"] = orderId,
-                    ["code"] = "99"
-                };
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
 
             var isSuccess = vnpResponseCode == "00";
 
@@ -94,37 +80,48 @@ namespace WebAPI.Services.Payments
             if (isSuccess)
             {
                 order.IsPaid = true;
-                order.PaidAt = DateTime.UtcNow;
+                order.PaidAt = TimeHelper.NowVietnam();
             }
 
             await _repo.SaveChangesAsync();
 
-            return new Dictionary<string, object?>
-            {
-                ["success"] = isSuccess,
-                ["message"] = isSuccess ? "" : "Thanh toán thất bại.",
-                ["orderId"] = orderId,
-                ["code"] = vnpResponseCode,
-                ["transactionId"] = response.TransactionId
-            };
+            return ServiceResult<object>.Success(
+                new
+                {
+                    orderId,
+                    code = vnpResponseCode,
+                    transactionId = response.TransactionId,
+                    isSuccess
+                },
+                isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"
+            );
         }
 
-        public async Task<bool> ConfirmQrPaymentAsync(int orderId, decimal amount)
+        public async Task<ServiceResult> ConfirmQrPaymentAsync(int orderId, decimal amount)
         {
             var order = await _repo.GetOrderByIdAsync(orderId);
-            if (order == null || order.IsPaid) return false;
 
-            // Kiểm tra số tiền khớp (cho phép sai lệch ±1000đ)
-            if (Math.Abs(order.TotalCost - amount) > 1000) return false;
+            if (order == null)
+                return ServiceResult.Failure("Không tìm thấy đơn hàng.");
 
-            // Chỉ xác nhận đơn chưa hủy
-            if (order.Status == "cancelled") return false;
+            if (order.IsPaid)
+                return ServiceResult.Failure("Đơn hàng đã thanh toán.");
+
+            if (order.Status == "cancelled")
+                return ServiceResult.Failure("Đơn hàng đã bị hủy.");
+
+            if (Math.Abs(order.TotalCost - amount) > 1000)
+                return ServiceResult.Failure("Số tiền không khớp.");
 
             order.IsPaid = true;
             order.PaidAt = DateTime.UtcNow;
             order.UpdatedAt = DateTime.UtcNow;
 
-            return await _repo.SaveChangesAsync();
+            var success = await _repo.SaveChangesAsync();
+            if (!success)
+                return ServiceResult.Failure("Lỗi hệ thống.");
+
+            return ServiceResult.Success("Thanh toán thành công.");
         }
     }
 }
