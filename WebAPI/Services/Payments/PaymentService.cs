@@ -74,7 +74,7 @@ namespace WebAPI.Services.Payments
                 Amount = order.TotalCost,
                 VnPayResponseCode = vnpResponseCode,
                 Success = isSuccess,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = TimeHelper.NowVietnam()
             });
 
             if (isSuccess)
@@ -114,8 +114,8 @@ namespace WebAPI.Services.Payments
                 return ServiceResult.Failure("Số tiền không khớp.");
 
             order.IsPaid = true;
-            order.PaidAt = DateTime.UtcNow;
-            order.UpdatedAt = DateTime.UtcNow;
+            order.PaidAt = TimeHelper.NowVietnam();
+            order.UpdatedAt = TimeHelper.NowVietnam();
 
             var success = await _repo.SaveChangesAsync();
             if (!success)

@@ -1,6 +1,5 @@
 ﻿namespace WebAPI.Services.Helper
 {
-    // Helpers/TimeHelper.cs
     public static class TimeHelper
     {
         public static DateTime NowVietnam()

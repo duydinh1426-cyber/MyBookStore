@@ -1,9 +1,5 @@
 ﻿using MyBookStore.Data.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Reflection.Metadata.Ecma335;
 using Data.Repositories.Interfaces;
 using Data.Models;
 

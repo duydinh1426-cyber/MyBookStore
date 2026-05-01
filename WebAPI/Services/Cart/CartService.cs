@@ -2,6 +2,7 @@
 using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
+using WebAPI.Services.Helper;
 
 namespace WebAPI.Services.Cart
 {
@@ -65,14 +66,14 @@ namespace WebAPI.Services.Cart
                     UserId = userId,
                     BookId = dto.BookId,
                     Quantity = dto.Quantity,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow,
+                    CreatedAt = TimeHelper.NowVietnam(),
+                    UpdatedAt = TimeHelper.NowVietnam(),
                 });
             }
             else
             {
                 cartItem.Quantity = targetQty;
-                cartItem.UpdatedAt = DateTime.UtcNow;
+                cartItem.UpdatedAt = TimeHelper.NowVietnam();
                 _repo.Update(cartItem);
             }
 
@@ -101,7 +102,7 @@ namespace WebAPI.Services.Cart
                     return ServiceResult.Failure($"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.");
 
                 cartItem.Quantity = dto.Quantity;
-                cartItem.UpdatedAt = DateTime.UtcNow;
+                cartItem.UpdatedAt = TimeHelper.NowVietnam();
                 _repo.Update(cartItem);
             }
 

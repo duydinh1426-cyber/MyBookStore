@@ -45,8 +45,8 @@ namespace WebAPI.Services.Orders
                     BookId = item.BookId,
                     Quantity = item.Quantity,
                     UnitPrice = item.Book.Price,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    CreatedAt = TimeHelper.NowVietnam(),
+                    UpdatedAt = TimeHelper.NowVietnam()
                 });
 
                 item.Book.NumberStock -= item.Quantity;
@@ -64,8 +64,8 @@ namespace WebAPI.Services.Orders
                 IsPaid = false,
                 TotalCost = totalCost,
                 OrderItems = orderItems,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = TimeHelper.NowVietnam(),
+                UpdatedAt = TimeHelper.NowVietnam()
             };
 
             _repo.AddOrder(order);
@@ -160,7 +160,7 @@ namespace WebAPI.Services.Orders
 
             RestoreStock(order);
             order.Status = OrderStatus.cancelled.ToValue();
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = TimeHelper.NowVietnam();
 
             if ((order.PaymentMethod?.ToLower() == "vnpay" || order.PaymentMethod?.ToLower() == "vietqr")
             && order.IsPaid)

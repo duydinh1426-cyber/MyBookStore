@@ -1,7 +1,8 @@
-﻿using MyBookStore.Data.Models;
-using Data.Repositories.Interfaces;
+﻿using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using MyBookStore.Data.Models;
 using WebAPI.DTOs;
+using WebAPI.Services.Helper;
 using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Services.Reviews
@@ -88,8 +89,8 @@ namespace WebAPI.Services.Reviews
                 UserId = userId,
                 Rating = dto.rating,
                 Comment = dto.comment?.Trim(),
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = TimeHelper.NowVietnam(),
+                UpdatedAt = TimeHelper.NowVietnam()
             };
 
             _repo.Add(review);

@@ -2,9 +2,6 @@
 using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using MyBookStore.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Data.Repositories
 {

@@ -69,17 +69,6 @@
         {
             return status == OrderStatus.completed || status == OrderStatus.cancelled;
         }
-
-        public static List<StatusOption> GetStatusList()
-        {
-            return Enum.GetValues<OrderStatus>()
-                .Select(s => new StatusOption
-                {
-                    id = (int)s,
-                    name = s.ToLabel(),
-                    code = s.ToValue()
-                }).ToList();
-        }
     }
 
     public class StatusOption

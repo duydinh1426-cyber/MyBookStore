@@ -3,6 +3,7 @@ using Data.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
+using WebAPI.Services.Helper;
 
 namespace WebAPI.Services.Books
 {
@@ -163,8 +164,8 @@ namespace WebAPI.Services.Books
                 NumberSold = 0,
                 AvgRating = 0,
                 ReviewCount = 0,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = TimeHelper.NowVietnam(),
+                UpdatedAt = TimeHelper.NowVietnam()
             };
 
             _repo.Add(book);
@@ -195,7 +196,7 @@ namespace WebAPI.Services.Books
             book.Price = dto.Price;
             book.NumberPage = dto.NumberPage;
             book.NumberStock = dto.NumberStock;
-            book.UpdatedAt = DateTime.UtcNow;
+            book.UpdatedAt = TimeHelper.NowVietnam();
 
             _repo.Update(book);
             var success = await _repo.SaveChangesAsync();

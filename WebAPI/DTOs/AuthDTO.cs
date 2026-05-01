@@ -51,10 +51,10 @@
         bool IsAdmin
     );
 
-    public class SendChangeEmailOtpDto
-    {
-        public string NewEmail { get; set; } = "";
-    }
+    //public class SendChangeEmailOtpDto
+    //{
+    //    public string NewEmail { get; set; } = "";
+    //}
 
     public class VerifyChangeEmailOtpDto
     {
