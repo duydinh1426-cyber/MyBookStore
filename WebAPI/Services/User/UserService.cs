@@ -10,7 +10,7 @@ namespace WebAPI.Services.User
         private readonly IUserRepository _repo;
         public UserService(IUserRepository repo) => _repo = repo;
 
-        public async Task<object> GetAllUsersAsync(string? keyword, int page, int pageSize)
+        public async Task<ServiceResult<object>> GetAllUsersAsync(string? keyword, int page, int pageSize)
         {
             var query = _repo.GetQuery();
 
@@ -40,25 +40,27 @@ namespace WebAPI.Services.User
                 })
                 .ToListAsync();
 
-            return new
+            var data = new
             {
                 data = items, 
                 total = total,
                 totalPages = (int)Math.Ceiling((double)total / pageSize),
                 page = page
             };
+            return ServiceResult<object>.Success(data);
         }
 
-        public async Task<object?> GetUserDetailAsync(int id)
+        public async Task<ServiceResult<object>> GetUserDetailAsync(int id)
         {
             var account = await _repo.GetDetailByIdAsync(id);
-            if (account == null) return null;
+            if (account == null)
+                return ServiceResult<object>.Failure("Không tìm thấy người dùng");
 
             var customer = account.Customers.FirstOrDefault();
             var totalOrders = customer?.Orders?.Count ?? 0;
             var totalSpent = customer?.Orders?.Sum(o => o.TotalCost) ?? 0;
 
-            return new
+            var data = new
             {
                 userId = customer?.UserId,
                 accountId = account.AccountId,
@@ -70,21 +72,8 @@ namespace WebAPI.Services.User
                 totalSpent = (decimal)totalSpent,
                 createdAt = account.CreatedAt
             };
-        }
 
-        public async Task<object> ResetPasswordAsync(int id)
-        {
-            var account = await _repo.GetBasicByIdAsync(id);
-            if (account == null) return new { message = "NotFound" };
-
-            const string DEFAULT_PASSWORD = "123456";
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(DEFAULT_PASSWORD));
-            account.Password = Convert.ToHexString(bytes).ToLower();
-
-            if (await _repo.SaveChangesAsync())
-                return new { message = "Đã reset mật khẩu về 123456." };
-
-            return new { message = "Lỗi khi cập nhật mật khẩu." };
+            return ServiceResult<object>.Success(data);
         }
     }
 }

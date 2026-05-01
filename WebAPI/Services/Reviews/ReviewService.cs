@@ -11,10 +11,10 @@ namespace WebAPI.Services.Reviews
         private readonly IReviewRepository _repo;
         public ReviewService(IReviewRepository repo) => _repo = repo;
 
-        public async Task<object> GetByBookAsync(int bookId, int page, int pageSize, int? rating)
+        public async Task<ServiceResult<object>> GetByBookAsync(int bookId, int page, int pageSize, int? rating)
         {
             if (!await _repo.BookExistsAsync(bookId))
-                return new { message = "NotFound" };
+                return ServiceResult<object>.Failure("Sách không tồn tại.");
 
             var query = _repo.GetQuery().Where(r => r.BookId == bookId);
             if (rating.HasValue) query = query.Where(r => r.Rating == rating.Value);
@@ -35,9 +35,8 @@ namespace WebAPI.Services.Reviews
                     createdAt = r.CreatedAt
                 }).ToListAsync();
 
-            return new
+            var data =  new
             {
-                message = "",
                 total,
                 page,
                 pageSize,
@@ -46,39 +45,42 @@ namespace WebAPI.Services.Reviews
                 ratingStats = stats,
                 data = items
             };
+            return ServiceResult<object>.Success(data);
         }
 
-        public async Task<object> GetReviewStatusAsync(int userId, int bookId)
+        public async Task<ServiceResult<object>> GetReviewStatusAsync(int userId, int bookId)
         {
             if (!await _repo.HasPurchasedAsync(userId, bookId))
-                return new { canReview = false, reason = "not_purchased" };
+                return ServiceResult<object>.Success( new { canReview = false, reason = "not_purchased" });
 
             var review = await _repo.GetUserReviewAsync(userId, bookId);
             if (review != null)
-                return new
+            {
+                var data = new
                 {
                     canReview = false,
                     reason = "already_reviewed",
                     rating = review.Rating,
                     comment = review.Comment
                 };
-
-            return new { canReview = true };
+                return ServiceResult<object>.Success( data);
+            }
+            return ServiceResult<object>.Success( new { canReview = true });
         }
 
-        public async Task<object> CreateAsync(int userId, CreateReviewDto dto)
+        public async Task<ServiceResult<object>> CreateAsync(int userId, CreateReviewDto dto)
         {
             if (dto.rating < 1 || dto.rating > 5)
-                return new { message = "Đánh giá phải từ 1 đến 5 sao." };
+                return ServiceResult<object>.Failure("Đánh giá phải từ 1 đến 5 sao.");
 
             if (!await _repo.BookExistsAsync(dto.bookId))
-                return new { message = "NotFound" };
+                return ServiceResult<object>.Failure("Sách không tồn tại.");
 
             if (!await _repo.HasPurchasedAsync(userId, dto.bookId))
-                return new { message = "Bạn cần mua sản phẩm này trước khi đánh giá." };
+                return ServiceResult<object>.Failure("Bạn cần mua sản phẩm này trước khi đánh giá.");
 
             if (await _repo.GetUserReviewAsync(userId, dto.bookId) != null)
-                return new { message = "Bạn đã đánh giá sản phẩm này rồi." };
+                return ServiceResult<object>.Failure("Bạn đã đánh giá sản phẩm này rồi.");
 
             var review = new Review
             {
@@ -94,25 +96,28 @@ namespace WebAPI.Services.Reviews
             await _repo.UpdateBookRatingAsync(dto.bookId);
 
             if (await _repo.SaveChangesAsync())
-                return new { message = "Gửi đánh giá thành công.", reviewId = review.ReviewId };
+                return ServiceResult<object>.Success(new { review = review.ReviewId }, "Gửi đánh giá thành công.");
 
-            return new { message = "Lỗi khi lưu đánh giá." };
+
+            return ServiceResult<object>.Failure("Lỗi khi lưu đánh giá.", 500);
         }
 
-        public async Task<object> DeleteAsync(int id)
+        public async Task<ServiceResult> DeleteAsync(int id)
         {
             var review = await _repo.GetByIdAsync(id);
-            if (review == null) return new { message = "NotFound" };
+            if (review == null) 
+                return ServiceResult.Failure("Không tìm thấy đánh giá.");
 
             var bookId = review.BookId;
             _repo.Delete(review);
             await _repo.UpdateBookRatingAsync(bookId);
 
-            if (await _repo.SaveChangesAsync()) return new { message = "Đã xóa đánh giá." };
-            return new { message = "Lỗi khi xóa đánh giá." };
+            if (await _repo.SaveChangesAsync()) 
+                return ServiceResult.Success("Đã xóa đánh giá.");
+            return ServiceResult.Failure("Lỗi khi xóa đánh giá.", 500);
         }
 
-        public async Task<object> AdminGetAllAsync(int page, int pageSize, int? rating, int? bookId)
+        public async Task<ServiceResult<object>> AdminGetAllAsync(int page, int pageSize, int? rating, int? bookId)
         {
             var query = _repo.GetQuery();
             if (rating.HasValue) query = query.Where(r => r.Rating == rating.Value);
@@ -132,7 +137,7 @@ namespace WebAPI.Services.Reviews
                     book = new { bookId = r.Book.BookId, title = r.Book.Title }
                 }).ToListAsync();
 
-            return new
+            var data = new
             {
                 total,
                 page,
@@ -140,6 +145,8 @@ namespace WebAPI.Services.Reviews
                 totalPages = (int)Math.Ceiling(total / (double)pageSize),
                 data = items
             };
+
+            return ServiceResult<object>.Success(data);
         }
     }
 }
