@@ -20,9 +20,7 @@ using WebAPI.Services.Reviews;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<DBContext>(options =>
@@ -54,7 +52,6 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 
@@ -64,6 +61,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<IJwtService, JwtService>();
 builder.Services.AddSingleton<IOtpService, OtpService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -99,7 +97,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 

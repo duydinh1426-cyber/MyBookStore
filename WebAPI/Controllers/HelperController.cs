@@ -7,7 +7,6 @@ using WebAPI.Services.Helper;
 namespace WebAPI.Controllers
 {
     [Route("api")]
-    [ApiController]
     public class HelperController : BaseController
     {
         private readonly IFileService _fileService;

@@ -1,9 +1,15 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using WebAPI.Enums;
 using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Services.Helper
-{
+{ 
+    public interface IFileService
+    {
+        Task<ServiceResult<string>> SaveImageAsync(IFormFile file);
+        ServiceResult<string> DeleteImage(string fileName);
+    }
     public class FileService : IFileService
     {
         private readonly IWebHostEnvironment _env;
