@@ -7,7 +7,6 @@ using WebAPI.Services.Payments;
 
 namespace WebAPI.Controllers
 {
-    [ApiController]
     [Route("api/payment")]
     public class PaymentController : BaseController
     {
@@ -20,17 +19,11 @@ namespace WebAPI.Controllers
             _configuration = configuration;
         }
 
-        private int GetUserId()
-        {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            return int.TryParse(claim, out var id) ? id : 0;
-        }
-
         [HttpPost("vnpay/create")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> CreatePaymentUrl([FromBody] CreatePaymentDto dto)
         {
-            var result = await _paymentService.CreateVnPayUrlAsync(GetUserId(), dto.OrderId, HttpContext);
+            var result = await _paymentService.CreateVnPayUrlAsync(UserId, dto.OrderId, HttpContext);
             return HandleResult(result);
         }
 

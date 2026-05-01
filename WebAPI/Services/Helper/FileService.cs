@@ -9,66 +9,55 @@ namespace WebAPI.Services.Helper
         private readonly IWebHostEnvironment _env;
         private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
         private const string ImageFolder = "images";
+        private const long MaxFileSize = 5 * 1024 * 1024;
 
         public FileService(IWebHostEnvironment env) => _env = env;
 
-        public async Task<object> SaveImageAsync(IFormFile file)
+        public async Task<ServiceResult<string>> SaveImageAsync(IFormFile file)
         {
+            if (file == null || file.Length == 0)
+                return ServiceResult<string>.Failure("Vui lòng chọn file ảnh.");
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!_allowedExtensions.Contains(ext))
+                return ServiceResult<string>.Failure("Chỉ chấp nhận JPG, PNG, WEBP, GIF.");
+
+            if (file.Length > MaxFileSize)
+                return ServiceResult<string>.Failure("Ảnh không được vượt quá 5MB.");
             try
             {
-                if (file == null || file.Length == 0)
-                    return new { error = true, message = "Vui lòng chọn file ảnh." };
-
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!_allowedExtensions.Contains(ext))
-                    return new { error = true, message = "Chỉ chấp nhận JPG, PNG, WEBP, GIF." };
-
-                // Giới hạn 5MB
-                if (file.Length > 5 * 1024 * 1024)
-                    return new { error = true, message = "Ảnh không được vượt quá 5MB." };
-
-                var contentPath = _env.WebRootPath;
-                var path = Path.Combine(contentPath, ImageFolder);
-
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
+                var uploadPath = Path.Combine(_env.WebRootPath, ImageFolder);
+                Directory.CreateDirectory(uploadPath);
 
                 var fileName = $"{Guid.NewGuid()}{ext}";
-                var fileNameWithPath = Path.Combine(path, fileName);
+                var fullPath = Path.Combine(uploadPath, fileName);
 
-                using (var stream = new FileStream(fileNameWithPath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                await using var stream = new FileStream(fullPath, FileMode.Create);
+                await file.CopyToAsync(stream);
 
-                return new { error = false, fileName };
+                return ServiceResult<string>.Success(fileName);
             }
             catch (Exception)
             {
-                return new { error = true, message = "Lỗi hệ thống khi lưu tập tin." };
+                return ServiceResult<string>.Failure("Lỗi hệ thống khi lưu tập tin.", 500);
             }
         }
 
-        public object DeleteImage(string fileName)
+        public ServiceResult<string> DeleteImage(string fileName)
         {
             try
             {
-                if (string.IsNullOrEmpty(fileName))
-                    return new { message = "Tên file không hợp lệ." };
+                var fullPath = Path.Combine(_env.WebRootPath, ImageFolder, fileName);
 
-                var path = Path.Combine(_env.WebRootPath, ImageFolder, fileName);
+                if (!File.Exists(fullPath))
+                    return ServiceResult<string>.Failure("Tập tin không tồn tại.", 404);
 
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                    return new { message = "Đã xóa ảnh thành công." };
-                }
-
-                return new { message = "NotFound" };
+                File.Delete(fullPath);
+                return ServiceResult<string>.Success(fileName, "Đã xóa ảnh thành công.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return new { message = "Lỗi khi xóa tập tin.", detail = ex.Message };
+                return ServiceResult<string>.Failure("Lỗi khi xóa tập tin.", 500);
             }
         }
     }

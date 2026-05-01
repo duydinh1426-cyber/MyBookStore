@@ -7,7 +7,6 @@ using WebAPI.Services.Orders;
 
 namespace WebAPI.Controllers
 {
-    [ApiController]
     [Route("api/orders")]
     [Authorize]
     public class OrderController : BaseController
@@ -15,17 +14,11 @@ namespace WebAPI.Controllers
         private readonly IOrderService _service;
         public OrderController(IOrderService service) => _service = service;
 
-        private int GetUserId()
-        {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            return int.TryParse(claim, out var id) ? id : 0;
-        }
-
         [HttpPost("checkout")]
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Checkout(CheckoutDto dto)
         {
-            var result = await _service.CheckoutAsync(GetUserId(), dto);
+            var result = await _service.CheckoutAsync(UserId, dto);
             return HandleResult(result);
         }
 
@@ -36,14 +29,14 @@ namespace WebAPI.Controllers
             [FromQuery] int pageSize = 10,
             [FromQuery] string? status = null)
         {
-            var result = await _service.GetUserOrdersAsync(GetUserId(), page, pageSize, status);
+            var result = await _service.GetUserOrdersAsync(UserId, page, pageSize, status);
             return HandleResult(result);
         }
 
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var result = await _service.GetByIdAsync(GetUserId(), User.IsInRole("Admin"), id);
+            var result = await _service.GetByIdAsync(UserId, User.IsInRole("Admin"), id);
             return HandleResult(result);
         }
 
@@ -52,7 +45,7 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> Cancel(int id, [FromBody] CancelOrderDto? dto = null)
         {
-            var result = await _service.CancelAsync(GetUserId(), id, dto);
+            var result = await _service.CancelAsync(UserId, id, dto);
             return HandleResult(result);
         }
 
@@ -106,7 +99,7 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<IActionResult> QrStatus(int orderId)
         {
-            var result = await _service.GetOrderByIdAsync(orderId, GetUserId());
+            var result = await _service.GetOrderByIdAsync(orderId, UserId);
             return HandleResult(result);
         }
     }

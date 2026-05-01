@@ -6,7 +6,6 @@ using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Controllers
 {
-    [ApiController]
     [Route("api/books")]
     public class BookController : BaseController
     {

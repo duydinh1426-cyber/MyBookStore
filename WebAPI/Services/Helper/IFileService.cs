@@ -4,7 +4,7 @@ namespace WebAPI.Services.Interfaces
 {
     public interface IFileService
     {
-        Task<object> SaveImageAsync(IFormFile file);
-        object DeleteImage(string fileName);
+        Task<ServiceResult<string>> SaveImageAsync(IFormFile file);
+        ServiceResult<string> DeleteImage(string fileName);
     }
 }

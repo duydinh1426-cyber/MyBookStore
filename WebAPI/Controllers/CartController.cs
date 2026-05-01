@@ -6,7 +6,6 @@ using WebAPI.Services.Interfaces;
 
 namespace WebAPI.Controllers
 {
-    [ApiController]
     [Route("api/cart")]
     [Authorize]
     public class CartController : BaseController
@@ -18,44 +17,38 @@ namespace WebAPI.Controllers
             _service = service;
         }
 
-        private int GetUserId()
-        {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            return int.TryParse(claim, out var id) ? id : 0;
-        }
-
         [HttpGet]
         public async Task<IActionResult> GetCart()
         {
-            var result = await _service.GetCartAsync(GetUserId());
+            var result = await _service.GetCartAsync(UserId);
             return HandleResult(result);
         }
 
         [HttpPost]
         public async Task<IActionResult> AddToCart(AddCartDto dto)
         {
-            var result = await _service.AddToCartAsync(GetUserId(), dto);
+            var result = await _service.AddToCartAsync(UserId, dto);
             return HandleResult(result);
         }
 
         [HttpPut("{bookId:int}")]
         public async Task<IActionResult> UpdateCart(int bookId, UpdateCartDto dto)
         {
-            var result = await _service.UpdateCartAsync(GetUserId(), bookId, dto);
+            var result = await _service.UpdateCartAsync(UserId, bookId, dto);
             return HandleResult(result);
         }
 
         [HttpDelete("{bookId:int}")]
         public async Task<IActionResult> RemoveFromCart(int bookId)
         {
-            var result = await _service.RemoveFromCartAsync(GetUserId(), bookId);
+            var result = await _service.RemoveFromCartAsync(UserId, bookId);
             return HandleResult(result);
         }
 
         [HttpDelete]
         public async Task<IActionResult> ClearCart()
         {
-            var result = await _service.ClearCartAsync(GetUserId());
+            var result = await _service.ClearCartAsync(UserId);
             return HandleResult(result);
         }
     }
