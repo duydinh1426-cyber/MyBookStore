@@ -373,109 +373,6 @@
                 background: var(--blue);
                 color: #fff;
             }
-
-        /* ── Confirm dialog ── */
-        .adm-confirm-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.45);
-            z-index: 9990;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity .2s;
-            pointer-events: none;
-        }
-
-            .adm-confirm-backdrop.show {
-                opacity: 1;
-                pointer-events: auto;
-            }
-
-        .adm-confirm-box {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 380px;
-            width: 90%;
-            box-shadow: 0 8px 40px rgba(0,0,0,.18);
-            transform: scale(.95);
-            transition: transform .2s;
-            text-align: center;
-        }
-
-        .adm-confirm-backdrop.show .adm-confirm-box {
-            transform: scale(1);
-        }
-
-        .adm-confirm-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: var(--amber-lt);
-            border: 2px solid #ffe0a0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.4rem;
-            color: var(--amber);
-        }
-
-        .adm-confirm-title {
-            font-weight: 700;
-            font-size: 1rem;
-            margin-bottom: .4rem;
-            color: var(--text);
-        }
-
-        .adm-confirm-msg {
-            font-size: .84rem;
-            color: #666;
-            margin-bottom: 1.4rem;
-            line-height: 1.5;
-        }
-
-        .adm-confirm-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .adm-confirm-ok {
-            padding: .5rem 1.4rem;
-            border-radius: 8px;
-            background: var(--amber);
-            color: #fff;
-            border: none;
-            font-family: inherit;
-            font-size: .86rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background .15s;
-        }
-
-            .adm-confirm-ok:hover {
-                background: #b7770d;
-            }
-
-        .adm-confirm-cancel {
-            padding: .5rem 1.2rem;
-            border-radius: 8px;
-            background: var(--bg);
-            color: var(--text);
-            border: 1.5px solid var(--border);
-            font-family: inherit;
-            font-size: .86rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background .15s;
-        }
-
-            .adm-confirm-cancel:hover {
-                background: var(--border);
-            }
     </style>
 </head>
 <body>
@@ -567,22 +464,6 @@
                 el.className = `adm-toast ${type} show`;
                 clearTimeout(toastTimer);
                 toastTimer = setTimeout(() => { el.classList.remove("show"); }, 3200);
-            }
-
-            // ── Confirm dialog ────────────────────────────────────────
-            window.closeConfirm = function () {
-                document.getElementById("confirmBackdrop").classList.remove("show");
-            };
-
-            function showConfirm(title, msg, onOk) {
-                document.getElementById("confirmTitle").textContent = title;
-                document.getElementById("confirmMsg").textContent = msg;
-                const backdrop = document.getElementById("confirmBackdrop");
-                const okBtn = document.getElementById("confirmOkBtn");
-                const fresh = okBtn.cloneNode(true);
-                fresh.addEventListener("click", () => { closeConfirm(); onOk(); });
-                okBtn.parentNode.replaceChild(fresh, okBtn);
-                backdrop.classList.add("show");
             }
 
             // ── Load table ────────────────────────────────────────────
@@ -718,11 +599,6 @@
                 clearTimeout(debTimer);
                 debTimer = setTimeout(() => load(1), 400);
             };
-
-            // ── Close confirm on backdrop click ───────────────────────
-            document.getElementById("confirmBackdrop").addEventListener("click", function (e) {
-                if (e.target === this) closeConfirm();
-            });
 
             load(1);
         })();
