@@ -1,0 +1,641 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liên hệ – Book Store</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f5f7fa;
+            color: #1a1a1a;
+        }
+
+        #header-placeholder {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* ── Page layout ── */
+        .ct-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 4rem;
+        }
+
+        /* ── Hero ── */
+        .ct-hero {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .ct-hero-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: #edf7e8;
+            border: 2px solid #b7e4a0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            color: #6ab04c;
+            margin: 0 auto 1.1rem;
+        }
+
+        .ct-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: .5rem;
+            color: #1a1a1a;
+        }
+
+        .ct-hero p {
+            font-size: .93rem;
+            color: #6b7a8d;
+            max-width: 480px;
+            margin: 0 auto;
+            line-height: 1.65;
+        }
+
+        /* ── Grid ── */
+        .ct-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        @media (max-width: 767px) {
+            .ct-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Info cards ── */
+        .ct-info-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1.5px solid #e8edf2;
+            padding: 1.4rem 1.3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .ct-info-title {
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #8a9bb0;
+            margin-bottom: .2rem;
+        }
+
+        .ct-info-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .ct-info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            background: #edf7e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .95rem;
+            color: #6ab04c;
+            flex-shrink: 0;
+        }
+
+        .ct-info-row-content {
+        }
+
+        .ct-info-row-label {
+            font-size: .72rem;
+            color: #8a9bb0;
+            margin-bottom: 2px;
+        }
+
+        .ct-info-row-val {
+            font-size: .88rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.4;
+        }
+
+            .ct-info-row-val a {
+                color: #1a1a1a;
+                text-decoration: none;
+                transition: color .15s;
+            }
+
+                .ct-info-row-val a:hover {
+                    color: #6ab04c;
+                }
+
+        .ct-divider {
+            border: none;
+            border-top: 1px solid #f0f3f7;
+            margin: .2rem 0;
+        }
+
+        .ct-social-label {
+            font-size: .72rem;
+            color: #8a9bb0;
+            margin-bottom: .6rem;
+        }
+
+        .ct-socials {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ct-social-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: transform .15s, opacity .15s;
+            border: 1.5px solid #e8edf2;
+        }
+
+            .ct-social-btn:hover {
+                transform: translateY(-2px);
+                opacity: .85;
+            }
+
+        .ct-social-fb {
+            background: #1877f2;
+            color: #fff;
+            border-color: #1877f2;
+        }
+
+        .ct-social-ig {
+            background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fd5949 45%, #d6249f 60%, #285aeb 90%);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .ct-social-yt {
+            background: #ff0000;
+            color: #fff;
+            border-color: #ff0000;
+        }
+
+        .ct-social-tiktok {
+            background: #010101;
+            color: #fff;
+            border-color: #333;
+        }
+
+        /* ── Form card ── */
+        .ct-form-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1.5px solid #e8edf2;
+            padding: 2rem 1.8rem;
+        }
+
+        .ct-form-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: .35rem;
+        }
+
+        .ct-form-sub {
+            font-size: .83rem;
+            color: #8a9bb0;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .ct-field {
+            margin-bottom: 1rem;
+        }
+
+        .ct-label {
+            display: block;
+            font-size: .78rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: .4rem;
+        }
+
+            .ct-label .req {
+                color: #e74c3c;
+                margin-left: 2px;
+            }
+
+        .ct-input {
+            width: 100%;
+            border: 1.5px solid #e8edf2;
+            border-radius: 10px;
+            padding: .6rem .9rem;
+            font-size: .88rem;
+            font-family: 'DM Sans', sans-serif;
+            color: #1a1a1a;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            box-sizing: border-box;
+            background: #fafbfc;
+        }
+
+            .ct-input:focus {
+                border-color: #6ab04c;
+                box-shadow: 0 0 0 3px rgba(106,176,76,.1);
+                background: #fff;
+            }
+
+            .ct-input.error {
+                border-color: #e74c3c;
+                box-shadow: 0 0 0 3px rgba(231,76,60,.08);
+            }
+
+        .ct-input-err {
+            font-size: .75rem;
+            color: #e74c3c;
+            margin-top: 4px;
+            display: none;
+        }
+
+        textarea.ct-input {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .ct-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media(max-width:480px) {
+            .ct-row-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ct-topic-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .ct-topic-chip {
+            border: 1.5px solid #e8edf2;
+            border-radius: 9px;
+            padding: .5rem .8rem;
+            font-size: .8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #4a5568;
+            transition: all .15s;
+            background: #fafbfc;
+        }
+
+            .ct-topic-chip:hover {
+                border-color: #6ab04c;
+                color: #6ab04c;
+                background: #f0fff4;
+            }
+
+            .ct-topic-chip.selected {
+                border-color: #6ab04c;
+                background: #edf7e8;
+                color: #4e8a35;
+                font-weight: 600;
+            }
+
+            .ct-topic-chip i {
+                font-size: .85rem;
+            }
+
+        .ct-submit-btn {
+            width: 100%;
+            background: #6ab04c;
+            color: #fff;
+            border: none;
+            border-radius: 11px;
+            padding: .85rem;
+            font-size: .93rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background .15s, transform .1s;
+            margin-top: 1.2rem;
+        }
+
+            .ct-submit-btn:hover {
+                background: #4e8a35;
+            }
+
+            .ct-submit-btn:active {
+                transform: scale(.99);
+            }
+
+            .ct-submit-btn:disabled {
+                background: #a8d090;
+                cursor: not-allowed;
+            }
+
+        /* ── Success state ── */
+        .ct-success {
+            display: none;
+            text-align: center;
+            padding: 2.5rem 1rem;
+        }
+
+        .ct-success-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #edf7e8;
+            border: 3px solid #b7e4a0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #6ab04c;
+            margin: 0 auto 1.2rem;
+            animation: ctBounce .4s ease;
+        }
+
+        @keyframes ctBounce {
+            0% {
+                transform: scale(.5);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .ct-success h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            margin-bottom: .5rem;
+        }
+
+        .ct-success p {
+            font-size: .86rem;
+            color: #6b7a8d;
+            margin-bottom: 1.4rem;
+            line-height: 1.6;
+        }
+
+        .ct-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: #edf7e8;
+            color: #4e8a35;
+            border: 1.5px solid #b7e4a0;
+            border-radius: 10px;
+            padding: .55rem 1.2rem;
+            font-size: .86rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background .15s;
+        }
+
+            .ct-back-btn:hover {
+                background: #d4f0c4;
+                color: #3a6e27;
+            }
+    </style>
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+
+    <div class="ct-page">
+
+        <!-- Hero -->
+        <div class="ct-hero">
+            <div class="ct-hero-icon"><i class="bi bi-envelope-heart-fill"></i></div>
+            <h1>Liên hệ với chúng tôi</h1>
+            <p>Có câu hỏi về đơn hàng, sách, hoặc dịch vụ? Chúng tôi luôn sẵn sàng hỗ trợ bạn.</p>
+        </div>
+
+        <div class="ct-grid">
+
+            <!-- Cột trái: Thông tin liên hệ -->
+            <div class="ct-info-card">
+                <div class="ct-info-title">Thông tin liên hệ</div>
+
+                <div class="ct-info-row">
+                    <div class="ct-info-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                    <div class="ct-info-row-content">
+                        <div class="ct-info-row-label">Địa chỉ</div>
+                        <div class="ct-info-row-val">123 Đường Sách, Q.1<br>TP. Hồ Chí Minh</div>
+                    </div>
+                </div>
+
+                <hr class="ct-divider">
+
+                <div class="ct-info-row">
+                    <div class="ct-info-icon"><i class="bi bi-telephone-fill"></i></div>
+                    <div class="ct-info-row-content">
+                        <div class="ct-info-row-label">Hotline</div>
+                        <div class="ct-info-row-val"><a href="tel:19001234">1900 1234</a></div>
+                    </div>
+                </div>
+
+                <hr class="ct-divider">
+
+                <div class="ct-info-row">
+                    <div class="ct-info-icon"><i class="bi bi-envelope-fill"></i></div>
+                    <div class="ct-info-row-content">
+                        <div class="ct-info-row-label">Email</div>
+                        <div class="ct-info-row-val"><a href="mailto:support@bookstore.vn">support@bookstore.vn</a></div>
+                    </div>
+                </div>
+
+                <hr class="ct-divider">
+
+                <div class="ct-info-row">
+                    <div class="ct-info-icon"><i class="bi bi-clock-fill"></i></div>
+                    <div class="ct-info-row-content">
+                        <div class="ct-info-row-label">Giờ làm việc</div>
+                        <div class="ct-info-row-val">Thứ 2 – Thứ 7<br>8:00 – 21:00</div>
+                    </div>
+                </div>
+
+                <hr class="ct-divider">
+
+                <div>
+                    <div class="ct-social-label">Theo dõi chúng tôi</div>
+                    <div class="ct-socials">
+                        <a href="https://facebook.com/yourpage" target="_blank" rel="noopener" class="ct-social-btn ct-social-fb" title="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="https://instagram.com/yourpage" target="_blank" rel="noopener" class="ct-social-btn ct-social-ig" title="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="https://youtube.com/@yourpage" target="_blank" rel="noopener" class="ct-social-btn ct-social-yt" title="YouTube"><i class="bi bi-youtube"></i></a>
+                        <a href="https://tiktok.com/@yourpage" target="_blank" rel="noopener" class="ct-social-btn ct-social-tiktok" title="TikTok"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Form -->
+            <div class="ct-form-card">
+
+                <!-- Form -->
+                <div id="ctFormWrap">
+                    <div class="ct-form-title">Gửi tin nhắn cho chúng tôi</div>
+                    <div class="ct-form-sub">Điền vào form bên dưới, chúng tôi sẽ phản hồi trong vòng 24 giờ làm việc.</div>
+
+                    <!-- Chủ đề -->
+                    <div class="ct-field">
+                        <label class="ct-label">Chủ đề <span class="req">*</span></label>
+                        <div class="ct-topic-grid" id="ctTopicGrid">
+                            <div class="ct-topic-chip" data-val="order" onclick="selectTopic(this)"><i class="bi bi-bag-check"></i>Đơn hàng</div>
+                            <div class="ct-topic-chip" data-val="book" onclick="selectTopic(this)"><i class="bi bi-journals"></i>Tìm sách</div>
+                            <div class="ct-topic-chip" data-val="return" onclick="selectTopic(this)"><i class="bi bi-arrow-return-left"></i>Đổi / Trả hàng</div>
+                            <div class="ct-topic-chip" data-val="other" onclick="selectTopic(this)"><i class="bi bi-chat-dots"></i>Khác</div>
+                        </div>
+                        <div id="ctTopicErr" class="ct-input-err">Vui lòng chọn chủ đề.</div>
+                    </div>
+
+                    <!-- Tên + Email -->
+                    <div class="ct-row-2">
+                        <div class="ct-field">
+                            <label class="ct-label" for="ctName">Họ và tên <span class="req">*</span></label>
+                            <input id="ctName" class="ct-input" type="text" placeholder="Nguyễn Văn A">
+                            <div id="ctNameErr" class="ct-input-err">Vui lòng nhập họ tên.</div>
+                        </div>
+                        <div class="ct-field">
+                            <label class="ct-label" for="ctEmail">Email <span class="req">*</span></label>
+                            <input id="ctEmail" class="ct-input" type="email" placeholder="email@example.com">
+                            <div id="ctEmailErr" class="ct-input-err">Email không hợp lệ.</div>
+                        </div>
+                    </div>
+
+                    <!-- SĐT (tùy chọn) -->
+                    <div class="ct-field">
+                        <label class="ct-label" for="ctPhone">Số điện thoại <span style="color:#8a9bb0;font-weight:400">(tuỳ chọn)</span></label>
+                        <input id="ctPhone" class="ct-input" type="tel" placeholder="0901 234 567">
+                    </div>
+
+                    <!-- Nội dung -->
+                    <div class="ct-field">
+                        <label class="ct-label" for="ctMsg">Nội dung <span class="req">*</span></label>
+                        <textarea id="ctMsg" class="ct-input" placeholder="Mô tả chi tiết vấn đề bạn gặp phải…"></textarea>
+                        <div id="ctMsgErr" class="ct-input-err">Vui lòng nhập nội dung.</div>
+                    </div>
+
+                    <button id="ctSubmitBtn" class="ct-submit-btn" onclick="ctSubmit()">
+                        <i class="bi bi-send-fill"></i> Gửi tin nhắn
+                    </button>
+                </div>
+
+                <!-- Success state -->
+                <div class="ct-success" id="ctSuccess">
+                    <div class="ct-success-icon"><i class="bi bi-check-lg"></i></div>
+                    <h3>Đã gửi thành công!</h3>
+                    <p>Cảm ơn bạn đã liên hệ. Chúng tôi sẽ phản hồi qua email của bạn trong vòng 24 giờ làm việc.</p>
+                    <a href="../html/index.html" class="ct-back-btn">
+                        <i class="bi bi-house"></i> Về trang chủ
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/Header.js"></script>
+    <script>
+    const API = "https://localhost:7204/api";
+    let selectedTopic = "";
+
+    function selectTopic(el) {
+        document.querySelectorAll(".ct-topic-chip").forEach(c => c.classList.remove("selected"));
+        el.classList.add("selected");
+        selectedTopic = el.dataset.val;
+        document.getElementById("ctTopicErr").style.display = "none";
+        document.getElementById("ctTopicGrid").style.borderColor = "";
+    }
+
+    function ctSetErr(inputId, errId, show) {
+        const inp = document.getElementById(inputId);
+        const err = document.getElementById(errId);
+        if (show) { inp?.classList.add("error"); if (err) err.style.display = "block"; }
+        else       { inp?.classList.remove("error"); if (err) err.style.display = "none"; }
+    }
+
+    async function ctSubmit() {
+        const name    = document.getElementById("ctName").value.trim();
+        const email   = document.getElementById("ctEmail").value.trim();
+        const phone   = document.getElementById("ctPhone").value.trim();
+        const message = document.getElementById("ctMsg").value.trim();
+        const btn     = document.getElementById("ctSubmitBtn");
+
+        let valid = true;
+
+        if (!selectedTopic) {
+            document.getElementById("ctTopicErr").style.display = "block";
+            valid = false;
+        }
+        ctSetErr("ctName",  "ctNameErr",  !name);
+        ctSetErr("ctEmail", "ctEmailErr", !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+        ctSetErr("ctMsg",   "ctMsgErr",   !message);
+        if (!name || !email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !message) valid = false;
+
+        if (!valid) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang gửi…';
+
+        try {
+            const res = await fetch(`${API}/contact/send`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, phone, topic: selectedTopic, message })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gửi thất bại.");
+
+            // Hiện success
+            document.getElementById("ctFormWrap").style.display = "none";
+            document.getElementById("ctSuccess").style.display  = "block";
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send-fill"></i> Gửi tin nhắn';
+            alert("Lỗi: " + e.message);
+        }
+    }
+
+    // Clear error on input
+    ["ctName","ctEmail","ctMsg"].forEach(id => {
+        document.getElementById(id)?.addEventListener("input", () => {
+            ctSetErr(id, id + "Err", false);
+        });
+    });
+    </script>
+</body>
+</html>
