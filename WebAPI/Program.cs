@@ -16,6 +16,8 @@ using WebAPI.Services.Books;
 using WebAPI.Services.Cart;
 using WebAPI.Services.Payments.VnPay;
 using WebAPI.Services.Reviews;
+using WebAPI.Services.Chat;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,7 +32,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("https://localhost:7021")
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -54,6 +56,8 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // đăng ký MemoryCache cho OtpService
 builder.Services.AddMemoryCache();
