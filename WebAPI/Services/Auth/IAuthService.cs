@@ -4,10 +4,10 @@ namespace WebAPI.Services.Auth
 {
     public interface IAuthService
     {
-        Task<ServiceResult> RegisterSendOtpAsync(SendOtpDto dto);
+        Task<ServiceResult> RegisterSendOtpAsync(OtpRequest dto);
         Task<ServiceResult> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto);
         Task<ServiceResult<AuthResponseDto>> LoginAsync(LoginDto dto);
-        Task<ServiceResult> ForgotSendOtpAsync(SendOtpDto dto);
+        Task<ServiceResult> ForgotSendOtpAsync(OtpRequest dto);
         Task<ServiceResult> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto);
         Task<ServiceResult<UserProfileDto>> GetMeAsync(int accountId);
         Task<ServiceResult<UpdateProfileResponseDto>> UpdateMeAsync(int accountId, int userId, UpdateProfileDto dto);
