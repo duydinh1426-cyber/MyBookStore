@@ -59,10 +59,10 @@ namespace WebAPI.Services.Auth
         public async Task<ServiceResult> RegisterSendOtpAsync(OtpRequest dto)
         {
             if (string.IsNullOrEmpty(dto.Email) || !dto.Email.Contains('@'))
-                return ServiceResult.Failure("Email không hợp lệ.");
+                return ServiceResult.Failure("Email không hợp lệ.",400);
 
             if (await _repo.IsEmailExistsAsync(dto.Email))
-                return ServiceResult.Failure("Email đã tồn tại trên hệ thống.");
+                return ServiceResult.Failure("Email đã tồn tại trên hệ thống.",409);
 
             var otp = _otp.GenerateOtp(dto.Email, OtpPurpose.REGISTER);
             await _email.SendOtpAsync(dto.Email, otp, OtpPurpose.REGISTER);
@@ -72,10 +72,10 @@ namespace WebAPI.Services.Auth
         public async Task<ServiceResult> RegisterVerifyOtpAsync(VerifyRegisterOtpDto dto)
         {
             if (!_otp.VerifyOtp(dto.Email, dto.Otp, OtpPurpose.REGISTER))
-                return ServiceResult.Failure("Mã OTP không chính xác hoặc đã hết hạn.");
+                return ServiceResult.Failure("Mã OTP không chính xác hoặc đã hết hạn.",400);
 
             if (dto.Password.Length < 6)
-                return ServiceResult.Failure("Mật khẩu phải có ít nhất 6 ký tự");
+                return ServiceResult.Failure("Mật khẩu phải có ít nhất 6 ký tự", 400);
 
             var account = new Account
             {
@@ -118,7 +118,7 @@ namespace WebAPI.Services.Auth
         {
             var account = await _repo.GetByEmailAsync(dto.Email);
             if (account == null)
-                return ServiceResult.Failure("Email không tồn tại trên hệ thống");
+                return ServiceResult.Failure("Email không tồn tại trên hệ thống", 404);
 
             var otp = _otp.GenerateOtp(dto.Email, OtpPurpose.FORGOT_PASSWORD);
             await _email.SendOtpAsync(dto.Email, otp, OtpPurpose.FORGOT_PASSWORD);
@@ -129,11 +129,11 @@ namespace WebAPI.Services.Auth
         public async Task<ServiceResult> ForgotVerifyOtpAsync(VerifyForgotOtpDto dto)
         {
             if (!_otp.VerifyOtp(dto.Email, dto.Otp, OtpPurpose.FORGOT_PASSWORD))
-                return ServiceResult.Failure("Mã OTP không hợp lệ.");
+                return ServiceResult.Failure("Mã OTP không hợp lệ.", 400);
 
             var account = await _repo.GetByEmailAsync(dto.Email);
             if (account == null) 
-                return ServiceResult.Failure("Tài khoản không tồn tại.");
+                return ServiceResult.Failure("Tài khoản không tồn tại.",404);
 
             account.Password = HashPassword(dto.NewPassword);
             _repo.UpdateAccount(account);
@@ -145,7 +145,7 @@ namespace WebAPI.Services.Auth
         {
             var account = await _repo.GetByIdAsync(accountId);
             if (account == null)
-                return ServiceResult<UserProfileDto>.Failure("Không tìm thấy tài khoản");
+                return ServiceResult<UserProfileDto>.Failure("Không tìm thấy tài khoản",404);
 
             var customer = account.Customers.FirstOrDefault();
             var admin = account.Admins.FirstOrDefault();
@@ -163,16 +163,16 @@ namespace WebAPI.Services.Auth
         public async Task<ServiceResult<UpdateProfileResponseDto>> UpdateMeAsync(int accountId, int userId, UpdateProfileDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
-                return ServiceResult<UpdateProfileResponseDto>.Failure("Tên không được để trống.");
+                return ServiceResult<UpdateProfileResponseDto>.Failure("Tên không được để trống.",400);
 
             var account = await _repo.GetByIdAsync(accountId);
             if (account == null)
-                return ServiceResult<UpdateProfileResponseDto>.Failure("Tài khoản không tồn tại trong hệ thống.");
+                return ServiceResult<UpdateProfileResponseDto>.Failure("Tài khoản không tồn tại trong hệ thống.",404);
 
             if (!string.IsNullOrWhiteSpace(dto.Email) && dto.Email != account.Email)
             {
                 if (await _repo.IsEmailExistsAsync(dto.Email))
-                    return ServiceResult<UpdateProfileResponseDto>.Failure("Email không được để trống.");
+                    return ServiceResult<UpdateProfileResponseDto>.Failure("Email không được để trống.", 400);
                 account.Email = dto.Email.Trim();
             }
 
@@ -200,10 +200,10 @@ namespace WebAPI.Services.Auth
         {
             var account = await _repo.GetByIdAsync(accountId);
             if (account == null) 
-                return ServiceResult.Failure("Tài khoản không tồn tại.");
+                return ServiceResult.Failure("Tài khoản không tồn tại.", 400);
 
             if (account.Password != HashPassword(dto.CurrentPassword))
-                return ServiceResult.Failure("Mật khẩu hiện tại không đúng.");
+                return ServiceResult.Failure("Mật khẩu hiện tại không đúng.",401);
 
             var otp = _otp.GenerateOtp(account.Email!, OtpPurpose.CHANGE_PASSWORD);
             await _email.SendOtpAsync(account.Email!, otp, OtpPurpose.CHANGE_PASSWORD);
@@ -214,16 +214,16 @@ namespace WebAPI.Services.Auth
         {
             var account = await _repo.GetByIdAsync(accountId);
             if (account == null) 
-                return ServiceResult.Failure("Tài khoản không tồn tại.");
+                return ServiceResult.Failure("Tài khoản không tồn tại.",404);
 
             if (!_otp.VerifyOtp(account.Email!, dto.Otp, OtpPurpose.CHANGE_PASSWORD))
-                return ServiceResult.Failure("Mã OTP không hợp lệ.");
+                return ServiceResult.Failure("Mã OTP không hợp lệ.", 400);
 
             if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 6)
-                return ServiceResult.Failure("Mật khẩu mới tối thiểu 6 ký tự.");
+                return ServiceResult.Failure("Mật khẩu mới tối thiểu 6 ký tự.", 400);
 
             if (dto.NewPassword != dto.ConfirmPassword)
-                return ServiceResult.Failure("Xác nhận mật khẩu không khớp.");
+                return ServiceResult.Failure("Xác nhận mật khẩu không khớp.", 400);
 
             account.Password = HashPassword(dto.NewPassword);
             _repo.UpdateAccount(account);
@@ -234,17 +234,17 @@ namespace WebAPI.Services.Auth
         public async Task<ServiceResult> ChangeEmailSendOtpAsync(int accountId, string newEmail)
         {
             if (string.IsNullOrEmpty(newEmail) || !newEmail.Contains('@'))
-                return ServiceResult.Failure("Email không hợp lệ.");
+                return ServiceResult.Failure("Email không hợp lệ.", 400);
 
             var account = await _repo.GetByIdAsync(accountId);
             if (account == null) 
-                return ServiceResult.Failure("Tài khoản không tồn tại.");
+                return ServiceResult.Failure("Tài khoản không tồn tại.", 404);
 
             if (newEmail == account.Email) 
-                return ServiceResult.Failure("Email mới phải khác email hiện tại.");
+                return ServiceResult.Failure("Email mới phải khác email hiện tại.",400);
 
             if (await _repo.IsEmailExistsAsync(newEmail))
-                return ServiceResult.Failure("Email này đã được sử dụng bởi tài khoản khác.");
+                return ServiceResult.Failure("Email này đã được sử dụng bởi tài khoản khác.", 409);
 
             var otp = _otp.GenerateOtp(newEmail, OtpPurpose.CHANGE_EMAIL);
             await _email.SendOtpAsync(newEmail, otp, OtpPurpose.CHANGE_EMAIL);
@@ -254,14 +254,14 @@ namespace WebAPI.Services.Auth
         public async Task<ServiceResult<ChangeEmailResponseDto>> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp)
         {
             if (!_otp.VerifyOtp(newEmail, otp, OtpPurpose.CHANGE_EMAIL))
-                return ServiceResult<ChangeEmailResponseDto>.Failure("Mã OTP không hợp lệ hoặc đã hết hạn.");
+                return ServiceResult<ChangeEmailResponseDto>.Failure("Mã OTP không hợp lệ hoặc đã hết hạn.", 400);
 
             var account = await _repo.GetByIdAsync(accountId);
             if (account == null) 
-                return ServiceResult<ChangeEmailResponseDto>.Failure("Tài khoản không tồn tại.");
+                return ServiceResult<ChangeEmailResponseDto>.Failure("Tài khoản không tồn tại.", 404);
 
             if (await _repo.IsEmailExistsAsync(newEmail))
-                return ServiceResult<ChangeEmailResponseDto>.Failure("Email này đã được sử dụng.");
+                return ServiceResult<ChangeEmailResponseDto>.Failure("Email này đã được sử dụng.", 409);
 
             account.Email = newEmail.Trim();
             _repo.UpdateAccount(account);

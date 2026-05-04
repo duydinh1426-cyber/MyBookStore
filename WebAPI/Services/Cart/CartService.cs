@@ -44,20 +44,20 @@ namespace WebAPI.Services.Cart
         public async Task<ServiceResult> AddToCartAsync(int userId, AddCartDto dto)
         {
             if (dto.Quantity <= 0)
-                return ServiceResult.Failure("Số lượng phải lớn hơn 0.");
+                return ServiceResult.Failure("Số lượng phải lớn hơn 0.",400);
 
             var book = await _bookRepo.GetByIdAsync(dto.BookId);
             if (book == null)
-                return ServiceResult.Failure("Sách không tồn tại.");
+                return ServiceResult.Failure("Sách không tồn tại.", 404);
             
             if (book.NumberStock <= 0)
-                return ServiceResult.Failure("Sách hiện đã hết hàng.");
+                return ServiceResult.Failure("Sách hiện đã hết hàng.", 400);
 
             var cartItem = await _repo.GetCartItemAsync(userId, dto.BookId);
             var targetQty = (cartItem?.Quantity ?? 0) + dto.Quantity;
 
             if (targetQty > book.NumberStock)
-                return ServiceResult.Failure($"Chỉ còn {book.NumberStock} cuốn trong kho.");
+                return ServiceResult.Failure($"Chỉ còn {book.NumberStock} cuốn trong kho.",400);
 
             if (cartItem == null)
             {
@@ -88,7 +88,7 @@ namespace WebAPI.Services.Cart
         {
             var cartItem = await _repo.GetCartItemAsync(userId, bookId);
             if (cartItem == null)
-                return ServiceResult.Failure("Sách không có trong giỏ hàng.");
+                return ServiceResult.Failure("Sách không có trong giỏ hàng.", 404);
 
             if (dto.Quantity <= 0)
             {
@@ -99,7 +99,7 @@ namespace WebAPI.Services.Cart
             else
             {
                 if (dto.Quantity > cartItem.Book.NumberStock)
-                    return ServiceResult.Failure($"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.");
+                    return ServiceResult.Failure($"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.",400);
 
                 cartItem.Quantity = dto.Quantity;
                 cartItem.UpdatedAt = TimeHelper.NowVietnam();
@@ -108,7 +108,7 @@ namespace WebAPI.Services.Cart
 
             var success = await _repo.SaveChangesAsync();
             if (!success)
-                return ServiceResult.Failure("Lỗi hệ thống khi cập nhật giỏ hàng.");
+                return ServiceResult.Failure("Lỗi hệ thống khi cập nhật giỏ hàng.", 500);
 
             return ServiceResult.Success("Cập nhật giỏ hàng thành công.");
         }
@@ -117,7 +117,7 @@ namespace WebAPI.Services.Cart
         {
             var cartItem = await _repo.GetCartItemAsync(userId, bookId);
             if (cartItem == null)
-                return ServiceResult.Failure("Sách không tồn tại trong giỏ hàng.");
+                return ServiceResult.Failure("Sách không tồn tại trong giỏ hàng.", 404);
 
             _repo.Delete(cartItem);
             var success = await _repo.SaveChangesAsync();
@@ -132,7 +132,7 @@ namespace WebAPI.Services.Cart
         {
             var result = await _repo.ClearCartByUserIdAsync(userId);
             if (!result)
-                return ServiceResult.Failure("Lỗi khi xóa giỏ hàng.");
+                return ServiceResult.Failure("Lỗi khi xóa giỏ hàng.",500);
 
             return ServiceResult.Success("Đã xóa toàn bộ giỏ hàng.");
 

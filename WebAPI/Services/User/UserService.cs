@@ -54,7 +54,7 @@ namespace WebAPI.Services.User
         {
             var account = await _repo.GetDetailByIdAsync(id);
             if (account == null)
-                return ServiceResult<object>.Failure("Không tìm thấy người dùng");
+                return ServiceResult<object>.Failure("Không tìm thấy người dùng",404);
 
             var customer = account.Customers.FirstOrDefault();
             var totalOrders = customer?.Orders?.Count ?? 0;

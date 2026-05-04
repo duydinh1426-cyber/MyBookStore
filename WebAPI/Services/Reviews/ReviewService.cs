@@ -15,7 +15,7 @@ namespace WebAPI.Services.Reviews
         public async Task<ServiceResult<object>> GetByBookAsync(int bookId, int page, int pageSize, int? rating)
         {
             if (!await _repo.BookExistsAsync(bookId))
-                return ServiceResult<object>.Failure("Sách không tồn tại.");
+                return ServiceResult<object>.Failure("Sách không tồn tại.",404);
 
             var query = _repo.GetQuery().Where(r => r.BookId == bookId);
             if (rating.HasValue) query = query.Where(r => r.Rating == rating.Value);
@@ -72,16 +72,16 @@ namespace WebAPI.Services.Reviews
         public async Task<ServiceResult<object>> CreateAsync(int userId, CreateReviewDto dto)
         {
             if (dto.rating < 1 || dto.rating > 5)
-                return ServiceResult<object>.Failure("Đánh giá phải từ 1 đến 5 sao.");
+                return ServiceResult<object>.Failure("Đánh giá phải từ 1 đến 5 sao.",400);
 
             if (!await _repo.BookExistsAsync(dto.bookId))
-                return ServiceResult<object>.Failure("Sách không tồn tại.");
+                return ServiceResult<object>.Failure("Sách không tồn tại.", 404);
 
             if (!await _repo.HasPurchasedAsync(userId, dto.bookId))
-                return ServiceResult<object>.Failure("Bạn cần mua sản phẩm này trước khi đánh giá.");
+                return ServiceResult<object>.Failure("Bạn cần mua sản phẩm này trước khi đánh giá.",403);
 
             if (await _repo.GetUserReviewAsync(userId, dto.bookId) != null)
-                return ServiceResult<object>.Failure("Bạn đã đánh giá sản phẩm này rồi.");
+                return ServiceResult<object>.Failure("Bạn đã đánh giá sản phẩm này rồi.",409);
 
             var review = new Review
             {
@@ -107,7 +107,7 @@ namespace WebAPI.Services.Reviews
         {
             var review = await _repo.GetByIdAsync(id);
             if (review == null) 
-                return ServiceResult.Failure("Không tìm thấy đánh giá.");
+                return ServiceResult.Failure("Không tìm thấy đánh giá.",404);
 
             var bookId = review.BookId;
             _repo.Delete(review);
