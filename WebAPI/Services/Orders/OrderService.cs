@@ -32,11 +32,11 @@ namespace WebAPI.Services.Orders
         {
             var cartItems = await _repo.GetCartItemsAsync(userId);
             if (!cartItems.Any())
-                return ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.");
+                return ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.",400);
 
             var method = dto.PaymentMethod.ToLower();
             if (method != "cod" && method != "vnpay" && method != "vietqr")
-                return ServiceResult<OrderResponseDto>.Failure("Phương thức thanh toán không hợp lệ.");
+                return ServiceResult<OrderResponseDto>.Failure("Phương thức thanh toán không hợp lệ.", 400);
 
             decimal totalCost = 0;
             var orderItems = new List<OrderItem>();
@@ -80,7 +80,7 @@ namespace WebAPI.Services.Orders
             _repo.RemoveCartItems(cartItems);
 
             if (!await _repo.SaveChangesAsync())
-                return ServiceResult<OrderResponseDto>.Failure("Lỗi hệ thống khi xử lý đơn hàng.");
+                return ServiceResult<OrderResponseDto>.Failure("Lỗi hệ thống khi xử lý đơn hàng.", 500);
 
             var data = new OrderResponseDto
             {
@@ -99,7 +99,7 @@ namespace WebAPI.Services.Orders
         {
             var order = await _repo.GetOrderByIdAsync(id);
             if (order == null)
-                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.", 404);
 
             if (!isAdmin && order.UserId != userId)
                 return ServiceResult<object>.Failure("Bạn không có quyền truy cập.", 403);
@@ -224,7 +224,7 @@ namespace WebAPI.Services.Orders
         {
             var order = await _repo.GetOrderByIdAsync(id);
             if (order == null)
-                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.", 404);
 
             if (order.UserId != userId)
                 return ServiceResult<object>.Failure("Bạn không có quyền truy cập.", 403);
@@ -232,7 +232,7 @@ namespace WebAPI.Services.Orders
             var current = order.Status.ToEnum();
             if (!current.CanTransitionTo(OrderStatus.cancelled))
                 return ServiceResult<object>.Failure(
-                    $"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'.");
+                    $"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'.",400);
 
             RestoreStock(order);
             order.Status    = OrderStatus.cancelled.ToValue();
@@ -244,7 +244,7 @@ namespace WebAPI.Services.Orders
                     string.IsNullOrWhiteSpace(dto?.BankAccountName)   ||
                     string.IsNullOrWhiteSpace(dto?.BankName))
                     return ServiceResult<object>.Failure(
-                        "Vui lòng nhập đầy đủ thông tin ngân hàng để hoàn tiền.");
+                        "Vui lòng nhập đầy đủ thông tin ngân hàng để hoàn tiền.", 404);
 
                 _repo.AddRefundRequest(new RefundRequest
                 {
@@ -281,18 +281,18 @@ namespace WebAPI.Services.Orders
         {
             var order = await _repo.GetOrderByIdAsync(id);
             if (order == null)
-                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.",404);
 
             var current = order.Status.ToEnum();
             var target  = dto.GetStatus();
 
             if (!current.CanTransitionTo(target))
                 return ServiceResult<object>.Failure(
-                    $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'.");
+                    $"Không thể chuyển từ '{current.ToLabel()}' sang '{target.ToLabel()}'.", 400);
 
             if (target == OrderStatus.confirmed && IsOnlinePayment(order.PaymentMethod) && !order.IsPaid)
                 return ServiceResult<object>.Failure(
-                    "Không thể xác nhận đơn hàng vì khách chưa thanh toán.");
+                    "Không thể xác nhận đơn hàng vì khách chưa thanh toán.", 400);
 
             if (target == OrderStatus.cancelled)
             {
@@ -397,14 +397,14 @@ namespace WebAPI.Services.Orders
                 return ServiceResult.Failure("NotFound", 404);
 
             if (r.Status == "completed")
-                return ServiceResult.Failure("Yêu cầu này đã được xử lý.");
+                return ServiceResult.Failure("Yêu cầu này đã được xử lý.",400);
 
             r.Status     = "completed";
             r.AdminNote  = adminNote?.Trim();
             r.ResolvedAt = TimeHelper.NowVietnam();
 
             if (!await _repo.SaveChangesAsync())
-                return ServiceResult.Failure("Lỗi hệ thống.");
+                return ServiceResult.Failure("Lỗi hệ thống.",500);
 
             return ServiceResult.Success("Đã đánh dấu hoàn tiền thành công.");
         }

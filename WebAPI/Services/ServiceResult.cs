@@ -21,6 +21,6 @@
         
         public static new ServiceResult<T> Failure(string message, int code = 400)
             => new() { IsSuccess = false, Message = message, StatusCode = code };
-
+        
     }
 }

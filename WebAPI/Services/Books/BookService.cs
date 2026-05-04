@@ -117,7 +117,7 @@ namespace WebAPI.Services.Books
         {
             var book = await _repo.GetByIdAsync(id);
             if (book == null)
-                return ServiceResult<BookDetailDto>.Failure("Không tìm thấy sách.");
+                return ServiceResult<BookDetailDto>.Failure("Không tìm thấy sách.",400);
 
             var data = new BookDetailDto(
                 book.BookId,
@@ -142,13 +142,13 @@ namespace WebAPI.Services.Books
         public async Task<ServiceResult<int>> CreateAsync(BookUpsertDto dto)
         {
             if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
-                return ServiceResult<int>.Failure("Thể loại không tồn tại.");
+                return ServiceResult<int>.Failure("Thể loại không tồn tại.", 400);
 
             if (string.IsNullOrWhiteSpace(dto.Title))
-                return ServiceResult<int>.Failure("Tên sách không được để trống.");
+                return ServiceResult<int>.Failure("Tên sách không được để trống.", 400);
 
             if (dto.Price <= 0)
-                return ServiceResult<int>.Failure("Giá sách phải lớn hơn 0.");
+                return ServiceResult<int>.Failure("Giá sách phải lớn hơn 0.", 400);
 
             var book = new Book
             {
@@ -181,10 +181,10 @@ namespace WebAPI.Services.Books
         {
             var book = await _repo.GetByIdAsync(id);
             if (book == null) 
-                return ServiceResult.Failure("Không tìm thấy sách.");
+                return ServiceResult.Failure("Không tìm thấy sách.", 404);
 
             if (dto.CategoryId.HasValue && !await _repo.CategoryExistsAsync(dto.CategoryId.Value))
-                return ServiceResult.Failure("Thể loại không tồn tại.");
+                return ServiceResult.Failure("Thể loại không tồn tại.",400);
             
 
             book.CategoryId = dto.CategoryId;
@@ -211,10 +211,10 @@ namespace WebAPI.Services.Books
         {
             var book = await _repo.GetByIdAsync(id);
             if (book == null) 
-                return ServiceResult.Failure("Không tìm thấy sách.");
+                return ServiceResult.Failure("Không tìm thấy sách.", 400);
 
             if (await _repo.HasOrderItemsAsync(id))
-                return ServiceResult.Failure("Không thể xóa sách đã có trong đơn hàng.");
+                return ServiceResult.Failure("Không thể xóa sách đã có trong đơn hàng.", 409);
             
 
             _repo.Delete(book);

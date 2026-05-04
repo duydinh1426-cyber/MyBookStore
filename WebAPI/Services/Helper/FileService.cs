@@ -22,14 +22,14 @@ namespace WebAPI.Services.Helper
         public async Task<ServiceResult<string>> SaveImageAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                return ServiceResult<string>.Failure("Vui lòng chọn file ảnh.");
+                return ServiceResult<string>.Failure("Vui lòng chọn file ảnh.", 400);
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!_allowedExtensions.Contains(ext))
-                return ServiceResult<string>.Failure("Chỉ chấp nhận JPG, PNG, WEBP, GIF.");
+                return ServiceResult<string>.Failure("Chỉ chấp nhận JPG, PNG, WEBP, GIF.", 400);
 
             if (file.Length > MaxFileSize)
-                return ServiceResult<string>.Failure("Ảnh không được vượt quá 5MB.");
+                return ServiceResult<string>.Failure("Ảnh không được vượt quá 5MB.", 400);
             try
             {
                 var uploadPath = Path.Combine(_env.WebRootPath, ImageFolder);

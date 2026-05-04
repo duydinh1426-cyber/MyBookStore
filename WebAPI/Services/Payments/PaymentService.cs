@@ -22,13 +22,13 @@ namespace WebAPI.Services.Payments
             var order = await _repo.GetOrderByIdAsync(orderId);
 
             if (order == null)
-                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.",404);
             if (order.UserId != userId)
-                return ServiceResult<object>.Failure("Không có quyền truy cập.");
+                return ServiceResult<object>.Failure("Không có quyền truy cập.",403);
             if (order.IsPaid) 
-                return ServiceResult<object>.Failure("Đơn hàng này đã được thanh toán.");
+                return ServiceResult<object>.Failure("Đơn hàng này đã được thanh toán.",400);
             if (order.Status == "cancelled")
-                return ServiceResult<object>.Failure("Đơn hàng đã bị hủy.");
+                return ServiceResult<object>.Failure("Đơn hàng đã bị hủy.", 400);
 
             var model = new PaymentInformationModel
             {
@@ -55,14 +55,14 @@ namespace WebAPI.Services.Payments
             var response = _vnPay.PaymentExecute(query);
 
             if (!response.Success)
-                return ServiceResult<object>.Failure("Chữ ký không hợp lệ.");
+                return ServiceResult<object>.Failure("Chữ ký không hợp lệ.", 400);
 
             if (orderId == 0)
-                return ServiceResult<object>.Failure("Không xác định được đơn hàng.");
+                return ServiceResult<object>.Failure("Không xác định được đơn hàng.", 404);
 
             var order = await _repo.GetOrderByIdAsync(orderId);
             if (order == null)
-                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.");
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.", 404);
 
             var isSuccess = vnpResponseCode == "00";
 
@@ -102,16 +102,16 @@ namespace WebAPI.Services.Payments
             var order = await _repo.GetOrderByIdAsync(orderId);
 
             if (order == null)
-                return ServiceResult.Failure("Không tìm thấy đơn hàng.");
+                return ServiceResult.Failure("Không tìm thấy đơn hàng.", 404);
 
             if (order.IsPaid)
                 return ServiceResult.Failure("Đơn hàng đã thanh toán.");
 
             if (order.Status == "cancelled")
-                return ServiceResult.Failure("Đơn hàng đã bị hủy.");
+                return ServiceResult.Failure("Đơn hàng đã bị hủy.", 400);
 
             if (Math.Abs(order.TotalCost - amount) > 1000)
-                return ServiceResult.Failure("Số tiền không khớp.");
+                return ServiceResult.Failure("Số tiền không khớp.", 400);
 
             order.IsPaid = true;
             order.PaidAt = TimeHelper.NowVietnam();
@@ -119,7 +119,7 @@ namespace WebAPI.Services.Payments
 
             var success = await _repo.SaveChangesAsync();
             if (!success)
-                return ServiceResult.Failure("Lỗi hệ thống.");
+                return ServiceResult.Failure("Lỗi hệ thống.", 500);
 
             return ServiceResult.Success("Thanh toán thành công.");
         }
