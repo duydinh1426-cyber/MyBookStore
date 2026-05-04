@@ -1,5 +1,20 @@
 ﻿namespace WebAPI.DTOs
 {
+<<<<<<< HEAD
+=======
+    public record OtpRequest(string Email);
+
+    public record RegisterVerifyRequest(
+        string Email,
+        string Otp,
+        string Password,
+        string Name,
+        string? Address
+    );
+
+
+
+>>>>>>> f84b213 ( new chatbox)
     public record UserProfileDto(
     int AccountId,
     string Email,
@@ -8,7 +23,11 @@
     bool IsAdmin,
     DateTime CreatedAt
     );
+<<<<<<< HEAD
     public record SendOtpDto(string Email); // gửi OTP đăng ký/quên mk
+=======
+    
+>>>>>>> f84b213 ( new chatbox)
     public record VerifyRegisterOtpDto( // xác thực OTP đăng ký
         string Email,
         string Otp,

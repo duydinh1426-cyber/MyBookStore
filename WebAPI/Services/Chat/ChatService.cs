@@ -22,7 +22,11 @@ public class ChatService(IConfiguration config, IHttpClientFactory httpFactory, 
     public async Task<string> SendMessageAsync(List<ChatMessage> history, string userMessage)
     {
         var apiKey = config["Gemini:ApiKey"];
+<<<<<<< HEAD
         var model = config["Gemini:Model"] ?? "gemini-30-flash-preview";
+=======
+        var model = config["Gemini:Model"] ?? "gemini-2.5-flash";
+>>>>>>> f84b213 ( new chatbox)
         var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
 
         // ── Lấy dữ liệu sách từ DB ────────────────────────────────────
@@ -60,7 +64,11 @@ public class ChatService(IConfiguration config, IHttpClientFactory httpFactory, 
             - Chỉ gợi ý sách có trong danh sách trên (dựa vào BookId)
             - Khi gợi ý sách, luôn nêu tên sách, tác giả, thể loại và giá
             - Nếu khách hỏi về thể loại cụ thể, lọc theo cột Thể loại
+<<<<<<< HEAD
             - Gợi ý tối đa 3-8 cuốn phù hợp nhất
+=======
+            - Gợi ý tối đa 3-5 cuốn phù hợp nhất
+>>>>>>> f84b213 ( new chatbox)
             - Trả lời ngắn gọn, thân thiện bằng tiếng Việt
             - Nếu không có sách phù hợp, thông báo lịch sự
             """;

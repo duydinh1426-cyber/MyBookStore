@@ -14,7 +14,11 @@ namespace WebAPI.Controllers
         public AuthController(IAuthService service) => _service = service;
 
         [HttpPost("register/send-otp")]
+<<<<<<< HEAD
         public async Task<IActionResult> RegisterSendOtp(SendOtpDto dto)
+=======
+        public async Task<IActionResult> RegisterSendOtp(OtpRequest dto)
+>>>>>>> f84b213 ( new chatbox)
         {
             var result = await _service.RegisterSendOtpAsync(dto);
             return HandleResult(result);
@@ -35,7 +39,11 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("forgot-password/send-otp")]
+<<<<<<< HEAD
         public async Task<IActionResult> ForgotSendOtp(SendOtpDto dto)
+=======
+        public async Task<IActionResult> ForgotSendOtp(OtpRequest dto)
+>>>>>>> f84b213 ( new chatbox)
         {
             var result = await _service.ForgotSendOtpAsync(dto);
             return HandleResult(result);

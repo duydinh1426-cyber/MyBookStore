@@ -34,7 +34,10 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("https://localhost:7021")
               .AllowAnyMethod()
               .AllowAnyHeader();
+<<<<<<< HEAD
              
+=======
+>>>>>>> f84b213 ( new chatbox)
     });
 });
 
@@ -58,6 +61,10 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IVnPayService, VnPayService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<IChatService, ChatService>();
+<<<<<<< HEAD
+=======
+
+>>>>>>> f84b213 ( new chatbox)
 // đăng ký MemoryCache cho OtpService
 builder.Services.AddMemoryCache();
 

@@ -69,6 +69,7 @@
         {
             return status == OrderStatus.completed || status == OrderStatus.cancelled;
         }
+<<<<<<< HEAD
 
         public static List<StatusOption> GetStatusList()
         {
@@ -80,6 +81,8 @@
                     code = s.ToValue()
                 }).ToList();
         }
+=======
+>>>>>>> f84b213 ( new chatbox)
     }
 
     public class StatusOption

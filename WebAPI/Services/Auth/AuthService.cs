@@ -56,7 +56,11 @@ namespace WebAPI.Services.Auth
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
+<<<<<<< HEAD
         public async Task<ServiceResult> RegisterSendOtpAsync(SendOtpDto dto)
+=======
+        public async Task<ServiceResult> RegisterSendOtpAsync(OtpRequest dto)
+>>>>>>> f84b213 ( new chatbox)
         {
             if (string.IsNullOrEmpty(dto.Email) || !dto.Email.Contains('@'))
                 return ServiceResult.Failure("Email không hợp lệ.");
@@ -114,7 +118,11 @@ namespace WebAPI.Services.Auth
             return ServiceResult<AuthResponseDto>.Success(response);
         }
 
+<<<<<<< HEAD
         public async Task<ServiceResult> ForgotSendOtpAsync(SendOtpDto dto)
+=======
+        public async Task<ServiceResult> ForgotSendOtpAsync(OtpRequest dto)
+>>>>>>> f84b213 ( new chatbox)
         {
             var account = await _repo.GetByEmailAsync(dto.Email);
             if (account == null)

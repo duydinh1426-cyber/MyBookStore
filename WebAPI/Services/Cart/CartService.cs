@@ -2,6 +2,10 @@
 using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
 using WebAPI.Services.Interfaces;
+<<<<<<< HEAD
+=======
+using WebAPI.Services.Helper;
+>>>>>>> f84b213 ( new chatbox)
 
 namespace WebAPI.Services.Cart
 {
@@ -65,14 +69,23 @@ namespace WebAPI.Services.Cart
                     UserId = userId,
                     BookId = dto.BookId,
                     Quantity = dto.Quantity,
+<<<<<<< HEAD
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
+=======
+                    CreatedAt = TimeHelper.NowVietnam(),
+                    UpdatedAt = TimeHelper.NowVietnam(),
+>>>>>>> f84b213 ( new chatbox)
                 });
             }
             else
             {
                 cartItem.Quantity = targetQty;
+<<<<<<< HEAD
                 cartItem.UpdatedAt = DateTime.UtcNow;
+=======
+                cartItem.UpdatedAt = TimeHelper.NowVietnam();
+>>>>>>> f84b213 ( new chatbox)
                 _repo.Update(cartItem);
             }
 
@@ -101,7 +114,11 @@ namespace WebAPI.Services.Cart
                     return ServiceResult.Failure($"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.");
 
                 cartItem.Quantity = dto.Quantity;
+<<<<<<< HEAD
                 cartItem.UpdatedAt = DateTime.UtcNow;
+=======
+                cartItem.UpdatedAt = TimeHelper.NowVietnam();
+>>>>>>> f84b213 ( new chatbox)
                 _repo.Update(cartItem);
             }
 

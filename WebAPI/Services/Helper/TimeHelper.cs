@@ -1,6 +1,9 @@
 ﻿namespace WebAPI.Services.Helper
 {
+<<<<<<< HEAD
     // Helpers/TimeHelper.cs
+=======
+>>>>>>> f84b213 ( new chatbox)
     public static class TimeHelper
     {
         public static DateTime NowVietnam()
