@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebAPI.Services.Chat;
 
 namespace WebAPI.Controllers;
@@ -9,9 +10,8 @@ public class ChatRequestDto
     public string Message { get; set; } = "";
 }
 
-
-[ApiController]
 [Route("api/chat")]
+[AllowAnonymous]
 public class ChatController(IChatService chatService) : BaseController
 {
     [HttpPost]
