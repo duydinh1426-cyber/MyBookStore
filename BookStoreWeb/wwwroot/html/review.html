@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viết đánh giá – Book Store</title>
+    <title>Đánh giá – Book Store</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&subset=vietnamese&display=swap">
@@ -276,13 +276,210 @@
             min-height: 1.2em;
             margin-bottom: .9rem;
         }
+
+        /* ══ Pending review list ══ */
+        .pr-page {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 2rem 1rem 4rem
+        }
+
+        .pr-page-title {
+            font-family: 'Playfair Display',serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 1.4rem
+        }
+
+            .pr-page-title i {
+                color: #f39c12
+            }
+
+        .pr-order-group {
+            background: #fff;
+            border-radius: 14px;
+            border: 1.5px solid #e8edf2;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow .2s
+        }
+
+            .pr-order-group:hover {
+                box-shadow: 0 4px 20px rgba(0,0,0,.07)
+            }
+
+        .pr-order-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: .75rem 1.2rem;
+            background: linear-gradient(90deg,#f8fdf5,#fafafa);
+            border-bottom: 1px solid #f0f0f0
+        }
+
+        .pr-order-id {
+            font-weight: 700;
+            font-size: .87rem;
+            color: #1a1a1a
+        }
+
+        .pr-order-date {
+            font-size: .74rem;
+            color: #8a9bb0;
+            margin-top: 1px
+        }
+
+        .pr-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: .85rem 1.2rem;
+            border-bottom: 1px solid #f7f7f7;
+            transition: background .15s
+        }
+
+            .pr-item:last-child {
+                border-bottom: none
+            }
+
+            .pr-item:hover {
+                background: #fafffe
+            }
+
+        .pr-item-img {
+            width: 52px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+            background: #f0f7eb
+        }
+
+        .pr-item-ph {
+            width: 52px;
+            height: 72px;
+            border-radius: 6px;
+            background: #f0f7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6ab04c;
+            font-size: 1.3rem;
+            flex-shrink: 0
+        }
+
+        .pr-item-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .pr-item-title {
+            font-weight: 700;
+            font-size: .88rem;
+            color: #1a1a1a;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap
+        }
+
+        .pr-item-author {
+            font-size: .76rem;
+            color: #8a9bb0;
+            margin-top: 2px
+        }
+
+        .pr-item-qty {
+            font-size: .75rem;
+            color: #aab4be;
+            margin-top: 2px
+        }
+
+        .pr-review-btn, a.pr-review-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: linear-gradient(135deg,#f39c12,#e67e22);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            padding: .45rem .95rem;
+            font-size: .8rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: transform .15s,box-shadow .15s;
+            box-shadow: 0 2px 8px rgba(243,156,18,.3);
+            text-decoration: none
+        }
+
+            .pr-review-btn:hover, a.pr-review-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 14px rgba(243,156,18,.45);
+                color: #fff
+            }
+
+        .pr-empty {
+            text-align: center;
+            padding: 3.5rem 1rem;
+            color: #8a9bb0
+        }
+
+        .pr-empty-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #f0fff4;
+            border: 2px solid #b7e4c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #27ae60;
+            margin: 0 auto 1rem
+        }
+
+        .pr-empty p {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1a1a1a;
+            margin-bottom: .3rem
+        }
+
+        .pr-done-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1.5px solid #b7e4c7;
+            border-radius: 8px;
+            padding: .28rem .7rem;
+            font-size: .75rem;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0
+        }
     </style>
 </head>
 <body>
     <div id="header-placeholder"></div>
 
+
+    <!-- ══ LIST VIEW (hiện khi không có ?bookId) ══ -->
+    <div id="prListView" style="display:none">
+        <div class="pr-page">
+            <h2 class="pr-page-title"><i class="bi bi-star-fill"></i> Chờ đánh giá</h2>
+            <div id="prListContent"></div>
+        </div>
+    </div>
+
     <div class="rv-page">
-        <a class="rv-back" id="backLink" href="order-history.html">
+        <a class="rv-back" id="backLink" href="orders.html" style="display:none">
             <i class="bi bi-arrow-left"></i> Quay lại đơn hàng
         </a>
 
@@ -351,6 +548,156 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../js/header.js"></script>
     <script>
+        /* List mode for review.html — runs when no ?bookId in URL */
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var bookId = parseInt(params.get("bookId") || "0");
+
+            var listView = document.getElementById("prListView");
+            var formPages = document.querySelectorAll(".rv-page");
+
+            if (bookId) {
+                // Form mode: hide list, keep form visible
+                listView.style.display = "none";
+                return;
+            }
+
+            // List mode: show list, hide form
+            listView.style.display = "block";
+            formPages.forEach(function (el) { el.style.display = "none"; });
+
+            var API = "https://localhost:7204/api";
+            var IMG_URL = "https://localhost:7204";
+            var getToken = function () { return sessionStorage.getItem("token"); };
+            var isLoggedIn = function () { return !!getToken(); };
+            var authHdr = function () {
+                return { "Content-Type": "application/json", "Authorization": "Bearer " + getToken() };
+            };
+            var imgSrc = function (raw) {
+                if (!raw) return "";
+                if (/^https?:\/\//i.test(raw)) return raw;
+                return IMG_URL + "/images/" + raw.replace(/^\/?(?:images\/)?/, "");
+            };
+
+            if (!isLoggedIn()) { window.location.replace("login.html"); return; }
+
+            loadList();
+
+            async function loadList() {
+                var cont = document.getElementById("prListContent");
+                cont.innerHTML = '<div class="pr-empty"><div class="spinner-border text-success"></div></div>';
+
+                try {
+                    var allOrders = [];
+                    for (var pg = 1; pg <= 5; pg++) {
+                        var res = await fetch(API + "/orders/my?page=" + pg + "&pageSize=10&status=completed", { headers: authHdr() });
+                        if (!res.ok) break;
+                        var data = await res.json();
+                        allOrders = allOrders.concat(data.data || []);
+                        if (pg >= (data.totalPages || 1)) break;
+                    }
+
+                    if (!allOrders.length) { renderEmpty("Bạn chưa có đơn hàng hoàn thành nào."); return; }
+
+                    var grouped = [];
+                    await Promise.all(allOrders.map(async function (o) {
+                        try {
+                            var dr = await fetch(API + "/orders/" + o.orderId, { headers: authHdr() });
+                            var det = dr.ok ? await dr.json() : null;
+                            if (!det || !det.items || !det.items.length) return;
+                            var unreviewed = [];
+                            await Promise.all(det.items.map(async function (it) {
+                                var bid = it.book && it.book.bookId;
+                                if (!bid) return;
+                                try {
+                                    var rvr = await fetch(API + "/reviews/status/" + bid, { headers: authHdr() });
+                                    var rv = rvr.ok ? await rvr.json() : {};
+                                    if (rv.canReview === true) {
+                                        unreviewed.push({
+                                            bookId: bid,
+                                            title: (it.book.title || "Sách"),
+                                            author: (it.book.author || ""),
+                                            image: imgSrc(it.book.image || ""),
+                                            qty: (it.quantity || 1)
+                                        });
+                                    }
+                                } catch (e) { }
+                            }));
+                            if (unreviewed.length) {
+                                grouped.push({ orderId: o.orderId, orderDate: o.createdAt, items: unreviewed });
+                            }
+                        } catch (e) { }
+                    }));
+
+                    grouped.sort(function (a, b) { return b.orderId - a.orderId; });
+
+                    if (!grouped.length) { renderEmpty("Tất cả sản phẩm đã được đánh giá rồi. Cảm ơn bạn!"); return; }
+
+                    var total = grouped.reduce(function (s, g) { return s + g.items.length; }, 0);
+                    var html = '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">'
+                        + '<div style="font-size:.82rem;color:#8a9bb0">Chia sẻ cảm nhận về các sản phẩm bạn đã mua</div>'
+                        + '<span style="background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;border-radius:20px;padding:.3rem .85rem;font-size:.8rem;font-weight:700">'
+                        + '<i class="bi bi-pencil-square me-1"></i>' + total + ' sản phẩm'
+                        + '</span>'
+                        + '</div>';
+                    grouped.forEach(function (g) { html += renderGroup(g); });
+                    cont.innerHTML = html;
+
+                } catch (e) {
+                    cont.innerHTML = '<div class="pr-empty"><i class="bi bi-wifi-off" style="font-size:2.5rem;color:#d0d9e2;display:block;margin-bottom:.8rem"></i>'
+                        + '<p>Không tải được dữ liệu</p><small>Vui lòng thử lại sau.</small></div>';
+                }
+            }
+
+            function renderEmpty(msg) {
+                document.getElementById("prListContent").innerHTML =
+                    '<div class="pr-empty">'
+                    + '<div class="pr-empty-icon"><i class="bi bi-patch-check-fill"></i></div>'
+                    + '<p>' + msg + '</p>'
+                    + '<small>Mua thêm sách và quay lại nhé!</small>'
+                    + '</div>';
+            }
+
+            function renderGroup(group) {
+                var d = group.orderDate
+                    ? new Date(group.orderDate).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+                    : "";
+                var items = "";
+                group.items.forEach(function (it) {
+                    var imgHtml = it.image
+                        ? '<img class="pr-item-img" src="' + it.image + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+                        + '<div class="pr-item-ph" style="display:none"><i class="bi bi-book"></i></div>'
+                        : '<div class="pr-item-ph"><i class="bi bi-book"></i></div>';
+                    items +=
+                        '<div class="pr-item" id="pr-item-' + group.orderId + '-' + it.bookId + '">'
+                        + imgHtml
+                        + '<div class="pr-item-info">'
+                        + '<div class="pr-item-title">' + it.title + '</div>'
+                        + (it.author ? '<div class="pr-item-author">' + it.author + '</div>' : '')
+                        + '<div class="pr-item-qty">Số lượng: ' + it.qty + '</div>'
+                        + '</div>'
+                        + '<a class="pr-review-btn" href="review.html?bookId=' + it.bookId + '&orderId=' + group.orderId + '">'
+                        + '<i class="bi bi-star-fill"></i> Đánh giá'
+                        + '</a>'
+                        + '</div>';
+                });
+                return '<div class="pr-order-group">'
+                    + '<div class="pr-order-head">'
+                    + '<div>'
+                    + '<div class="pr-order-id"><i class="bi bi-bag text-success me-1"></i>Đơn #' + group.orderId + '</div>'
+                    + (d ? '<div class="pr-order-date"><i class="bi bi-clock me-1"></i>' + d + '</div>' : '')
+                    + '</div>'
+                    + '<span style="background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;border-radius:20px;padding:.22rem .7rem;font-size:.75rem;font-weight:700">'
+                    + group.items.length + ' sản phẩm'
+                    + '</span>'
+                    + '</div>'
+                    + items
+                    + '</div>';
+            }
+        })();
+    </script>
+
+    <script>
         (function () {
             const API = "https://localhost:7204/api";
             const IMG_URL = "https://localhost:7204";
@@ -374,7 +721,10 @@
             const bookId = parseInt(params.get("bookId"));
             const orderId = params.get("orderId");
 
-            if (!bookId) { window.location.replace("orders.html"); return; }
+            if (!bookId) { return; } // list mode đã xử lý ở script trên
+
+            // Form mode: hiện nút quay lại
+            document.getElementById("backLink").style.display = "";
 
             if (orderId) {
                 document.getElementById("backLink").href = `orders.html`;
@@ -433,15 +783,15 @@
                     const b = await res.json();
                     const src = imgSrc(b.image || b.Image || "");
                     document.getElementById("bookCard").innerHTML = `
-                    ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
-                    <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                    <div>
-                        <div class="rv-book-title">${b.title || b.Title || ""}</div>
-                        <div class="rv-book-author">${b.author || b.Author || ""}</div>
-                        <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
-                            ${(b.categoryName || b.CategoryName || "")}
-                        </div>
-                    </div>`;
+                        ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
+                        <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                        <div>
+                            <div class="rv-book-title">${b.title || b.Title || ""}</div>
+                            <div class="rv-book-author">${b.author || b.Author || ""}</div>
+                            <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
+                                ${(b.categoryName || b.CategoryName || "")}
+                            </div>
+                        </div>`;
                 } catch {
                     document.getElementById("bookCard").innerHTML =
                         `<div style="color:#aaa;font-size:.85rem">Không tải được thông tin sách.</div>`;
