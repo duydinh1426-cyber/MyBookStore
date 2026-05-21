@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&subset=vietnamese&display=swap">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         *, *::before, *::after {
             box-sizing: border-box;
@@ -374,6 +375,36 @@
                 padding: 2rem 1.25rem
             }
         }
+
+        .lg-btn-google {
+            width: 100%;
+            background: #fff;
+            color: #3c4043;
+            border: 1.5px solid #dadce0;
+            border-radius: 11px;
+            padding: .72rem;
+            font-size: .92rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background .2s, box-shadow .2s, transform .1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+            .lg-btn-google:hover {
+                background: #f8f9fa;
+                box-shadow: 0 2px 8px rgba(0,0,0,.12);
+                transform: translateY(-1px);
+            }
+
+            .lg-btn-google:disabled {
+                opacity: .6;
+                cursor: not-allowed;
+                transform: none;
+            }
     </style>
 </head>
 <body>
@@ -461,8 +492,19 @@
 
             <div class="lg-divider">hoặc</div>
 
+            <!-- Google Login -->
+            <button class="lg-btn-google" id="lgGoogleBtn" onclick="loginWithGoogle()">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z" />
+                    <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z" />
+                    <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z" />
+                    <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z" />
+                </svg>
+                Đăng nhập bằng Google
+            </button>
+
             <!-- Register -->
-            <div class="lg-register">
+            <div class="lg-register" style="margin-top:1.3rem">
                 Chưa có tài khoản?
                 <a href="register.html">Đăng ký ngay</a>
             </div>
@@ -473,7 +515,7 @@
     <script>
         (function () {
             const API = "https://localhost:7204/api";
-
+            const GOOGLE_CLIENT_ID = "173336535640-23n4ep3dog43gkqtva81n65rrhneb324.apps.googleusercontent.com";
             function showErr(msg) {
                 document.getElementById("lgErrMsg").textContent = msg;
                 document.getElementById("lgErr").classList.add("show");
@@ -541,6 +583,58 @@
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Đăng nhập';
                 }
+
+            };
+            window.loginWithGoogle = function () {
+                hideErr();
+                const btn = document.getElementById("lgGoogleBtn");
+                btn.disabled = true;
+
+                const client = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: "openid email profile",
+                    callback: async function (tokenResponse) {
+                        if (tokenResponse.error) {
+                            showErr("Đăng nhập Google thất bại.");
+                            btn.disabled = false;
+                            return;
+                        }
+                        try {
+                            const res = await fetch(`${API}/auth/google`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ idToken: tokenResponse.access_token })
+                            });
+
+                            if (res.ok) {
+                                const data = await res.json();
+                                sessionStorage.setItem("token", data.token);
+
+                                const base64 = data.token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+                                const payload = JSON.parse(decodeURIComponent(
+                                    atob(base64).split("").map(c =>
+                                        "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)
+                                    ).join("")
+                                ));
+                                const role = payload.role
+                                    || payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+                                window.location.href = role === "Admin"
+                                    ? "../html/admin.html"
+                                    : "../html/index.html";
+                            } else {
+                                const data = await res.json().catch(() => ({}));
+                                showErr(data.message || "Đăng nhập Google thất bại.");
+                            }
+                        } catch {
+                            showErr("Không thể kết nối đến máy chủ.");
+                        } finally {
+                            btn.disabled = false;
+                        }
+                    }
+                });
+
+                client.requestAccessToken();
             };
         })();
     </script>

@@ -77,4 +77,5 @@
         string Token,
         string Email
     );
+    public record GoogleLoginDto(string IdToken);
 }

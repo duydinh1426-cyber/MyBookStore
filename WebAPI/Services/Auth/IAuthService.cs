@@ -15,5 +15,6 @@ namespace WebAPI.Services.Auth
         Task<ServiceResult> ChangeVerifyOtpAsync(int accountId, VerifyChangePasswordOtpDto dto);
         Task<ServiceResult> ChangeEmailSendOtpAsync(int accountId, string newEmail);
         Task<ServiceResult<ChangeEmailResponseDto>> ChangeEmailVerifyOtpAsync(int accountId, int userId, string newEmail, string otp);
+        Task<ServiceResult<AuthResponseDto>> GoogleLoginAsync(GoogleLoginDto dto);
     }
 }
