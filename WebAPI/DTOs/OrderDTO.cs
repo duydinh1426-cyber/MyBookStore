@@ -2,7 +2,7 @@
 
 namespace WebAPI.DTOs
 {
-    public record CheckoutDto(string Phone, string Address, string? Note, string PaymentMethod = "cod");
+    public record CheckoutDto(string Phone, string Address, string? Note, string PaymentMethod = "cod", decimal ShippingFee = 0);
     public class UpdateOrderStatusDto
     {
         public string Status { get; set; } = string.Empty;

@@ -96,5 +96,11 @@ namespace WebAPI.Controllers
 
             return HandleResult(result);
         }
+        [HttpPost("google")]
+        public async Task<IActionResult> GoogleLogin(GoogleLoginDto dto)
+        {
+            var result = await _service.GoogleLoginAsync(dto);
+            return HandleResult(result);
+        }
     }
 }

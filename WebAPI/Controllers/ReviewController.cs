@@ -12,6 +12,14 @@ namespace WebAPI.Controllers
         private readonly IReviewService _service;
         public ReviewController(IReviewService service) => _service = service;
 
+        [HttpGet("my")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetMyReviews(int page = 1, int pageSize = 10)
+        {
+            var result = await _service.GetMyReviewsAsync(UserId, page, pageSize);
+            return HandleResult(result);
+        }
+
         [HttpGet("book/{bookId:int}")]
         public async Task<IActionResult> GetByBook(int bookId, int page = 1, int pageSize = 10, int? rating = null)
         {

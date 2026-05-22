@@ -10,6 +10,7 @@ namespace Data.Repositories.Interfaces
         Task<bool> HasPurchasedAsync(int userId, int bookId);
         Task<bool> BookExistsAsync(int bookId);
         Task<Dictionary<int, int>> GetRatingStatsAsync(int bookId);
+        Task<(List<Review> Items, int Total)> GetByUserAsync(int userId, int page, int pageSize);
         void Add(Review review);
         void Delete(Review review);
         Task UpdateBookRatingAsync(int bookId);

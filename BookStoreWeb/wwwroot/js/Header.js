@@ -13,6 +13,7 @@
             { label: "Trang chủ", href: "../html/index.html", icon: "bi-house-door" },
             { label: "Sách", href: "../html/books.html", icon: "bi-journals" },
             { label: "Đơn hàng", href: "orders.html", icon: "bi-bag" },
+            { label: "Đánh giá", href: "review.html", icon: "bi-star-half", badge: "pendingReviewCount" },
         ],
         Admin: [
             { label: "Dashboard", href: "admin.html", icon: "bi-speedometer2" },
@@ -192,10 +193,14 @@
         const items = MENUS[role] || MENUS["guest"];
         const page = currentPage();
         return items.map(item => {
-            const active = page === item.href.split("/").pop() ? "active" : "";
+            const itemPageName = item.href.split("?")[0].split("/").pop();
+            const active = page === itemPageName ? "active" : "";
+            const badgeHtml = item.badge
+                ? `<span class="nav-rv-badge" id="headerRvBadge" style="display:none">0</span>`
+                : "";
             return `<li class="nav-item">
                         <a class="nav-link ${active}" href="${item.href}">
-                            <i class="bi ${item.icon} me-1"></i>${item.label}
+                            <i class="bi ${item.icon} me-1"></i>${item.label}${badgeHtml}
                         </a>
                     </li>`;
         }).join("");
@@ -259,6 +264,7 @@
             .cart-nav-btn{position:relative;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.4);color:#fff;border-radius:10px;padding:.42rem .9rem;font-size:.88rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .2s;font-family:inherit}
             .cart-nav-btn:hover{background:rgba(255,255,255,.28)}
             .cart-nav-badge{position:absolute;top:-7px;right:-7px;background:#e74c3c;color:#fff;font-size:.65rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #6ab04c}
+            .nav-rv-badge{position:absolute;top:4px;right:2px;background:#f39c12;color:#fff;font-size:.6rem;font-weight:800;min-width:17px;height:17px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #6ab04c;vertical-align:middle;margin-left:4px}
             #headerCartOverlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;opacity:0;pointer-events:none;transition:opacity .3s}
             #headerCartOverlay.open{opacity:1;pointer-events:all}
             #headerCartDrawer{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:95vw;background:#fff;z-index:2001;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.15);font-family:'DM Sans',sans-serif}
@@ -354,6 +360,45 @@
         </div>`;
 
         if (isLoggedIn()) _cartLoadCount();
+        if (isLoggedIn() && getRole() === "Customer") _loadPendingReviewBadge();
+    }
+
+    /* ── PENDING REVIEW BADGE (header) ── */
+    async function _loadPendingReviewBadge() {
+        const badge = document.getElementById("headerRvBadge");
+        if (!badge) return;
+        try {
+            // Lấy tối đa 3 trang completed orders, đếm sách chưa review
+            let count = 0;
+            let allOrders = [];
+            for (let pg = 1; pg <= 3; pg++) {
+                const res = await fetch(`${API}/orders/my?page=${pg}&pageSize=10&status=completed`, { headers: authHeaders() });
+                if (!res.ok) break;
+                const data = await res.json();
+                allOrders = allOrders.concat(data.data || []);
+                if (pg >= (data.totalPages ?? 1)) break;
+            }
+            await Promise.all(allOrders.map(async (o) => {
+                try {
+                    const dr = await fetch(`${API}/orders/${o.orderId}`, { headers: authHeaders() });
+                    const detail = dr.ok ? await dr.json() : null;
+                    if (!detail?.items?.length) return;
+                    await Promise.all(detail.items.map(async (it) => {
+                        const bid = it.book?.bookId;
+                        if (!bid) return;
+                        try {
+                            const rvr = await fetch(`${API}/reviews/status/${bid}`, { headers: authHeaders() });
+                            const rv = rvr.ok ? await rvr.json() : {};
+                            if (rv.canReview === true) count++;
+                        } catch { }
+                    }));
+                } catch { }
+            }));
+            if (count > 0) {
+                badge.textContent = count > 99 ? "99+" : count;
+                badge.style.display = "inline-flex";
+            }
+        } catch { }
     }
 
     /* ── CART LOGIC ── */
