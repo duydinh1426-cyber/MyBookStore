@@ -40,6 +40,22 @@ namespace Data.Repositories
         public void Add(Review review) => _db.Reviews.Add(review);
         public void Delete(Review review) => _db.Reviews.Remove(review);
 
+        public async Task<(List<Review> Items, int Total)> GetByUserAsync(int userId, int page, int pageSize)
+        {
+            var query = _db.Reviews
+                .Include(r => r.Book)
+                .Where(r => r.UserId == userId)
+                .OrderByDescending(r => r.CreatedAt);
+
+            var total = await query.CountAsync();
+            var items = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return (items, total);
+        }
+
         public async Task UpdateBookRatingAsync(int bookId)
         {
             var book = await _db.Books.FindAsync(bookId);

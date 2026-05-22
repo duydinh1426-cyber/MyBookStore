@@ -464,6 +464,159 @@
             white-space: nowrap;
             flex-shrink: 0
         }
+
+        /* ══ Tabs ══ */
+        .rv-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 1.4rem;
+            border-bottom: 2px solid #e8edf2;
+            padding-bottom: 0;
+        }
+
+        .rv-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: .55rem 1.1rem;
+            font-size: .88rem;
+            font-weight: 700;
+            color: #8a9bb0;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            border-bottom: 2.5px solid transparent;
+            margin-bottom: -2px;
+            transition: color .15s, border-color .15s;
+        }
+
+            .rv-tab:hover {
+                color: #4a5568;
+            }
+
+            .rv-tab.active {
+                color: #6ab04c;
+                border-bottom-color: #6ab04c;
+            }
+
+        .rv-tab-badge {
+            background: #f0fff4;
+            color: #27ae60;
+            border-radius: 20px;
+            padding: .1rem .5rem;
+            font-size: .72rem;
+            font-weight: 800;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        .rv-tab.active .rv-tab-badge {
+            background: #6ab04c;
+            color: #fff;
+        }
+
+        /* ══ History items ══ */
+        .rv-hist-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1.5px solid #e8edf2;
+            padding: 1rem 1.2rem;
+            margin-bottom: .75rem;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: box-shadow .18s;
+        }
+
+            .rv-hist-card:hover {
+                box-shadow: 0 3px 16px rgba(0,0,0,.07);
+            }
+
+            .rv-hist-card:last-child {
+                margin-bottom: 0;
+            }
+
+        .rv-hist-img {
+            width: 52px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 7px;
+            flex-shrink: 0;
+            background: #f0f7eb;
+        }
+
+        .rv-hist-ph {
+            width: 52px;
+            height: 72px;
+            border-radius: 7px;
+            background: #f0f7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6ab04c;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .rv-hist-stars {
+            display: inline-flex;
+            gap: 2px;
+        }
+
+            .rv-hist-stars i {
+                font-size: .78rem;
+            }
+
+        .rv-hist-comment {
+            background: #f8fdf5;
+            border-radius: 8px;
+            padding: .45rem .7rem;
+            font-size: .81rem;
+            color: #4a5568;
+            line-height: 1.6;
+            border-left: 3px solid #6ab04c;
+            margin-top: .45rem;
+        }
+
+        .rv-hist-pager {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 1rem;
+        }
+
+        .rv-hist-pg {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1.5px solid #e8edf2;
+            background: #fff;
+            cursor: pointer;
+            font-size: .8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+            transition: all .15s;
+        }
+
+            .rv-hist-pg:hover {
+                border-color: #6ab04c;
+                color: #6ab04c;
+            }
+
+            .rv-hist-pg.active {
+                background: #6ab04c;
+                border-color: #6ab04c;
+                color: #fff;
+            }
+
+            .rv-hist-pg:disabled {
+                opacity: .35;
+                cursor: not-allowed;
+            }
     </style>
 </head>
 <body>
@@ -473,8 +626,22 @@
     <!-- ══ LIST VIEW (hiện khi không có ?bookId) ══ -->
     <div id="prListView" style="display:none">
         <div class="pr-page">
-            <h2 class="pr-page-title"><i class="bi bi-star-fill"></i> Chờ đánh giá</h2>
+            <h2 class="pr-page-title"><i class="bi bi-star-fill"></i> Đánh giá của tôi</h2>
+
+            <!-- Tabs -->
+            <div class="rv-tabs">
+                <button class="rv-tab active" id="tabPending" onclick="switchTab('pending')">
+                    <i class="bi bi-pencil-square"></i> Chờ đánh giá
+                    <span class="rv-tab-badge" id="badgePending">...</span>
+                </button>
+                <button class="rv-tab" id="tabHistory" onclick="switchTab('history')">
+                    <i class="bi bi-clock-history"></i> Lịch sử
+                    <span class="rv-tab-badge" id="badgeHistory">...</span>
+                </button>
+            </div>
+
             <div id="prListContent"></div>
+            <div id="prHistContent" style="display:none"></div>
         </div>
     </div>
 
@@ -583,6 +750,91 @@
 
             loadList();
 
+            // ── Tab switching ──
+            var currentTab = 'pending';
+            var histLoaded = false;
+
+            window.switchTab = function (tab) {
+                currentTab = tab;
+                document.getElementById('tabPending').classList.toggle('active', tab === 'pending');
+                document.getElementById('tabHistory').classList.toggle('active', tab === 'history');
+                document.getElementById('prListContent').style.display = tab === 'pending' ? '' : 'none';
+                document.getElementById('prHistContent').style.display = tab === 'history' ? '' : 'none';
+                if (tab === 'history' && !histLoaded) {
+                    histLoaded = true;
+                    loadHistory(1);
+                }
+            };
+
+            // ── History ──
+            var HIST_PAGE_SIZE = 6;
+
+            async function loadHistory(page) {
+                var cont = document.getElementById('prHistContent');
+                cont.innerHTML = '<div class="pr-empty"><div class="spinner-border text-success spinner-border-sm"></div></div>';
+                try {
+                    var res = await fetch(API + '/reviews/my?page=' + page + '&pageSize=' + HIST_PAGE_SIZE, { headers: authHdr() });
+                    if (!res.ok) throw new Error();
+                    var data = await res.json();
+                    var reviews = data.data || [];
+
+                    document.getElementById('badgeHistory').textContent = data.total || 0;
+
+                    if (!reviews.length) {
+                        cont.innerHTML = '<div class="pr-empty"><div class="pr-empty-icon"><i class="bi bi-chat-square-text"></i></div>'
+                            + '<p>Bạn chưa có đánh giá nào.</p><small>Mua sách và chia sẻ cảm nhận nhé!</small></div>';
+                        return;
+                    }
+
+                    var html = '';
+                    reviews.forEach(function (r) {
+                        var src = imgSrc(r.bookImage || '');
+                        var imgHtml = src
+                            ? '<img class="rv-hist-img" src="' + src + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+                            + '<div class="rv-hist-ph" style="display:none"><i class="bi bi-book"></i></div>'
+                            : '<div class="rv-hist-ph"><i class="bi bi-book"></i></div>';
+
+                        var starsHtml = '';
+                        for (var s = 1; s <= 5; s++) {
+                            starsHtml += '<i class="bi ' + (s <= r.rating ? 'bi-star-fill' : 'bi-star') + '" style="color:' + (s <= r.rating ? '#f39c12' : '#ddd') + '"></i>';
+                        }
+
+                        var date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+
+                        html += '<div class="rv-hist-card">'
+                            + imgHtml
+                            + '<div style="flex:1;min-width:0">'
+                            + '<div style="font-weight:700;font-size:.88rem;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.bookTitle || '—') + '</div>'
+                            + '<div style="display:flex;align-items:center;gap:8px;margin-top:.3rem">'
+                            + '<span class="rv-hist-stars">' + starsHtml + '</span>'
+                            + '<span style="font-size:.75rem;color:#f39c12;font-weight:700">' + r.rating + '/5</span>'
+                            + (date ? '<span style="font-size:.73rem;color:#aab4be;margin-left:auto"><i class="bi bi-calendar3 me-1"></i>' + date + '</span>' : '')
+                            + '</div>'
+                            + (r.comment
+                                ? '<div class="rv-hist-comment"><i class="bi bi-chat-left-quote me-1" style="color:#aaa"></i>' + r.comment + '</div>'
+                                : '<div style="margin-top:.35rem;font-size:.78rem;color:#ccc;font-style:italic">Không có nhận xét</div>')
+                            + '</div>'
+                            + '</div>';
+                    });
+
+                    // Pager
+                    if (data.totalPages > 1) {
+                        html += '<div class="rv-hist-pager">';
+                        html += '<button class="rv-hist-pg" ' + (page === 1 ? 'disabled' : '') + ' onclick="loadHistory(' + (page - 1) + ')"><i class="bi bi-chevron-left"></i></button>';
+                        for (var pg = 1; pg <= data.totalPages; pg++) {
+                            html += '<button class="rv-hist-pg ' + (pg === page ? 'active' : '') + '" onclick="loadHistory(' + pg + ')">' + pg + '</button>';
+                        }
+                        html += '<button class="rv-hist-pg" ' + (page === data.totalPages ? 'disabled' : '') + ' onclick="loadHistory(' + (page + 1) + ')"><i class="bi bi-chevron-right"></i></button>';
+                        html += '</div>';
+                    }
+
+                    cont.innerHTML = html;
+                } catch (e) {
+                    cont.innerHTML = '<div class="pr-empty"><i class="bi bi-wifi-off" style="font-size:2rem;color:#d0d9e2;display:block;margin-bottom:.5rem"></i>'
+                        + '<p>Không tải được dữ liệu</p></div>';
+                }
+            }
+
             async function loadList() {
                 var cont = document.getElementById("prListContent");
                 cont.innerHTML = '<div class="pr-empty"><div class="spinner-border text-success"></div></div>';
@@ -631,9 +883,10 @@
 
                     grouped.sort(function (a, b) { return b.orderId - a.orderId; });
 
-                    if (!grouped.length) { renderEmpty("Tất cả sản phẩm đã được đánh giá rồi. Cảm ơn bạn!"); return; }
+                    if (!grouped.length) { document.getElementById('badgePending').textContent = 0; renderEmpty("Tất cả sản phẩm đã được đánh giá rồi. Cảm ơn bạn!"); return; }
 
                     var total = grouped.reduce(function (s, g) { return s + g.items.length; }, 0);
+                    document.getElementById('badgePending').textContent = total;
                     var html = '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">'
                         + '<div style="font-size:.82rem;color:#8a9bb0">Chia sẻ cảm nhận về các sản phẩm bạn đã mua</div>'
                         + '<span style="background:#fff8ec;color:#d68910;border:1.5px solid #ffe0a0;border-radius:20px;padding:.3rem .85rem;font-size:.8rem;font-weight:700">'
@@ -783,15 +1036,15 @@
                     const b = await res.json();
                     const src = imgSrc(b.image || b.Image || "");
                     document.getElementById("bookCard").innerHTML = `
-                        ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
-                        <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                        <div>
-                            <div class="rv-book-title">${b.title || b.Title || ""}</div>
-                            <div class="rv-book-author">${b.author || b.Author || ""}</div>
-                            <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
-                                ${(b.categoryName || b.CategoryName || "")}
-                            </div>
-                        </div>`;
+                            ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
+                            <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                            <div>
+                                <div class="rv-book-title">${b.title || b.Title || ""}</div>
+                                <div class="rv-book-author">${b.author || b.Author || ""}</div>
+                                <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
+                                    ${(b.categoryName || b.CategoryName || "")}
+                                </div>
+                            </div>`;
                 } catch {
                     document.getElementById("bookCard").innerHTML =
                         `<div style="color:#aaa;font-size:.85rem">Không tải được thông tin sách.</div>`;
