@@ -19,7 +19,7 @@ namespace WebAPI.Services.Orders
             foreach (var item in order.OrderItems)
             {
                 item.Book.NumberStock += item.Quantity;
-                item.Book.NumberSold  -= item.Quantity;
+                item.Book.NumberSold -= item.Quantity;
             }
         }
 
@@ -32,7 +32,7 @@ namespace WebAPI.Services.Orders
         {
             var cartItems = await _repo.GetCartItemsAsync(userId);
             if (!cartItems.Any())
-                return ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.",400);
+                return ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.", 400);
 
             var method = dto.PaymentMethod.ToLower();
             if (method != "cod" && method != "vnpay" && method != "vietqr")
@@ -50,30 +50,33 @@ namespace WebAPI.Services.Orders
                 totalCost += item.Book.Price * item.Quantity;
                 orderItems.Add(new OrderItem
                 {
-                    BookId    = item.BookId,
-                    Quantity  = item.Quantity,
+                    BookId = item.BookId,
+                    Quantity = item.Quantity,
                     UnitPrice = item.Book.Price,
                     CreatedAt = TimeHelper.NowVietnam(),
                     UpdatedAt = TimeHelper.NowVietnam()
                 });
 
                 item.Book.NumberStock -= item.Quantity;
-                item.Book.NumberSold  += item.Quantity;
+                item.Book.NumberSold += item.Quantity;
             }
+
+            var shippingFee = dto.ShippingFee >= 0 ? dto.ShippingFee : 0;
 
             var order = new Order
             {
-                UserId        = userId,
-                Phone         = dto.Phone.Trim(),
-                Address       = dto.Address.Trim(),
-                Note          = dto.Note?.Trim(),
-                Status        = OrderStatus.pending.ToValue(),
+                UserId = userId,
+                Phone = dto.Phone.Trim(),
+                Address = dto.Address.Trim(),
+                Note = dto.Note?.Trim(),
+                Status = OrderStatus.pending.ToValue(),
                 PaymentMethod = method,
-                IsPaid        = false,
-                TotalCost     = totalCost,
-                OrderItems    = orderItems,
-                CreatedAt     = TimeHelper.NowVietnam(),
-                UpdatedAt     = TimeHelper.NowVietnam()
+                IsPaid = false,
+                ShippingFee = shippingFee,
+                TotalCost = totalCost + shippingFee,
+                OrderItems = orderItems,
+                CreatedAt = TimeHelper.NowVietnam(),
+                UpdatedAt = TimeHelper.NowVietnam()
             };
 
             _repo.AddOrder(order);
@@ -84,11 +87,11 @@ namespace WebAPI.Services.Orders
 
             var data = new OrderResponseDto
             {
-                orderId          = order.OrderId,
-                totalCost        = totalCost,
-                itemCount        = orderItems.Count,
-                paymentMethod    = method,
-                requiresPayment  = IsOnlinePayment(method)
+                orderId = order.OrderId,
+                totalCost = totalCost,
+                itemCount = orderItems.Count,
+                paymentMethod = method,
+                requiresPayment = IsOnlinePayment(method)
             };
             return ServiceResult<OrderResponseDto>.Success(data, "Đặt hàng thành công.");
         }
@@ -107,35 +110,35 @@ namespace WebAPI.Services.Orders
             var currentStatus = order.Status.ToEnum();
             var data = new
             {
-                orderId      = order.OrderId,
-                totalCost    = order.TotalCost,
-                status       = order.Status,
-                statusLabel  = order.Status.ToEnum().ToLabel(),
-                phone        = order.Phone,
-                address      = order.Address,
-                note         = order.Note,
-                createdAt    = order.CreatedAt,
-                updatedAt    = order.UpdatedAt,
+                orderId = order.OrderId,
+                totalCost = order.TotalCost,
+                status = order.Status,
+                statusLabel = order.Status.ToEnum().ToLabel(),
+                phone = order.Phone,
+                address = order.Address,
+                note = order.Note,
+                createdAt = order.CreatedAt,
+                updatedAt = order.UpdatedAt,
                 nextStatuses = currentStatus.GetNextStatuses().Select(s => s.ToValue()),
-                isFinal      = currentStatus.IsFinal(),
+                isFinal = currentStatus.IsFinal(),
                 customer = new
                 {
                     userId = order.UserId,
-                    name   = order.User?.Name,
-                    email  = order.User?.Account?.Email ?? ""
+                    name = order.User?.Name,
+                    email = order.User?.Account?.Email ?? ""
                 },
                 items = order.OrderItems?.Select(oi => new
                 {
                     orderItemId = oi.OrderItemId,
-                    quantity    = oi.Quantity,
-                    unitPrice   = oi.UnitPrice,
-                    subTotal    = oi.Quantity * oi.UnitPrice,
+                    quantity = oi.Quantity,
+                    unitPrice = oi.UnitPrice,
+                    subTotal = oi.Quantity * oi.UnitPrice,
                     book = new
                     {
                         bookId = oi.BookId,
-                        title  = oi.Book.Title,
+                        title = oi.Book.Title,
                         author = oi.Book.Author,
-                        image  = oi.Book.Image
+                        image = oi.Book.Image
                     }
                 })
             };
@@ -149,17 +152,17 @@ namespace WebAPI.Services.Orders
 
             var items = orders.Select(o => new
             {
-                orderId       = o.OrderId,
-                totalCost     = o.TotalCost,
-                status        = o.Status,
-                statusLabel   = o.Status.ToEnum().ToLabel(),
-                phone         = o.Phone,
-                address       = o.Address,
-                note          = o.Note,
-                createdAt     = o.CreatedAt,
-                itemCount     = o.OrderItems?.Count ?? 0,
+                orderId = o.OrderId,
+                totalCost = o.TotalCost,
+                status = o.Status,
+                statusLabel = o.Status.ToEnum().ToLabel(),
+                phone = o.Phone,
+                address = o.Address,
+                note = o.Note,
+                createdAt = o.CreatedAt,
+                itemCount = o.OrderItems?.Count ?? 0,
                 paymentMethod = o.PaymentMethod,
-                isPaid        = o.IsPaid
+                isPaid = o.IsPaid
             });
 
             return ServiceResult<object>.Success(new
@@ -179,16 +182,16 @@ namespace WebAPI.Services.Orders
 
             var data = orders.Select(o => new
             {
-                orderId      = o.OrderId,
+                orderId = o.OrderId,
                 customerName = o.User?.Name ?? "",
-                totalCost    = o.TotalCost,
-                status       = o.Status,
-                statusLabel  = o.Status.ToEnum().ToLabel(),
-                createdAt    = o.CreatedAt,
-                phone        = o.Phone,
+                totalCost = o.TotalCost,
+                status = o.Status,
+                statusLabel = o.Status.ToEnum().ToLabel(),
+                createdAt = o.CreatedAt,
+                phone = o.Phone,
                 paymentMethod = o.PaymentMethod,
-                isPaid       = o.IsPaid,
-                address      = o.Address
+                isPaid = o.IsPaid,
+                address = o.Address
             });
 
             return ServiceResult<object>.Success(new
@@ -232,31 +235,31 @@ namespace WebAPI.Services.Orders
             var current = order.Status.ToEnum();
             if (!current.CanTransitionTo(OrderStatus.cancelled))
                 return ServiceResult<object>.Failure(
-                    $"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'.",400);
+                    $"Không thể hủy đơn hàng đang ở trạng thái '{current.ToLabel()}'.", 400);
 
             RestoreStock(order);
-            order.Status    = OrderStatus.cancelled.ToValue();
+            order.Status = OrderStatus.cancelled.ToValue();
             order.UpdatedAt = TimeHelper.NowVietnam();
 
             if (IsOnlinePayment(order.PaymentMethod) && order.IsPaid)
             {
                 if (string.IsNullOrWhiteSpace(dto?.BankAccountNumber) ||
-                    string.IsNullOrWhiteSpace(dto?.BankAccountName)   ||
+                    string.IsNullOrWhiteSpace(dto?.BankAccountName) ||
                     string.IsNullOrWhiteSpace(dto?.BankName))
                     return ServiceResult<object>.Failure(
                         "Vui lòng nhập đầy đủ thông tin ngân hàng để hoàn tiền.", 404);
 
                 _repo.AddRefundRequest(new RefundRequest
                 {
-                    OrderId           = order.OrderId,
-                    UserId            = userId,
-                    Amount            = order.TotalCost,
-                    Note              = dto.Note?.Trim(),
+                    OrderId = order.OrderId,
+                    UserId = userId,
+                    Amount = order.TotalCost,
+                    Note = dto.Note?.Trim(),
                     BankAccountNumber = dto.BankAccountNumber.Trim(),
-                    BankAccountName   = dto.BankAccountName.Trim().ToUpper(),
-                    BankName          = dto.BankName.Trim(),
-                    Status            = "pending",
-                    CreatedAt         = TimeHelper.NowVietnam()
+                    BankAccountName = dto.BankAccountName.Trim().ToUpper(),
+                    BankName = dto.BankName.Trim(),
+                    Status = "pending",
+                    CreatedAt = TimeHelper.NowVietnam()
                 });
 
                 if (!await _repo.SaveChangesAsync())
@@ -281,10 +284,10 @@ namespace WebAPI.Services.Orders
         {
             var order = await _repo.GetOrderByIdAsync(id);
             if (order == null)
-                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.",404);
+                return ServiceResult<object>.Failure("Không tìm thấy đơn hàng.", 404);
 
             var current = order.Status.ToEnum();
-            var target  = dto.GetStatus();
+            var target = dto.GetStatus();
 
             if (!current.CanTransitionTo(target))
                 return ServiceResult<object>.Failure(
@@ -301,15 +304,15 @@ namespace WebAPI.Services.Orders
                 if (IsOnlinePayment(order.PaymentMethod) && order.IsPaid)
                     _repo.AddRefundRequest(new RefundRequest
                     {
-                        OrderId           = order.OrderId,
-                        UserId            = order.UserId,
-                        Amount            = order.TotalCost,
-                        Note              = "Admin hủy đơn hàng — cần liên hệ khách để lấy thông tin ngân hàng",
+                        OrderId = order.OrderId,
+                        UserId = order.UserId,
+                        Amount = order.TotalCost,
+                        Note = "Admin hủy đơn hàng — cần liên hệ khách để lấy thông tin ngân hàng",
                         BankAccountNumber = "",
-                        BankAccountName   = "",
-                        BankName          = "",
-                        Status            = "pending",
-                        CreatedAt         = TimeHelper.NowVietnam()
+                        BankAccountName = "",
+                        BankName = "",
+                        Status = "pending",
+                        CreatedAt = TimeHelper.NowVietnam()
                     });
             }
 
@@ -317,7 +320,7 @@ namespace WebAPI.Services.Orders
                 && IsOnlinePayment(order.PaymentMethod)
                 && order.IsPaid;
 
-            order.Status    = target.ToValue();
+            order.Status = target.ToValue();
             order.UpdatedAt = TimeHelper.NowVietnam();
 
             if (!await _repo.SaveChangesAsync())
@@ -325,10 +328,10 @@ namespace WebAPI.Services.Orders
 
             var data = new
             {
-                orderId      = order.OrderId,
-                newStatus    = order.Status,
+                orderId = order.OrderId,
+                newStatus = order.Status,
                 nextStatuses = target.GetNextStatuses().Select(s => s.ToValue()),
-                isFinal      = target.IsFinal(),
+                isFinal = target.IsFinal(),
                 refundCreated
             };
 
@@ -343,18 +346,18 @@ namespace WebAPI.Services.Orders
 
         public async Task<ServiceResult<object>> GetAdminStatsAsync(DateTime? from = null, DateTime? to = null)
         {
-            var totalRevenue   = await _repo.GetRevenueAsync(from, to);
+            var totalRevenue = await _repo.GetRevenueAsync(from, to);
             var monthlyRevenue = await _repo.GetMonthlyRevenueAsync();
-            var totalOrders    = await _repo.GetTotalOrdersAsync(from, to);
+            var totalOrders = await _repo.GetTotalOrdersAsync(from, to);
             var totalBooksSold = await _repo.GetTotalBooksSoldAsync(from, to);
-            var statusStats    = await _repo.GetStatusStatsAsync(from, to);
+            var statusStats = await _repo.GetStatusStatsAsync(from, to);
 
             return ServiceResult<object>.Success(new
             {
-                TotalRevenue       = totalRevenue,
-                MonthlyRevenue     = monthlyRevenue,
-                TotalOrders        = totalOrders,
-                TotalBooksSold     = totalBooksSold,
+                TotalRevenue = totalRevenue,
+                MonthlyRevenue = monthlyRevenue,
+                TotalOrders = totalOrders,
+                TotalBooksSold = totalBooksSold,
                 StatusDistribution = statusStats
             });
         }
@@ -397,14 +400,14 @@ namespace WebAPI.Services.Orders
                 return ServiceResult.Failure("NotFound", 404);
 
             if (r.Status == "completed")
-                return ServiceResult.Failure("Yêu cầu này đã được xử lý.",400);
+                return ServiceResult.Failure("Yêu cầu này đã được xử lý.", 400);
 
-            r.Status     = "completed";
-            r.AdminNote  = adminNote?.Trim();
+            r.Status = "completed";
+            r.AdminNote = adminNote?.Trim();
             r.ResolvedAt = TimeHelper.NowVietnam();
 
             if (!await _repo.SaveChangesAsync())
-                return ServiceResult.Failure("Lỗi hệ thống.",500);
+                return ServiceResult.Failure("Lỗi hệ thống.", 500);
 
             return ServiceResult.Success("Đã đánh dấu hoàn tiền thành công.");
         }

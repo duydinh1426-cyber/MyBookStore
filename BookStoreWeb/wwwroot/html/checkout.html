@@ -685,24 +685,24 @@
                     cartData.items?.length ? renderForm() : renderEmpty();
                 } catch {
                     document.getElementById("coMain").innerHTML = `
-                        <div class="co-card" style="text-align:center;padding:2rem;color:#8a9bb0">
-                            <i class="bi bi-wifi-off" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
-                            Không tải được giỏ hàng. Vui lòng thử lại.
-                        </div>`;
+                            <div class="co-card" style="text-align:center;padding:2rem;color:#8a9bb0">
+                                <i class="bi bi-wifi-off" style="font-size:2.5rem;display:block;margin-bottom:.75rem"></i>
+                                Không tải được giỏ hàng. Vui lòng thử lại.
+                            </div>`;
                 }
             }
 
             function renderEmpty() {
                 document.getElementById("coMain").innerHTML = `
-                    <div class="co-card" style="text-align:center;padding:2.5rem;color:#8a9bb0">
-                        <i class="bi bi-bag-x" style="font-size:3rem;display:block;margin-bottom:.75rem;color:#d0d9e2"></i>
-                        <p style="font-weight:600;color:#1a1a1a;margin-bottom:.6rem">Giỏ hàng trống</p>
-                        <a href="../html/books.html"
-                           style="display:inline-flex;align-items:center;gap:6px;background:#6ab04c;
-                                  color:#fff;padding:.6rem 1.4rem;border-radius:10px;font-weight:700;text-decoration:none">
-                            <i class="bi bi-journals"></i> Khám phá sách
-                        </a>
-                    </div>`;
+                        <div class="co-card" style="text-align:center;padding:2.5rem;color:#8a9bb0">
+                            <i class="bi bi-bag-x" style="font-size:3rem;display:block;margin-bottom:.75rem;color:#d0d9e2"></i>
+                            <p style="font-weight:600;color:#1a1a1a;margin-bottom:.6rem">Giỏ hàng trống</p>
+                            <a href="../html/books.html"
+                               style="display:inline-flex;align-items:center;gap:6px;background:#6ab04c;
+                                      color:#fff;padding:.6rem 1.4rem;border-radius:10px;font-weight:700;text-decoration:none">
+                                <i class="bi bi-journals"></i> Khám phá sách
+                            </a>
+                        </div>`;
             }
 
             function renderForm() {
@@ -712,109 +712,219 @@
                 const itemsHtml = items.map(it => {
                     const src = imgSrc(it.image);
                     return `
-                        <div class="co-item">
-                            ${src ? `<img class="co-item-img" src="${src}" alt="${it.title}"
-                                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
-                            <div class="co-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                            <div style="flex:1;min-width:0">
-                                <div class="co-item-name">${it.title}</div>
-                                <div class="co-item-meta">${it.author ?? ""} · SL: ${it.quantity}</div>
-                                <div class="co-item-price">${fmt(it.subTotal)}</div>
-                            </div>
-                        </div>`;
+                            <div class="co-item">
+                                ${src ? `<img class="co-item-img" src="${src}" alt="${it.title}"
+                                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                                <div class="co-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                                <div style="flex:1;min-width:0">
+                                    <div class="co-item-name">${it.title}</div>
+                                    <div class="co-item-meta">${it.author ?? ""} · SL: ${it.quantity}</div>
+                                    <div class="co-item-price">${fmt(it.subTotal)}</div>
+                                </div>
+                            </div>`;
                 }).join("");
 
                 document.getElementById("coMain").innerHTML = `
-                    <h2 class="co-title"><i class="bi bi-bag-check"></i> Thanh toán</h2>
-                    <div class="row g-4">
-                        <div class="col-12 col-lg-6">
-                            <div class="co-card">
-                                <div class="co-card-title"><i class="bi bi-geo-alt-fill"></i> Thông tin giao hàng</div>
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="co-label" for="coPhone">Số điện thoại <span style="color:#e74c3c">*</span></label>
-                                        <input class="co-input" id="coPhone" type="tel" placeholder="0912 345 678"
-                                               oninput="this.value=this.value.replace(/[^0-9]/g,'')">
-                                        <div class="co-err" id="coPhoneErr">Số điện thoại không hợp lệ (10 số)</div>
+                        <h2 class="co-title"><i class="bi bi-bag-check"></i> Thanh toán</h2>
+                        <div class="row g-4">
+                            <div class="col-12 col-lg-6">
+                                <div class="co-card">
+                                    <div class="co-card-title"><i class="bi bi-geo-alt-fill"></i> Thông tin giao hàng</div>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="co-label" for="coPhone">Số điện thoại <span style="color:#e74c3c">*</span></label>
+                                            <input class="co-input" id="coPhone" type="tel" placeholder="0912 345 678"
+                                                   oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+                                            <div class="co-err" id="coPhoneErr">Số điện thoại không hợp lệ (10 số)</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="co-label" for="coAddress">Địa chỉ giao hàng <span style="color:#e74c3c">*</span></label>
+                                            <input class="co-input" id="coAddress" type="text"
+                                                   placeholder="Số nhà, tên đường, phường/xã, quận/huyện">
+                                            <div class="co-err" id="coAddressErr">Vui lòng nhập địa chỉ giao hàng</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="co-label" for="coProvince">Tỉnh / Thành phố <span style="color:#e74c3c">*</span></label>
+                                            <select class="co-input" id="coProvince" onchange="updateShipping()">
+                                                <option value="">-- Chọn tỉnh/thành phố --</option>
+                                                <option value="Quảng Nam">Quảng Nam</option>
+                                                <option value="An Giang">An Giang</option>
+                                                <option value="Bà Rịa - Vũng Tàu">Bà Rịa - Vũng Tàu</option>
+                                                <option value="Bắc Giang">Bắc Giang</option>
+                                                <option value="Bắc Kạn">Bắc Kạn</option>
+                                                <option value="Bạc Liêu">Bạc Liêu</option>
+                                                <option value="Bắc Ninh">Bắc Ninh</option>
+                                                <option value="Bến Tre">Bến Tre</option>
+                                                <option value="Bình Định">Bình Định</option>
+                                                <option value="Bình Dương">Bình Dương</option>
+                                                <option value="Bình Phước">Bình Phước</option>
+                                                <option value="Bình Thuận">Bình Thuận</option>
+                                                <option value="Cà Mau">Cà Mau</option>
+                                                <option value="Cần Thơ">Cần Thơ</option>
+                                                <option value="Cao Bằng">Cao Bằng</option>
+                                                <option value="Đà Nẵng">Đà Nẵng</option>
+                                                <option value="Đắk Lắk">Đắk Lắk</option>
+                                                <option value="Đắk Nông">Đắk Nông</option>
+                                                <option value="Điện Biên">Điện Biên</option>
+                                                <option value="Đồng Nai">Đồng Nai</option>
+                                                <option value="Đồng Tháp">Đồng Tháp</option>
+                                                <option value="Gia Lai">Gia Lai</option>
+                                                <option value="Hà Giang">Hà Giang</option>
+                                                <option value="Hà Nam">Hà Nam</option>
+                                                <option value="Hà Nội">Hà Nội</option>
+                                                <option value="Hà Tĩnh">Hà Tĩnh</option>
+                                                <option value="Hải Dương">Hải Dương</option>
+                                                <option value="Hải Phòng">Hải Phòng</option>
+                                                <option value="Hậu Giang">Hậu Giang</option>
+                                                <option value="Hòa Bình">Hòa Bình</option>
+                                                <option value="Hưng Yên">Hưng Yên</option>
+                                                <option value="Khánh Hòa">Khánh Hòa</option>
+                                                <option value="Kiên Giang">Kiên Giang</option>
+                                                <option value="Kon Tum">Kon Tum</option>
+                                                <option value="Lai Châu">Lai Châu</option>
+                                                <option value="Lâm Đồng">Lâm Đồng</option>
+                                                <option value="Lạng Sơn">Lạng Sơn</option>
+                                                <option value="Lào Cai">Lào Cai</option>
+                                                <option value="Long An">Long An</option>
+                                                <option value="Nam Định">Nam Định</option>
+                                                <option value="Nghệ An">Nghệ An</option>
+                                                <option value="Ninh Bình">Ninh Bình</option>
+                                                <option value="Ninh Thuận">Ninh Thuận</option>
+                                                <option value="Phú Thọ">Phú Thọ</option>
+                                                <option value="Phú Yên">Phú Yên</option>
+                                                <option value="Quảng Bình">Quảng Bình</option>
+                                                <option value="Quảng Ngãi">Quảng Ngãi</option>
+                                                <option value="Quảng Ninh">Quảng Ninh</option>
+                                                <option value="Quảng Trị">Quảng Trị</option>
+                                                <option value="Sóc Trăng">Sóc Trăng</option>
+                                                <option value="Sơn La">Sơn La</option>
+                                                <option value="Tây Ninh">Tây Ninh</option>
+                                                <option value="Thái Bình">Thái Bình</option>
+                                                <option value="Thái Nguyên">Thái Nguyên</option>
+                                                <option value="Thanh Hóa">Thanh Hóa</option>
+                                                <option value="Thừa Thiên Huế">Thừa Thiên Huế</option>
+                                                <option value="Tiền Giang">Tiền Giang</option>
+                                                <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+                                                <option value="Trà Vinh">Trà Vinh</option>
+                                                <option value="Tuyên Quang">Tuyên Quang</option>
+                                                <option value="Vĩnh Long">Vĩnh Long</option>
+                                                <option value="Vĩnh Phúc">Vĩnh Phúc</option>
+                                                <option value="Yên Bái">Yên Bái</option>
+                                            </select>
+                                            <div class="co-err" id="coProvinceErr">Vui lòng chọn tỉnh/thành phố</div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="co-label" for="coNote">Ghi chú (tùy chọn)</label>
+                                            <textarea class="co-input" id="coNote" rows="2"
+                                                      placeholder="Ghi chú thêm cho đơn hàng..."
+                                                      style="resize:vertical;min-height:64px"></textarea>
+                                        </div>
                                     </div>
-                                    <div class="col-12">
-                                        <label class="co-label" for="coAddress">Địa chỉ giao hàng <span style="color:#e74c3c">*</span></label>
-                                        <input class="co-input" id="coAddress" type="text"
-                                               placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/TP">
-                                        <div class="co-err" id="coAddressErr">Vui lòng nhập địa chỉ giao hàng</div>
+                                </div>
+
+                                <div class="co-card">
+                                    <div class="co-card-title"><i class="bi bi-credit-card-2-front-fill"></i> Phương thức thanh toán</div>
+
+                                    <!-- VietQR — mặc định chọn -->
+                                    <div class="co-pay-opt active-vietqr" id="optVietqr" onclick="selectPayment('vietqr')">
+                                        <i class="bi bi-qr-code" style="color:#27ae60"></i>
+                                        <div>
+                                            <div class="co-pay-title">
+                                                Chuyển khoản VietQR
+                                                <span class="co-pay-badge"><i class="bi bi-lightning-fill" style="font-size:.6rem"></i> Tức thì</span>
+                                            </div>
+                                            <div class="co-pay-sub" style="color:#27ae60">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Quét mã QR, tự động xác nhận ngay
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-12">
-                                        <label class="co-label" for="coNote">Ghi chú (tùy chọn)</label>
-                                        <textarea class="co-input" id="coNote" rows="2"
-                                                  placeholder="Ghi chú thêm cho đơn hàng..."
-                                                  style="resize:vertical;min-height:64px"></textarea>
+
+                                    <!-- VNPay -->
+                                    <div class="co-pay-opt" id="optVnpay" onclick="selectPayment('vnpay')">
+                                        <i class="bi bi-credit-card-fill" style="color:#1a6fb0"></i>
+                                        <div>
+                                            <div class="co-pay-title">Thanh toán qua VNPay</div>
+                                            <div class="co-pay-sub" style="color:#1a6fb0">
+                                                <i class="bi bi-shield-check me-1"></i>Thanh toán online an toàn, nhanh chóng
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- COD -->
+                                    <div class="co-pay-opt" id="optCod" onclick="selectPayment('cod')">
+                                        <i class="bi bi-cash-stack" style="color:#6ab04c"></i>
+                                        <div>
+                                            <div class="co-pay-title">Thanh toán khi nhận hàng (COD)</div>
+                                            <div class="co-pay-sub" style="color:#6ab04c">
+                                                <i class="bi bi-check-circle-fill me-1"></i>Bạn chỉ thanh toán khi nhận được hàng
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="co-card">
-                                <div class="co-card-title"><i class="bi bi-credit-card-2-front-fill"></i> Phương thức thanh toán</div>
-
-                                <!-- VietQR — mặc định chọn -->
-                                <div class="co-pay-opt active-vietqr" id="optVietqr" onclick="selectPayment('vietqr')">
-                                    <i class="bi bi-qr-code" style="color:#27ae60"></i>
-                                    <div>
-                                        <div class="co-pay-title">
-                                            Chuyển khoản VietQR
-                                            <span class="co-pay-badge"><i class="bi bi-lightning-fill" style="font-size:.6rem"></i> Tức thì</span>
-                                        </div>
-                                        <div class="co-pay-sub" style="color:#27ae60">
-                                            <i class="bi bi-check-circle-fill me-1"></i>Quét mã QR, tự động xác nhận ngay
-                                        </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="co-card" style="position:sticky;top:20px">
+                                    <div class="co-card-title">
+                                        <i class="bi bi-receipt"></i> Đơn hàng của bạn
+                                        <span style="font-weight:400;color:#8a9bb0;font-size:.8rem;margin-left:auto">${items.length} sản phẩm</span>
                                     </div>
-                                </div>
-
-                                <!-- VNPay -->
-                                <div class="co-pay-opt" id="optVnpay" onclick="selectPayment('vnpay')">
-                                    <i class="bi bi-credit-card-fill" style="color:#1a6fb0"></i>
-                                    <div>
-                                        <div class="co-pay-title">Thanh toán qua VNPay</div>
-                                        <div class="co-pay-sub" style="color:#1a6fb0">
-                                            <i class="bi bi-shield-check me-1"></i>Thanh toán online an toàn, nhanh chóng
+                                    ${itemsHtml}
+                                    <div style="margin-top:.9rem">
+                                        <div class="co-row"><span>Tạm tính</span><span>${fmt(total)}</span></div>
+                                        <div class="co-row" id="shippingRow">
+                                            <span>Phí vận chuyển</span>
+                                            <span id="shippingDisplay" style="color:#8a9bb0;font-size:.82rem;font-style:italic">Chọn tỉnh/TP để tính</span>
                                         </div>
+                                        <div class="co-row total"><span>Tổng cộng</span><span id="grandTotal">${fmt(total)}</span></div>
                                     </div>
-                                </div>
-
-                                <!-- COD -->
-                                <div class="co-pay-opt" id="optCod" onclick="selectPayment('cod')">
-                                    <i class="bi bi-cash-stack" style="color:#6ab04c"></i>
-                                    <div>
-                                        <div class="co-pay-title">Thanh toán khi nhận hàng (COD)</div>
-                                        <div class="co-pay-sub" style="color:#6ab04c">
-                                            <i class="bi bi-check-circle-fill me-1"></i>Bạn chỉ thanh toán khi nhận được hàng
-                                        </div>
+                                    <button class="co-submit" id="coBtn" onclick="submitOrder()">
+                                        <i class="bi bi-bag-check-fill"></i> Đặt hàng ngay
+                                    </button>
+                                    <div style="text-align:center;font-size:.76rem;color:#8a9bb0;margin-top:.6rem">
+                                        <i class="bi bi-shield-check text-success me-1"></i>Giao dịch được bảo mật và mã hóa
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="col-12 col-lg-6">
-                            <div class="co-card" style="position:sticky;top:20px">
-                                <div class="co-card-title">
-                                    <i class="bi bi-receipt"></i> Đơn hàng của bạn
-                                    <span style="font-weight:400;color:#8a9bb0;font-size:.8rem;margin-left:auto">${items.length} sản phẩm</span>
-                                </div>
-                                ${itemsHtml}
-                                <div style="margin-top:.9rem">
-                                    <div class="co-row"><span>Tạm tính</span><span>${fmt(total)}</span></div>
-                                    <div class="co-row"><span>Phí vận chuyển</span><span style="color:#6ab04c;font-weight:600">Miễn phí</span></div>
-                                    <div class="co-row total"><span>Tổng cộng</span><span>${fmt(total)}</span></div>
-                                </div>
-                                <button class="co-submit" id="coBtn" onclick="submitOrder()">
-                                    <i class="bi bi-bag-check-fill"></i> Đặt hàng ngay
-                                </button>
-                                <div style="text-align:center;font-size:.76rem;color:#8a9bb0;margin-top:.6rem">
-                                    <i class="bi bi-shield-check text-success me-1"></i>Giao dịch được bảo mật và mã hóa
-                                </div>
-                            </div>
-                        </div>
-                    </div>`;
+                        </div>`;
             }
+
+            // ── Shipping fee logic ──
+            const HOME_PROVINCE = "Quảng Nam";
+            const SHIP_FEE_LOCAL = 30000;
+            const SHIP_FEE_OTHER = 50000;
+            const FREE_SHIP_THRESHOLD = 500000;
+
+            function calcShippingFee(province, subtotal) {
+                if (!province) return null;
+                if (subtotal >= FREE_SHIP_THRESHOLD) return 0;
+                return province === HOME_PROVINCE ? SHIP_FEE_LOCAL : SHIP_FEE_OTHER;
+            }
+
+            window.updateShipping = function () {
+                const province = document.getElementById("coProvince")?.value || "";
+                const subtotal = cartData?.totalPrice ?? 0;
+                const fee = calcShippingFee(province, subtotal);
+
+                const display = document.getElementById("shippingDisplay");
+                const grandTotal = document.getElementById("grandTotal");
+                if (!display || !grandTotal) return;
+
+                if (fee === null) {
+                    display.innerHTML = `<span style="color:#8a9bb0;font-size:.82rem;font-style:italic">Chọn tỉnh/TP để tính</span>`;
+                    grandTotal.textContent = fmt(subtotal);
+                } else if (fee === 0) {
+                    const reason = subtotal >= FREE_SHIP_THRESHOLD ? "đơn ≥ 500.000₫" : "nội tỉnh";
+                    display.innerHTML = `<span style="color:#6ab04c;font-weight:700">Miễn phí</span>
+                            <span style="font-size:.72rem;color:#8a9bb0;margin-left:4px">(${reason})</span>`;
+                    grandTotal.textContent = fmt(subtotal);
+                } else {
+                    const label = province === HOME_PROVINCE ? "nội tỉnh" : "ngoài tỉnh";
+                    display.innerHTML = `<span style="color:#e67e22;font-weight:700">+${fmt(fee)}</span>
+                            <span style="font-size:.72rem;color:#8a9bb0;margin-left:4px">(${label})</span>`;
+                    grandTotal.textContent = fmt(subtotal + fee);
+                }
+            };
 
             function validate() {
                 let ok = true;
@@ -829,6 +939,7 @@
                 }
                 chk("coPhone", "coPhoneErr", v => /^0\d{9}$/.test(v));
                 chk("coAddress", "coAddressErr", v => v.length >= 5);
+                chk("coProvince", "coProvinceErr", v => v.length > 0);
                 return ok;
             }
 
@@ -847,7 +958,7 @@
                 document.getElementById("qrNoteText").textContent = note;
                 document.getElementById("qrImg").src = buildQrUrl(orderId, amount);
                 document.getElementById("qrPollStatus").innerHTML = `
-                    <span class="qr-poll-dot"></span> Đang chờ xác nhận thanh toán...`;
+                        <span class="qr-poll-dot"></span> Đang chờ xác nhận thanh toán...`;
                 document.getElementById("qrModalOverlay").style.display = "flex";
                 startPolling(orderId);
             }
@@ -871,7 +982,7 @@
                         stopPolling();
                         document.getElementById("qrPollStatus").innerHTML =
                             `<i class="bi bi-clock-history" style="color:#e74c3c"></i>
-                             <span style="color:#e74c3c">Hết thời gian chờ. Vui lòng thanh toán lại trong mục đơn hàng.</span>`;
+                                 <span style="color:#e74c3c">Hết thời gian chờ. Vui lòng thanh toán lại trong mục đơn hàng.</span>`;
                         return;
                     }
                     try {
@@ -896,11 +1007,16 @@
                 // nên ta gửi "cod" để tạo đơn trước rồi xử lý QR ở frontend
                 const backendMethod = selectedPayment;
 
+                const province = document.getElementById("coProvince").value.trim();
+                const shippingFee = calcShippingFee(province, cartData?.totalPrice ?? 0) ?? 0;
+                const fullAddress = document.getElementById("coAddress").value.trim() + ", " + province;
+
                 const payload = {
                     phone: document.getElementById("coPhone").value.trim(),
-                    address: document.getElementById("coAddress").value.trim(),
+                    address: fullAddress,
                     note: document.getElementById("coNote").value.trim(),
                     paymentMethod: backendMethod,
+                    shippingFee: shippingFee,
                 };
 
                 try {

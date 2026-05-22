@@ -226,6 +226,10 @@ public partial class DBContext : DbContext
             entity.Property(e => e.TotalCost)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("totalCost");
+            entity.Property(e => e.ShippingFee)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("shippingFee")
+                .HasDefaultValue(0m);
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getutcdate())")
                 .HasColumnType("datetime")

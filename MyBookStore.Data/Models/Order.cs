@@ -11,6 +11,8 @@ public partial class Order
 
     public decimal TotalCost { get; set; }
 
+    public decimal ShippingFee { get; set; } = 0;
+
     public string? Note { get; set; }
 
     public string? Phone { get; set; }
