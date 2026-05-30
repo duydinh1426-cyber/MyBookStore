@@ -65,8 +65,18 @@ namespace WebAPI.Services.Helper
             <p>{messageContent}</p>
             """;
 
-            // Gửi về email quản trị (Admin)
-            await SendEmailInternalAsync(_cfg["Email:AdminEmail"] ?? _cfg["Email:From"]!, subject, body);
+            // Gửi về tất cả email admin
+            var adminEmails = _cfg.GetSection("Email:AdminEmails").Get<string[]>();
+            if (adminEmails != null && adminEmails.Length > 0)
+            {
+                var tasks = adminEmails.Select(email => SendEmailInternalAsync(email, subject, body));
+                await Task.WhenAll(tasks);
+            }
+            else
+            {
+                // Fallback nếu không cấu hình AdminEmails
+                await SendEmailInternalAsync(_cfg["Email:From"]!, subject, body);
+            }
         }
     }
 }
