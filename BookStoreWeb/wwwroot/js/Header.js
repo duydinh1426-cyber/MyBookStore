@@ -220,10 +220,6 @@
                     <i class="bi bi-person me-1"></i>Đăng nhập
                 </button></li>`;
         const u = getUsername();
-        const supportItem = role === 'Customer'
-            ? `<li><a class="dropdown-item" href="../html/contact.html"><i class="bi bi-headset me-2"></i>Chăm sóc khách hàng</a></li>
-                        <li><hr class="dropdown-divider"></li>`
-            : '';
         return `<li class="nav-item dropdown">
                     <button class="btn-login-nav dropdown-toggle"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -234,7 +230,7 @@
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Trang cá nhân</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        ${supportItem}<li><a class="dropdown-item text-danger" href="#" onclick="headerLogout();return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="headerLogout();return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
                     </ul>
                 </li>`;
     }
@@ -530,7 +526,62 @@
                 }
             });
         },
-        checkout() { this.close(); window.location.href = "checkout.html"; },
+        async checkout() {
+            // Đổi nút thành trạng thái loading
+            const btn = document.querySelector(".hc-btn-checkout");
+            if (btn) { btn.disabled = true; btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Đang kiểm tra...`; }
+
+            // Xóa thông báo lỗi cũ nếu có
+            document.getElementById("hcStockAlert")?.remove();
+
+            let cartData;
+            try {
+                const res = await fetch(`${API}/cart`, { headers: authHeaders() });
+                if (!res.ok) throw new Error();
+                cartData = await res.json();
+            } catch {
+                if (btn) { btn.disabled = false; btn.innerHTML = `<i class="bi bi-lightning-charge me-1"></i>Tiến hành thanh toán`; }
+                showToast("Lỗi kết nối, vui lòng thử lại.", "error");
+                return;
+            }
+
+            // Kiểm tra tồn kho từng sản phẩm
+            const problems = [];
+            for (const item of (cartData.items || [])) {
+                if (item.numberStock <= 0) {
+                    problems.push(`<b>"${item.title}"</b> đã hết hàng`);
+                } else if (item.quantity > item.numberStock) {
+                    problems.push(`<b>"${item.title}"</b>: chỉ còn ${item.numberStock} cuốn (bạn đặt ${item.quantity})`);
+                }
+            }
+
+            // Khôi phục nút
+            if (btn) { btn.disabled = false; btn.innerHTML = `<i class="bi bi-lightning-charge me-1"></i>Tiến hành thanh toán`; }
+
+            if (problems.length > 0) {
+                // Hiển thị thông báo lỗi ngay trong footer của drawer
+                const footer = document.getElementById("hcFooter");
+                if (footer) {
+                    const alert = document.createElement("div");
+                    alert.id = "hcStockAlert";
+                    alert.style.cssText = "background:#fff8f0;border:1.5px solid #f5cba7;border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:.82rem;color:#7d4e00;line-height:1.7;animation:cartDrawerFadeUp .2s ease;";
+                    alert.innerHTML = `
+                        <div style="font-weight:700;margin-bottom:.3rem;display:flex;align-items:center;gap:6px;">
+                            <i class="bi bi-exclamation-triangle-fill" style="color:#e67e22;"></i> Không thể thanh toán
+                        </div>
+                        ${problems.map(p => `• ${p}`).join("<br>")}`;
+                    footer.insertBefore(alert, footer.firstChild);
+                }
+                // Reload giỏ để cập nhật số lượng hiển thị
+                _cartFetch();
+                return;
+            }
+
+            // Tất cả còn hàng → chuyển trang
+            this.close();
+            window.location.href = "checkout.html";
+        },
+
         refreshBadge() { _cartLoadCount(); }
     };
     window.addToCart = (id, title) => window._headerCart.addToCart(id, title);

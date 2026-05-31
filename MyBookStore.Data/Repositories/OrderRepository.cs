@@ -11,6 +11,10 @@ namespace Data.Repositories
         private readonly DBContext _db;
         public OrderRepository(DBContext db) => _db = db;
 
+        // ─── Expose DbContext (dùng trong OrderService để tạo transaction) ────
+
+        public DBContext GetDbContext() => _db;
+
         // ─── Order ───────────────────────────────────────────────────────────
 
         public async Task<Order?> GetOrderByIdAsync(int id)
@@ -78,6 +82,35 @@ namespace Data.Repositories
 
         public async Task<List<CartItem>> GetCartItemsAsync(int userId)
         {
+            return await _db.CartItems
+                .Include(c => c.Book)
+                .Where(c => c.UserId == userId)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Load cart items kèm lock UPDLOCK trên bảng Books để tránh 2 user
+        /// checkout cùng 1 cuốn sách cùng lúc (race condition).
+        /// Phải được gọi bên trong một transaction đang mở.
+        /// </summary>
+        public async Task<List<CartItem>> GetCartItemsWithLockAsync(int userId)
+        {
+            // Lấy BookIds trong giỏ hàng trước
+            var bookIds = await _db.CartItems
+                .Where(c => c.UserId == userId)
+                .Select(c => c.BookId)
+                .ToListAsync();
+
+            if (!bookIds.Any())
+                return new List<CartItem>();
+
+            // Lock các book rows với UPDLOCK — ngăn transaction khác đọc/ghi
+            // trong khi ta đang kiểm tra và trừ tồn kho
+            var inClause = string.Join(",", bookIds);
+            await _db.Database.ExecuteSqlRawAsync(
+                $"SELECT BookId FROM Books WITH (UPDLOCK) WHERE BookId IN ({inClause})");
+
+            // Bây giờ load đầy đủ cart items với book đã bị lock
             return await _db.CartItems
                 .Include(c => c.Book)
                 .Where(c => c.UserId == userId)
