@@ -8,7 +8,8 @@
         string? Image,
         decimal Price,
         int Quantity,
-        decimal SubTotal
+        decimal SubTotal,
+        int NumberStock   // ← thêm để frontend kiểm tra tồn kho trước checkout
     );
 
     public record CartResponseDto(
@@ -16,12 +17,12 @@
             decimal TotalPrice,
             int TotalItems
     );
-    
+
     public record AddCartDto(
         int BookId,
         int Quantity
     );
-    
+
     public record UpdateCartDto(
         int Quantity
     );

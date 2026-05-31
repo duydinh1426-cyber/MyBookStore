@@ -29,7 +29,8 @@ namespace WebAPI.Services.Cart
                 i.Book.Image,
                 i.Book.Price,
                 i.Quantity,
-                i.Book.Price * i.Quantity
+                i.Book.Price * i.Quantity,
+                i.Book.NumberStock   // ← map tồn kho thực tế từ DB
             )).ToList();
 
             var data = new CartResponseDto(
@@ -44,12 +45,12 @@ namespace WebAPI.Services.Cart
         public async Task<ServiceResult> AddToCartAsync(int userId, AddCartDto dto)
         {
             if (dto.Quantity <= 0)
-                return ServiceResult.Failure("Số lượng phải lớn hơn 0.",400);
+                return ServiceResult.Failure("Số lượng phải lớn hơn 0.", 400);
 
             var book = await _bookRepo.GetByIdAsync(dto.BookId);
             if (book == null)
                 return ServiceResult.Failure("Sách không tồn tại.", 404);
-            
+
             if (book.NumberStock <= 0)
                 return ServiceResult.Failure("Sách hiện đã hết hàng.", 400);
 
@@ -57,7 +58,7 @@ namespace WebAPI.Services.Cart
             var targetQty = (cartItem?.Quantity ?? 0) + dto.Quantity;
 
             if (targetQty > book.NumberStock)
-                return ServiceResult.Failure($"Chỉ còn {book.NumberStock} cuốn trong kho.",400);
+                return ServiceResult.Failure($"Chỉ còn {book.NumberStock} cuốn trong kho.", 400);
 
             if (cartItem == null)
             {
@@ -95,11 +96,10 @@ namespace WebAPI.Services.Cart
                 _repo.Delete(cartItem);
                 return ServiceResult.Success("Đã xóa sách khỏi giỏ hàng.");
             }
-
             else
             {
                 if (dto.Quantity > cartItem.Book.NumberStock)
-                    return ServiceResult.Failure($"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.",400);
+                    return ServiceResult.Failure($"Chỉ còn {cartItem.Book.NumberStock} cuốn trong kho.", 400);
 
                 cartItem.Quantity = dto.Quantity;
                 cartItem.UpdatedAt = TimeHelper.NowVietnam();
@@ -132,10 +132,9 @@ namespace WebAPI.Services.Cart
         {
             var result = await _repo.ClearCartByUserIdAsync(userId);
             if (!result)
-                return ServiceResult.Failure("Lỗi khi xóa giỏ hàng.",500);
+                return ServiceResult.Failure("Lỗi khi xóa giỏ hàng.", 500);
 
             return ServiceResult.Success("Đã xóa toàn bộ giỏ hàng.");
-
         }
     }
 }

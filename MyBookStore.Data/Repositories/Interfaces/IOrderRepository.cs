@@ -13,6 +13,13 @@ namespace Data.Repositories.Interfaces
 
         // ─── Cart ────────────────────────────────────────────────────────────
         Task<List<CartItem>> GetCartItemsAsync(int userId);
+
+        /// <summary>
+        /// Load cart items và lock các book rows bằng UPDLOCK để tránh race condition khi checkout.
+        /// Phải được gọi bên trong một transaction đang hoạt động.
+        /// </summary>
+        Task<List<CartItem>> GetCartItemsWithLockAsync(int userId);
+
         void RemoveCartItems(IEnumerable<CartItem> items);
 
         // ─── Stats ───────────────────────────────────────────────────────────
@@ -29,5 +36,8 @@ namespace Data.Repositories.Interfaces
 
         // ─── Persistence ─────────────────────────────────────────────────────
         Task<bool> SaveChangesAsync();
+
+        /// <summary>Trả về DBContext để OrderService có thể tạo transaction.</summary>
+        Data.Models.DBContext GetDbContext();
     }
 }

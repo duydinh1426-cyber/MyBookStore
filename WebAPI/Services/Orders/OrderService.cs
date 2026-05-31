@@ -3,6 +3,7 @@ using Data.Repositories.Interfaces;
 using WebAPI.DTOs;
 using WebAPI.Enums;
 using WebAPI.Services.Helper;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Services.Orders
 {
@@ -30,70 +31,123 @@ namespace WebAPI.Services.Orders
 
         public async Task<ServiceResult<OrderResponseDto>> CheckoutAsync(int userId, CheckoutDto dto)
         {
-            var cartItems = await _repo.GetCartItemsAsync(userId);
-            if (!cartItems.Any())
-                return ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.", 400);
-
             var method = dto.PaymentMethod.ToLower();
             if (method != "cod" && method != "vnpay" && method != "vietqr")
                 return ServiceResult<OrderResponseDto>.Failure("Phương thức thanh toán không hợp lệ.", 400);
 
-            decimal totalCost = 0;
-            var orderItems = new List<OrderItem>();
+            var db = _repo.GetDbContext();
+            var strategy = db.Database.CreateExecutionStrategy();
 
-            foreach (var item in cartItems)
+            ServiceResult<OrderResponseDto>? result = null;
+
+            await strategy.ExecuteAsync(async () =>
             {
-                if (item.Book.NumberStock < item.Quantity)
-                    return ServiceResult<OrderResponseDto>.Failure(
-                        $"Sách '{item.Book.Title}' chỉ còn {item.Book.NumberStock} cuốn.");
-
-                totalCost += item.Book.Price * item.Quantity;
-                orderItems.Add(new OrderItem
+                // Bắt đầu transaction — đảm bảo toàn bộ check + trừ stock + lưu là atomic
+                await using var transaction = await db.Database.BeginTransactionAsync();
+                try
                 {
-                    BookId = item.BookId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.Book.Price,
-                    CreatedAt = TimeHelper.NowVietnam(),
-                    UpdatedAt = TimeHelper.NowVietnam()
-                });
+                    // Load cart items với UPDLOCK: lock các book rows ngay lập tức
+                    // → người B checkout cùng lúc sẽ phải chờ transaction này hoàn thành
+                    var cartItems = await _repo.GetCartItemsWithLockAsync(userId);
 
-                item.Book.NumberStock -= item.Quantity;
-                item.Book.NumberSold += item.Quantity;
-            }
+                    if (!cartItems.Any())
+                    {
+                        result = ServiceResult<OrderResponseDto>.Failure("Giỏ hàng của bạn đang trống.", 400);
+                        await transaction.RollbackAsync();
+                        return;
+                    }
 
-            var shippingFee = dto.ShippingFee >= 0 ? dto.ShippingFee : 0;
+                    decimal totalCost = 0;
+                    var orderItems = new List<OrderItem>();
+                    var outOfStockMessages = new List<string>();
 
-            var order = new Order
-            {
-                UserId = userId,
-                Phone = dto.Phone.Trim(),
-                Address = dto.Address.Trim(),
-                Note = dto.Note?.Trim(),
-                Status = OrderStatus.pending.ToValue(),
-                PaymentMethod = method,
-                IsPaid = false,
-                ShippingFee = shippingFee,
-                TotalCost = totalCost + shippingFee,
-                OrderItems = orderItems,
-                CreatedAt = TimeHelper.NowVietnam(),
-                UpdatedAt = TimeHelper.NowVietnam()
-            };
+                    foreach (var item in cartItems)
+                    {
+                        // Kiểm tra tồn kho TRONG transaction — giá trị này đã được lock
+                        // nên phản ánh đúng số lượng thực tế sau các giao dịch khác
+                        if (item.Book.NumberStock < item.Quantity)
+                        {
+                            if (item.Book.NumberStock <= 0)
+                                outOfStockMessages.Add($"Sách '{item.Book.Title}' đã hết hàng.");
+                            else
+                                outOfStockMessages.Add(
+                                    $"Sách '{item.Book.Title}' chỉ còn {item.Book.NumberStock} cuốn " +
+                                    $"(bạn đang đặt {item.Quantity} cuốn).");
+                        }
+                    }
 
-            _repo.AddOrder(order);
-            _repo.RemoveCartItems(cartItems);
+                    if (outOfStockMessages.Any())
+                    {
+                        result = ServiceResult<OrderResponseDto>.Failure(
+                            string.Join(" ", outOfStockMessages), 400);
+                        await transaction.RollbackAsync();
+                        return;
+                    }
 
-            if (!await _repo.SaveChangesAsync())
-                return ServiceResult<OrderResponseDto>.Failure("Lỗi hệ thống khi xử lý đơn hàng.", 500);
+                    // Tất cả sách đều còn đủ hàng — tiến hành trừ stock và tạo đơn
+                    foreach (var item in cartItems)
+                    {
+                        totalCost += item.Book.Price * item.Quantity;
+                        orderItems.Add(new OrderItem
+                        {
+                            BookId = item.BookId,
+                            Quantity = item.Quantity,
+                            UnitPrice = item.Book.Price,
+                            CreatedAt = TimeHelper.NowVietnam(),
+                            UpdatedAt = TimeHelper.NowVietnam()
+                        });
 
-            var data = new OrderResponseDto
-            {
-                orderId = order.OrderId,
-                totalCost = totalCost,
-                itemCount = orderItems.Count,
-                paymentMethod = method,
-                requiresPayment = IsOnlinePayment(method)
-            };
-            return ServiceResult<OrderResponseDto>.Success(data, "Đặt hàng thành công.");
+                        item.Book.NumberStock -= item.Quantity;
+                        item.Book.NumberSold += item.Quantity;
+                    }
+
+                    var shippingFee = dto.ShippingFee >= 0 ? dto.ShippingFee : 0;
+
+                    var order = new Order
+                    {
+                        UserId = userId,
+                        Phone = dto.Phone.Trim(),
+                        Address = dto.Address.Trim(),
+                        Note = dto.Note?.Trim(),
+                        Status = OrderStatus.pending.ToValue(),
+                        PaymentMethod = method,
+                        IsPaid = false,
+                        ShippingFee = shippingFee,
+                        TotalCost = totalCost + shippingFee,
+                        OrderItems = orderItems,
+                        CreatedAt = TimeHelper.NowVietnam(),
+                        UpdatedAt = TimeHelper.NowVietnam()
+                    };
+
+                    _repo.AddOrder(order);
+                    _repo.RemoveCartItems(cartItems);
+
+                    if (!await _repo.SaveChangesAsync())
+                    {
+                        result = ServiceResult<OrderResponseDto>.Failure("Lỗi hệ thống khi xử lý đơn hàng.", 500);
+                        await transaction.RollbackAsync();
+                        return;
+                    }
+
+                    await transaction.CommitAsync();
+
+                    result = ServiceResult<OrderResponseDto>.Success(new OrderResponseDto
+                    {
+                        orderId = order.OrderId,
+                        totalCost = totalCost,
+                        itemCount = orderItems.Count,
+                        paymentMethod = method,
+                        requiresPayment = IsOnlinePayment(method)
+                    }, "Đặt hàng thành công.");
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+
+            return result ?? ServiceResult<OrderResponseDto>.Failure("Lỗi hệ thống.", 500);
         }
 
         // ─── Read ────────────────────────────────────────────────────────────
