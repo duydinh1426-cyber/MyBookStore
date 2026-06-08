@@ -134,7 +134,7 @@ namespace WebAPI.Services.Orders
                     result = ServiceResult<OrderResponseDto>.Success(new OrderResponseDto
                     {
                         orderId = order.OrderId,
-                        totalCost = totalCost,
+                        totalCost = order.TotalCost,
                         itemCount = orderItems.Count,
                         paymentMethod = method,
                         requiresPayment = IsOnlinePayment(method)
@@ -173,6 +173,9 @@ namespace WebAPI.Services.Orders
                 note = order.Note,
                 createdAt = order.CreatedAt,
                 updatedAt = order.UpdatedAt,
+                paymentMethod = order.PaymentMethod,
+                isPaid = order.IsPaid,
+                paidAt = order.PaidAt,
                 nextStatuses = currentStatus.GetNextStatuses().Select(s => s.ToValue()),
                 isFinal = currentStatus.IsFinal(),
                 customer = new
@@ -208,6 +211,7 @@ namespace WebAPI.Services.Orders
             {
                 orderId = o.OrderId,
                 totalCost = o.TotalCost,
+                shippingFee = o.ShippingFee,
                 status = o.Status,
                 statusLabel = o.Status.ToEnum().ToLabel(),
                 phone = o.Phone,

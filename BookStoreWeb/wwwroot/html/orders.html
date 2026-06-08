@@ -1110,6 +1110,9 @@
                     ? (isVietQr ? "unpaid-qr" : "unpaid-vnpay")
                     : (isPaid ? "paid-vnpay" : "");
 
+                const shippingFee = o.shippingFee ?? detail?.shippingFee ?? 0;
+                const subtotal = total - shippingFee;
+
                 const itemHtml = (list) => list.map(it => {
                     const src = imgSrc(it.book?.image ?? "");
                     const name = it.book?.title ?? "Sách";
@@ -1211,16 +1214,19 @@
                                 </div>` : ""}
                             </div>
                             <div class="oh-foot">
-                                <div class="oh-total">Tổng: <strong>${fmt(total)}</strong></div>
-                                <div style="display:flex;gap:6px;flex-wrap:wrap">
-                                    ${(phone || address) ? `
-                                    <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
-                                        <i class="bi bi-geo-alt me-1"></i>Địa chỉ
-                                    </button>` : ""}
-                                    ${(status === "pending" || status === "confirmed" || status === "shipping") ? `
-                                    <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id},${isVnpay || isVietQr},${isPaid},${total})">
-                                        <i class="bi bi-x-circle me-1"></i>Hủy đơn
-                                    </button>` : ""}
+                                <div class="oh-total" style="display:flex;flex-direction:column;gap:2px">
+                                    <span style="font-size:.8rem;color:#8a9bb0">
+                                        Tiền sách: <strong style="color:#4a5568">${fmt(subtotal)}</strong>
+                                    </span>
+                                    ${shippingFee > 0
+                                                        ? `<span style="font-size:.8rem;color:#8a9bb0">
+                                               Phí ship: <strong style="color:#e67e22">+${fmt(shippingFee)}</strong>
+                                           </span>`
+                                                        : `<span style="font-size:.8rem;color:#8a9bb0">
+                                               Phí ship: <strong style="color:#27ae60">Miễn phí</strong>
+                                           </span>`
+                                                    }
+                                    <span>Tổng: <strong>${fmt(total)}</strong></span>
                                 </div>
                             </div>
                         </div>`;
