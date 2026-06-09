@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿﻿
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -1133,16 +1134,16 @@
                         }
                     }
                     return `
-                            <div class="oh-item">
-                                ${src ? `<img class="oh-item-img" src="${src}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
-                                <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                                <div style="flex:1;min-width:0">
-                                    <div class="oh-item-name">${name}</div>
-                                    <div class="oh-item-meta">SL: ${qty}</div>
-                                    <div class="oh-item-price">${fmt(sub)}</div>
-                                </div>
-                                ${reviewBtn}
-                            </div>`;
+                                <div class="oh-item">
+                                    ${src ? `<img class="oh-item-img" src="${src}" alt="${name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ``}
+                                    <div class="oh-item-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                                    <div style="flex:1;min-width:0">
+                                        <div class="oh-item-name">${name}</div>
+                                        <div class="oh-item-meta">SL: ${qty}</div>
+                                        <div class="oh-item-price">${fmt(sub)}</div>
+                                    </div>
+                                    ${reviewBtn}
+                                </div>`;
                 }).join("");
 
                 const visibleItems = items.slice(0, SHOW);
@@ -1151,85 +1152,95 @@
 
                 // Banner nhắc thanh toán VNPay với lựa chọn phương thức
                 const payBanner = needsPayment ? (isVietQr ? `
-                        <div class="oh-pay-banner banner-qr">
-                            <div style="flex:1">
-                                <div class="oh-pay-banner-text text-qr">
-                                    <i class="bi bi-qr-code-scan"></i>Đơn hàng chờ thanh toán QR
+                            <div class="oh-pay-banner banner-qr">
+                                <div style="flex:1">
+                                    <div class="oh-pay-banner-text text-qr">
+                                        <i class="bi bi-qr-code-scan"></i>Đơn hàng chờ thanh toán QR
+                                    </div>
+                                    <div style="font-size:.76rem;color:#27ae60;margin-top:3px;padding-left:22px">
+                                        Quét mã QR để hoàn tất thanh toán
+                                    </div>
                                 </div>
-                                <div style="font-size:.76rem;color:#27ae60;margin-top:3px;padding-left:22px">
-                                    Quét mã QR để hoàn tất thanh toán
+                                <button class="oh-btn-pay-now btn-qr" onclick="showQrPop(${id}, ${total})">
+                                    <i class="bi bi-qr-code-scan"></i> Xem mã QR
+                                </button>
+                            </div>` : `
+                            <div class="oh-pay-banner banner-vnpay">
+                                <div style="flex:1">
+                                    <div class="oh-pay-banner-text text-vnpay">
+                                        <i class="bi bi-exclamation-circle-fill"></i>Đơn hàng chưa được thanh toán
+                                    </div>
+                                    <div style="font-size:.76rem;color:#4a88b8;margin-top:3px;padding-left:22px">
+                                        Chọn phương thức và thanh toán ngay
+                                    </div>
                                 </div>
+                                <button class="oh-btn-pay-now btn-qr" id="paybtn_${id}" onclick="doPayNow(${id}, ${total})">
+                                    <i class="bi bi-qr-code-scan"></i> Xem mã QR
+                                </button>
                             </div>
-                            <button class="oh-btn-pay-now btn-qr" onclick="showQrPop(${id}, ${total})">
-                                <i class="bi bi-qr-code-scan"></i> Xem mã QR
-                            </button>
-                        </div>` : `
-                        <div class="oh-pay-banner banner-vnpay">
-                            <div style="flex:1">
-                                <div class="oh-pay-banner-text text-vnpay">
-                                    <i class="bi bi-exclamation-circle-fill"></i>Đơn hàng chưa được thanh toán
-                                </div>
-                                <div style="font-size:.76rem;color:#4a88b8;margin-top:3px;padding-left:22px">
-                                    Chọn phương thức và thanh toán ngay
-                                </div>
-                            </div>
-                            <button class="oh-btn-pay-now btn-qr" id="paybtn_${id}" onclick="doPayNow(${id}, ${total})">
-                                <i class="bi bi-qr-code-scan"></i> Xem mã QR
-                            </button>
-                        </div>
-                        <div class="oh-pay-method-picker">
-                            <span style="font-size:.75rem;color:#8a9bb0;font-weight:600;align-self:center">Thanh toán qua:</span>
-                            <button class="oh-pm-opt active-qr" id="pmQr_${id}" onclick="switchPayMethod(${id},'vietqr')">
-                                <i class="bi bi-qr-code" style="font-size:.85rem"></i> VietQR
-                            </button>
-                            <button class="oh-pm-opt" id="pmVnp_${id}" onclick="switchPayMethod(${id},'vnpay')">
-                                <i class="bi bi-credit-card" style="font-size:.85rem"></i> VNPay
-                            </button>
-                        </div>`) : "";
+                            <div class="oh-pay-method-picker">
+                                <span style="font-size:.75rem;color:#8a9bb0;font-weight:600;align-self:center">Thanh toán qua:</span>
+                                <button class="oh-pm-opt active-qr" id="pmQr_${id}" onclick="switchPayMethod(${id},'vietqr')">
+                                    <i class="bi bi-qr-code" style="font-size:.85rem"></i> VietQR
+                                </button>
+                                <button class="oh-pm-opt" id="pmVnp_${id}" onclick="switchPayMethod(${id},'vnpay')">
+                                    <i class="bi bi-credit-card" style="font-size:.85rem"></i> VNPay
+                                </button>
+                            </div>`) : "";
                 return `
-                        <div class="oh-card ${cardBorderCls}" id="card_${id}">
-                            <div class="oh-head">
-                                <div>
-                                    <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
-                                    ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
+                            <div class="oh-card ${cardBorderCls}" id="card_${id}">
+                                <div class="oh-head">
+                                    <div>
+                                        <div class="oh-id"><i class="bi bi-bag text-success me-1"></i>Đơn #${id}</div>
+                                        ${dateStr ? `<div class="oh-date"><i class="bi bi-clock me-1"></i>${dateStr}</div>` : ""}
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                                        ${payBadge(paymentMethod, isPaid)}
+                                        ${badge(status)}
+                                    </div>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                                    ${payBadge(paymentMethod, isPaid)}
-                                    ${badge(status)}
+                                ${payBanner}
+                                <div class="oh-body">
+                                    ${itemHtml(visibleItems)}
+                                    ${hasMore ? `
+                                    <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
+                                    <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
+                                        <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
+                                    </button>` : ""}
+                                    ${(phone || address) ? `
+                                    <div class="oh-ship" id="ship_${id}">
+                                        ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
+                                        ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
+                                        ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
+                                    </div>` : ""}
                                 </div>
-                            </div>
-                            ${payBanner}
-                            <div class="oh-body">
-                                ${itemHtml(visibleItems)}
-                                ${hasMore ? `
-                                <div class="oh-extra" id="extra_${id}">${itemHtml(hiddenItems)}</div>
-                                <button class="oh-more-btn" id="morebtn_${id}" onclick="toggleExtra(${id})">
-                                    <i class="bi bi-chevron-down me-1"></i>Xem thêm ${hiddenItems.length} sản phẩm
-                                </button>` : ""}
-                                ${(phone || address) ? `
-                                <div class="oh-ship" id="ship_${id}">
-                                    ${phone ? `<div><strong>SĐT:</strong> ${phone}</div>` : ""}
-                                    ${address ? `<div><strong>Địa chỉ:</strong> ${address}</div>` : ""}
-                                    ${note ? `<div><strong>Ghi chú:</strong> ${note}</div>` : ""}
-                                </div>` : ""}
-                            </div>
-                            <div class="oh-foot">
-                                <div class="oh-total" style="display:flex;flex-direction:column;gap:2px">
-                                    <span style="font-size:.8rem;color:#8a9bb0">
-                                        Tiền sách: <strong style="color:#4a5568">${fmt(subtotal)}</strong>
-                                    </span>
-                                    ${shippingFee > 0
+                                <div class="oh-foot">
+                                    <div class="oh-total" style="display:flex;flex-direction:column;gap:2px">
+                                        <span style="font-size:.8rem;color:#8a9bb0">
+                                            Tiền sách: <strong style="color:#4a5568">${fmt(subtotal)}</strong>
+                                        </span>
+                                        ${shippingFee > 0
                                                         ? `<span style="font-size:.8rem;color:#8a9bb0">
-                                               Phí ship: <strong style="color:#e67e22">+${fmt(shippingFee)}</strong>
-                                           </span>`
+                                                   Phí ship: <strong style="color:#e67e22">+${fmt(shippingFee)}</strong>
+                                               </span>`
                                                         : `<span style="font-size:.8rem;color:#8a9bb0">
-                                               Phí ship: <strong style="color:#27ae60">Miễn phí</strong>
-                                           </span>`
+                                                   Phí ship: <strong style="color:#27ae60">Miễn phí</strong>
+                                               </span>`
                                                     }
-                                    <span>Tổng: <strong>${fmt(total)}</strong></span>
+                                        <span>Tổng: <strong>${fmt(total)}</strong></span>
+                                    </div>
+                                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                                        ${(phone || address) ? `
+                                        <button class="oh-btn oh-btn-outline" id="shipbtn_${id}" onclick="toggleShip(${id})">
+                                            <i class="bi bi-geo-alt me-1"></i>Địa chỉ
+                                        </button>` : ""}
+                                        ${(status === "pending" || status === "confirmed" || status === "shipping") ? `
+                                        <button class="oh-btn oh-btn-danger" onclick="cancelOrder(${id},${isVnpay || isVietQr},${isPaid},${total})">
+                                            <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                                        </button>` : ""}
+                                    </div>
                                 </div>
-                            </div>
-                        </div>`;
+                            </div>`;
             }
 
             window.toggleExtra = function (id) {
