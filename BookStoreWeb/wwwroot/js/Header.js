@@ -220,6 +220,10 @@
                     <i class="bi bi-person me-1"></i>Đăng nhập
                 </button></li>`;
         const u = getUsername();
+        const supportItem = role === 'Customer'
+            ? `<li><a class="dropdown-item" href="../html/contact.html"><i class="bi bi-headset me-2"></i>Chăm sóc khách hàng</a></li>
+                        <li><hr class="dropdown-divider"></li>`
+            : '';
         return `<li class="nav-item dropdown">
                     <button class="btn-login-nav dropdown-toggle"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -231,7 +235,7 @@
                         <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Trang cá nhân</a></li>
                         <li><a class="dropdown-item" href="contact.html"><i class="bi bi-headset me-2"></i>Chăm sóc khách hàng</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="headerLogout();return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                        ${supportItem}<li><a class="dropdown-item text-danger" href="#" onclick="headerLogout();return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
                     </ul>
                 </li>`;
     }
