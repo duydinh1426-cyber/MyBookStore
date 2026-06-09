@@ -229,6 +229,7 @@
                         <li><span class="dropdown-item-text small text-muted">Xin chào, <strong>${u}</strong></span></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="profile.html"><i class="bi bi-person me-2"></i>Trang cá nhân</a></li>
+                        <li><a class="dropdown-item" href="contact.html"><i class="bi bi-headset me-2"></i>Chăm sóc khách hàng</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="#" onclick="headerLogout();return false;"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
                     </ul>

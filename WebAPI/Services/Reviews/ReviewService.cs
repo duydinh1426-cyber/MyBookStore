@@ -99,15 +99,34 @@ namespace WebAPI.Services.Reviews
             if (await _repo.SaveChangesAsync())
                 return ServiceResult<object>.Success(new { review = review.ReviewId }, "Gửi đánh giá thành công.");
 
-
             return ServiceResult<object>.Failure("Lỗi khi lưu đánh giá.", 500);
         }
 
+        // Admin xóa bất kỳ đánh giá nào
         public async Task<ServiceResult> DeleteAsync(int id)
         {
             var review = await _repo.GetByIdAsync(id);
             if (review == null)
                 return ServiceResult.Failure("Không tìm thấy đánh giá.", 404);
+
+            var bookId = review.BookId;
+            _repo.Delete(review);
+            await _repo.UpdateBookRatingAsync(bookId);
+
+            if (await _repo.SaveChangesAsync())
+                return ServiceResult.Success("Đã xóa đánh giá.");
+            return ServiceResult.Failure("Lỗi khi xóa đánh giá.", 500);
+        }
+
+        // Customer tự xóa đánh giá của mình
+        public async Task<ServiceResult> DeleteMyAsync(int userId, int reviewId)
+        {
+            var review = await _repo.GetByIdAsync(reviewId);
+            if (review == null)
+                return ServiceResult.Failure("Không tìm thấy đánh giá.", 404);
+
+            if (review.UserId != userId)
+                return ServiceResult.Failure("Bạn không có quyền xóa đánh giá này.", 403);
 
             var bookId = review.BookId;
             _repo.Delete(review);

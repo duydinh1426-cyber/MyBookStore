@@ -43,6 +43,16 @@ namespace WebAPI.Controllers
             return HandleResult(result);
         }
 
+        // Customer tự xóa đánh giá của mình
+        [HttpDelete("my/{id:int}")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> DeleteMine(int id)
+        {
+            var result = await _service.DeleteMyAsync(UserId, id);
+            return HandleResult(result);
+        }
+
+        // Admin xóa bất kỳ đánh giá nào
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)

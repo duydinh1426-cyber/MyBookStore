@@ -617,11 +617,56 @@
                 opacity: .35;
                 cursor: not-allowed;
             }
+
+        /* Nút xóa đánh giá */
+        .rv-hist-del {
+            background: none;
+            border: 1.5px solid #f5c6c6;
+            border-radius: 8px;
+            color: #e74c3c;
+            padding: .28rem .6rem;
+            font-size: .78rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            align-self: flex-start;
+            transition: background .15s, border-color .15s;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+            .rv-hist-del:hover {
+                background: #fdf2f2;
+                border-color: #e74c3c;
+            }
     </style>
 </head>
 <body>
     <div id="header-placeholder"></div>
 
+
+    <!-- Modal xác nhận xóa đánh giá -->
+    <div class="modal fade" id="rvDelModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content" style="border-radius:14px;border:none">
+                <div class="modal-body" style="padding:1.75rem;text-align:center">
+                    <i class="bi bi-trash3-fill" style="font-size:2.2rem;color:#e74c3c;display:block;margin-bottom:.75rem"></i>
+                    <div style="font-weight:700;font-size:1rem;margin-bottom:.4rem">Xóa đánh giá?</div>
+                    <div style="font-size:.85rem;color:#8a9bb0;margin-bottom:1rem">Hành động này không thể hoàn tác.</div>
+                    <!-- Error message inside modal -->
+                    <div id="rvDelErrMsg" style="display:none;background:#fff0f0;border:1.5px solid #f5c6c6;border-radius:9px;padding:.5rem .8rem;font-size:.82rem;color:#c0392b;margin-bottom:1rem;text-align:left">
+                        <i class="bi bi-exclamation-circle-fill me-1"></i>
+                        <span id="rvDelErrText"></span>
+                    </div>
+                    <div style="display:flex;gap:10px;justify-content:center">
+                        <button class="btn btn-light" style="border-radius:9px;font-weight:600;min-width:85px" data-bs-dismiss="modal">Hủy</button>
+                        <button class="btn btn-danger" id="rvDelConfirmBtn" style="border-radius:9px;font-weight:600;min-width:85px">Xóa</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ══ LIST VIEW (hiện khi không có ?bookId) ══ -->
     <div id="prListView" style="display:none">
@@ -768,8 +813,49 @@
 
             // ── History ──
             var HIST_PAGE_SIZE = 6;
+            var _delModal = new bootstrap.Modal(document.getElementById('rvDelModal'));
+            var _pendingDelId = null;
+            var _histPageCurrent = 1;
+            // expose to window so inline onclick can access
+            window._delModal = _delModal;
+            window._pendingDelId = null;
+
+            document.getElementById('rvDelConfirmBtn').addEventListener('click', async function () {
+                if (!window._pendingDelId) return;
+                var btn = this;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xóa...';
+                document.getElementById('rvDelErrMsg').style.display = 'none';
+                try {
+                    var res = await fetch(API + '/reviews/my/' + window._pendingDelId, {
+                        method: 'DELETE', headers: authHdr()
+                    });
+                    if (res.ok) {
+                        window._delModal.hide();
+                        loadHistory(_histPageCurrent);
+                    } else {
+                        var data = await res.json().catch(function () { return {}; });
+                        var errText = document.getElementById('rvDelErrText');
+                        errText.textContent = data.message || ('Lỗi ' + res.status + ': Xóa thất bại.');
+                        document.getElementById('rvDelErrMsg').style.display = 'block';
+                    }
+                } catch (e) {
+                    document.getElementById('rvDelErrText').textContent = 'Không kết nối được máy chủ.';
+                    document.getElementById('rvDelErrMsg').style.display = 'block';
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Xóa';
+                    window._pendingDelId = null;
+                }
+            });
+
+            // Reset error khi mở modal
+            document.getElementById('rvDelModal').addEventListener('show.bs.modal', function () {
+                document.getElementById('rvDelErrMsg').style.display = 'none';
+            });
 
             async function loadHistory(page) {
+                _histPageCurrent = page;
                 var cont = document.getElementById('prHistContent');
                 cont.innerHTML = '<div class="pr-empty"><div class="spinner-border text-success spinner-border-sm"></div></div>';
                 try {
@@ -801,7 +887,7 @@
 
                         var date = r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 
-                        html += '<div class="rv-hist-card">'
+                        html += '<div class="rv-hist-card" id="rvhist-' + r.reviewId + '">'
                             + imgHtml
                             + '<div style="flex:1;min-width:0">'
                             + '<div style="font-weight:700;font-size:.88rem;color:#1a1a1a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (r.bookTitle || '—') + '</div>'
@@ -814,6 +900,9 @@
                                 ? '<div class="rv-hist-comment"><i class="bi bi-chat-left-quote me-1" style="color:#aaa"></i>' + r.comment + '</div>'
                                 : '<div style="margin-top:.35rem;font-size:.78rem;color:#ccc;font-style:italic">Không có nhận xét</div>')
                             + '</div>'
+                            + '<button class="rv-hist-del" title="Xóa đánh giá" onclick="window._pendingDelId=' + r.reviewId + ';window._delModal.show()">'
+                            + '<i class="bi bi-trash3"></i>'
+                            + '</button>'
                             + '</div>';
                     });
 
@@ -1036,15 +1125,15 @@
                     const b = await res.json();
                     const src = imgSrc(b.image || b.Image || "");
                     document.getElementById("bookCard").innerHTML = `
-                            ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
-                            <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
-                            <div>
-                                <div class="rv-book-title">${b.title || b.Title || ""}</div>
-                                <div class="rv-book-author">${b.author || b.Author || ""}</div>
-                                <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
-                                    ${(b.categoryName || b.CategoryName || "")}
-                                </div>
-                            </div>`;
+                                ${src ? `<img class="rv-book-img" src="${src}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
+                                <div class="rv-book-img-ph" ${src ? 'style="display:none"' : ""}><i class="bi bi-book"></i></div>
+                                <div>
+                                    <div class="rv-book-title">${b.title || b.Title || ""}</div>
+                                    <div class="rv-book-author">${b.author || b.Author || ""}</div>
+                                    <div style="font-size:.78rem;color:#6ab04c;font-weight:700;margin-top:5px">
+                                        ${(b.categoryName || b.CategoryName || "")}
+                                    </div>
+                                </div>`;
                 } catch {
                     document.getElementById("bookCard").innerHTML =
                         `<div style="color:#aaa;font-size:.85rem">Không tải được thông tin sách.</div>`;
